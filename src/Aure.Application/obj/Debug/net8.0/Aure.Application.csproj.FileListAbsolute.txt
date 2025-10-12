@@ -1,0 +1,16 @@
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\bin\Debug\net8.0\Aure.Application.deps.json
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\bin\Debug\net8.0\Aure.Application.dll
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\bin\Debug\net8.0\Aure.Application.pdb
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\bin\Debug\net8.0\Aure.Domain.dll
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\bin\Debug\net8.0\Aure.Domain.pdb
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\Aure.Application.csproj.AssemblyReference.cache
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\Aure.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\Aure.Application.AssemblyInfoInputs.cache
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\Aure.Application.AssemblyInfo.cs
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\Aure.Application.csproj.CoreCompileInputs.cache
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\Aure.Application.sourcelink.json
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\Aure.App.CCB43003.Up2Date
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\Aure.Application.dll
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\refint\Aure.Application.dll
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\Aure.Application.pdb
+C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Application\obj\Debug\net8.0\ref\Aure.Application.dll
