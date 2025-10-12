@@ -98,7 +98,7 @@ public class CompanyService : ICompanyService
             return Result.Failure<CompanyResponse>("CNPJ already exists");
         }
 
-        var company = new Company(request.Name, request.Cnpj, request.Type);
+        var company = new Company(request.Name, request.Cnpj, request.Type, request.BusinessModel);
         
         await _unitOfWork.Companies.AddAsync(company);
         await _unitOfWork.SaveChangesAsync();
@@ -119,8 +119,8 @@ public class CompanyService : ICompanyService
             return Result.Failure<CompanyResponse>("Company not found");
         }
 
-        // Atualizar apenas nome e tipo - CNPJ não pode ser alterado
-        company.UpdateCompanyInfo(request.Name, request.Type);
+        // Atualizar apenas nome, tipo e modelo de negócio - CNPJ não pode ser alterado
+        company.UpdateCompanyInfo(request.Name, request.Type, request.BusinessModel);
         
         await _unitOfWork.Companies.UpdateAsync(company);
         await _unitOfWork.SaveChangesAsync();

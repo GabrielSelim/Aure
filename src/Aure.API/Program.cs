@@ -1,4 +1,5 @@
 using Aure.API.Extensions;
+using Aure.API.Filters;
 using Aure.Infrastructure.Data;
 using Serilog;
 
@@ -11,7 +12,12 @@ builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddCorsServices();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -46,6 +52,12 @@ builder.Services.AddSwaggerGen(c =>
             new string[] {}
         }
     });
+    
+    // Configuração para mostrar enums como strings no Swagger
+    c.SchemaFilter<EnumSchemaFilter>();
+    
+    // Configuração para exemplo customizado do InviteUserRequest
+    c.SchemaFilter<InviteUserRequestSchemaFilter>();
 });
 
 builder.Services.AddHealthChecks()

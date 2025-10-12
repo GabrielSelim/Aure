@@ -27,7 +27,8 @@ public class UserRepository : BaseRepository<User>, IUserRepository
     public async Task<bool> EmailExistsAsync(string email)
     {
         return await _dbSet
-            .AnyAsync(x => x.Email.ToLower() == email.ToLower());
+            .AnyAsync(x => x.Email.ToLower() == email.ToLower())
+            .ConfigureAwait(false);
     }
 
     public override async Task<IEnumerable<User>> GetAllAsync()

@@ -21,6 +21,9 @@ public class RegisterCompanyAdminRequestValidator : AbstractValidator<RegisterCo
         RuleFor(x => x.CompanyType)
             .IsInEnum().WithMessage("Invalid company type specified");
 
+        RuleFor(x => x.BusinessModel)
+            .IsInEnum().WithMessage("Invalid business model specified");
+
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Name is required")
             .Must(ValidationHelpers.IsValidPersonName)
@@ -55,7 +58,8 @@ public class InviteUserRequestValidator : AbstractValidator<InviteUserRequest>
             .MaximumLength(255).WithMessage("Email must not exceed 255 characters");
 
         RuleFor(x => x.Role)
-            .IsInEnum().WithMessage("Invalid role specified");
+            .IsInEnum().WithMessage("Invalid role specified")
+            .When(x => x.Role.HasValue);
     }
 }
 

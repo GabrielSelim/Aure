@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Aure.Application.DTOs.User;
 using Aure.Application.Interfaces;
 
@@ -65,9 +66,24 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("profile")]
-    public Task<IActionResult> GetProfile()
+    [Authorize]
+    public async Task<IActionResult> GetProfile()
     {
-        return Task.FromResult<IActionResult>(Ok(new { Message = "Profile endpoint - JWT implementation needed" }));
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(new { Error = "Invalid token" });
+        }
+
+        var result = await _userService.GetByIdAsync(userId);
+        
+        if (result.IsFailure)
+        {
+            return NotFound(new { Error = result.Error });
+        }
+
+        return Ok(result.Data);
     }
 
     [HttpPost("refresh-token")]

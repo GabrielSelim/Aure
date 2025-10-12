@@ -273,4 +273,38 @@ public class UsersController : ControllerBase
                               id, companyId.Value, currentUserId);
         return NoContent();
     }
+
+    /// <summary>
+    /// NOVO: Mostra estatísticas de usuários considerando relacionamentos
+    /// </summary>
+    [HttpGet("stats")]
+    [Authorize]
+    public async Task<IActionResult> GetUserStats()
+    {
+        var companyId = await GetCurrentUserCompanyIdAsync();
+        if (companyId == null)
+        {
+            return BadRequest(new { Error = "User not associated with any company" });
+        }
+
+        try
+        {
+            // Usuários da própria empresa
+            var ownUsersResult = await _userService.GetAllByCompanyAsync(companyId.Value);
+            var ownUsersCount = ownUsersResult.IsSuccess ? ownUsersResult.Data?.Count() ?? 0 : 0;
+
+            // Relacionamentos (requer injeção do UnitOfWork - será implementado se necessário)
+            return Ok(new
+            {
+                CompanyId = companyId.Value,
+                DirectEmployees = ownUsersCount,
+                Message = "Para ver usuários da rede completa, use os endpoints /api/UsersExtended/"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user stats for company {CompanyId}", companyId);
+            return BadRequest(new { Error = "Error getting user statistics" });
+        }
+    }
 }

@@ -8,6 +8,7 @@ public class Company : BaseEntity
     public string Name { get; private set; } = string.Empty;
     public string Cnpj { get; private set; } = string.Empty;
     public CompanyType Type { get; private set; }
+    public BusinessModel BusinessModel { get; private set; }
     public KycStatus KycStatus { get; private set; }
 
     private readonly List<Contract> _clientContracts = new();
@@ -22,18 +23,20 @@ public class Company : BaseEntity
 
     private Company() { }
 
-    public Company(string name, string cnpj, CompanyType type)
+    public Company(string name, string cnpj, CompanyType type, BusinessModel businessModel = BusinessModel.Standard)
     {
         Name = name;
         Cnpj = cnpj;
         Type = type;
+        BusinessModel = businessModel;
         KycStatus = Enums.KycStatus.Pending;
     }
 
-    public void UpdateCompanyInfo(string name, CompanyType type)
+    public void UpdateCompanyInfo(string name, CompanyType type, BusinessModel businessModel)
     {
         Name = name;
         Type = type;
+        BusinessModel = businessModel;
         UpdateTimestamp();
     }
 

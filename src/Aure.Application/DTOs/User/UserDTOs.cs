@@ -46,6 +46,7 @@ public record RegisterCompanyAdminRequest(
     string CompanyName,
     string CompanyCnpj,
     CompanyType CompanyType,
+    BusinessModel BusinessModel,
     string Name,
     string Email,
     string Password
@@ -54,8 +55,12 @@ public record RegisterCompanyAdminRequest(
 public record InviteUserRequest(
     string Name,
     string Email,
-    UserRole Role,
-    Guid? CompanyId = null
+    UserRole? Role,                    // Opcional - será Provider para ContractedPJ
+    InviteType InviteType,
+    string? CompanyName = null,         // Para PJ contratado
+    string? Cnpj = null,               // Para PJ contratado
+    CompanyType? CompanyType = null,   // Para PJ contratado
+    BusinessModel? BusinessModel = null // Para PJ contratado
 );
 
 public record AcceptInviteRequest(
@@ -64,5 +69,25 @@ public record AcceptInviteRequest(
 
 public record InviteResponse(
     Guid InviteId,
-    string Message
+    string Message,
+    string InviteToken,
+    DateTime ExpiresAt,
+    InviteType InviteType
+);
+
+public record UserInviteResponse(
+    Guid Id,
+    string InviterName,
+    string InviteeEmail,
+    string InviteeName,
+    UserRole Role,
+    InviteType InviteType,
+    string? CompanyName,
+    string? Cnpj,
+    CompanyType? CompanyType,
+    BusinessModel? BusinessModel,
+    string Token,
+    DateTime ExpiresAt,
+    DateTime CreatedAt,
+    bool IsExpired
 );

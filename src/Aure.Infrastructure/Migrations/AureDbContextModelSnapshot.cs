@@ -88,6 +88,10 @@ namespace Aure.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("uuid_generate_v4()");
 
+                    b.Property<int>("BusinessModel")
+                        .HasColumnType("integer")
+                        .HasColumnName("business_model");
+
                     b.Property<string>("Cnpj")
                         .IsRequired()
                         .HasMaxLength(18)
@@ -140,6 +144,64 @@ namespace Aure.Infrastructure.Migrations
                         .HasDatabaseName("idx_companies_type");
 
                     b.ToTable("companies");
+                });
+
+            modelBuilder.Entity("Aure.Domain.Entities.CompanyRelationship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ClientCompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("client_company_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_date");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("ProviderCompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("provider_company_id");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProviderCompanyId");
+
+                    b.HasIndex("ClientCompanyId", "ProviderCompanyId", "Type")
+                        .IsUnique()
+                        .HasFilter("is_deleted = false");
+
+                    b.ToTable("companyrelationships");
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.Contract", b =>
@@ -978,6 +1040,107 @@ namespace Aure.Infrastructure.Migrations
                     b.ToTable("users");
                 });
 
+            modelBuilder.Entity("Aure.Domain.Entities.UserInvite", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int?>("BusinessModel")
+                        .HasColumnType("integer")
+                        .HasColumnName("business_model");
+
+                    b.Property<string>("Cnpj")
+                        .HasMaxLength(18)
+                        .HasColumnType("character varying(18)")
+                        .HasColumnName("cnpj");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<string>("CompanyName")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("company_name");
+
+                    b.Property<int?>("CompanyType")
+                        .HasColumnType("integer")
+                        .HasColumnName("company_type");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<int>("InviteType")
+                        .HasColumnType("integer")
+                        .HasColumnName("invite_type");
+
+                    b.Property<Guid>("InvitedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invited_by_user_id");
+
+                    b.Property<string>("InviteeEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("invitee_email");
+
+                    b.Property<string>("InviteeName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("invitee_name");
+
+                    b.Property<string>("InviterName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("inviter_name");
+
+                    b.Property<bool>("IsAccepted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_accepted");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("token");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvitedByUserId");
+
+                    b.HasIndex("InviteeEmail");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("CompanyId", "IsAccepted", "IsDeleted");
+
+                    b.ToTable("userinvites");
+                });
+
             modelBuilder.Entity("Aure.Domain.Entities.AuditLog", b =>
                 {
                     b.HasOne("Aure.Domain.Entities.User", "User")
@@ -987,6 +1150,25 @@ namespace Aure.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Aure.Domain.Entities.CompanyRelationship", b =>
+                {
+                    b.HasOne("Aure.Domain.Entities.Company", "ClientCompany")
+                        .WithMany()
+                        .HasForeignKey("ClientCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aure.Domain.Entities.Company", "ProviderCompany")
+                        .WithMany()
+                        .HasForeignKey("ProviderCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ClientCompany");
+
+                    b.Navigation("ProviderCompany");
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.Contract", b =>
@@ -1186,6 +1368,25 @@ namespace Aure.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("Aure.Domain.Entities.UserInvite", b =>
+                {
+                    b.HasOne("Aure.Domain.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aure.Domain.Entities.User", "InvitedByUser")
+                        .WithMany()
+                        .HasForeignKey("InvitedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("InvitedByUser");
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.Company", b =>

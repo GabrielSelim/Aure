@@ -14,6 +14,21 @@ public enum CompanyType
     Both = 3
 }
 
+public enum BusinessModel
+{
+    Standard = 1,         // Empresa padrão
+    MainCompany = 2,      // Empresa que contrata PJs
+    ContractedPJ = 3,     // PJ contratado
+    Freelancer = 4        // Freelancer individual
+}
+
+public enum InviteType
+{
+    Employee = 0,          // Funcionário interno da empresa
+    ContractedPJ = 1,      // PJ contratado que terá sua própria empresa criada  
+    ExternalUser = 2       // Usuário externo para acesso específico
+}
+
 public enum KycStatus
 {
     Pending = 1,
@@ -107,4 +122,20 @@ public enum SplitExecutionStatus
     Pending = 1,
     Completed = 2,
     Failed = 3
+}
+
+public enum RelationshipType
+{
+    ContractedPJ = 1,      // Empresa contrata PJ
+    Partnership = 2,       // Parceria entre empresas
+    Supplier = 3,          // Fornecedor
+    Client = 4             // Cliente
+}
+
+public enum RelationshipStatus
+{
+    Active = 1,
+    Inactive = 2,
+    Terminated = 3,
+    Suspended = 4
 }

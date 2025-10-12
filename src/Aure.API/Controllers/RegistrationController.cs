@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Aure.Application.DTOs.User;
 using Aure.Application.Interfaces;
 using Aure.Domain.Enums;
+using Aure.Domain.Interfaces;
 using System.Security.Claims;
 
 namespace Aure.API.Controllers;
@@ -12,11 +13,13 @@ namespace Aure.API.Controllers;
 public class RegistrationController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<RegistrationController> _logger;
 
-    public RegistrationController(IUserService userService, ILogger<RegistrationController> logger)
+    public RegistrationController(IUserService userService, IUnitOfWork unitOfWork, ILogger<RegistrationController> logger)
     {
         _userService = userService;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -59,7 +62,7 @@ public class RegistrationController : ControllerBase
             return BadRequest(new { Error = result.Error });
         }
 
-        return Ok(new { Message = "User invitation sent successfully", InviteId = result.Data });
+        return Ok(result.Data);
     }
 
     [HttpPost("accept-invite/{inviteToken}")]
@@ -79,5 +82,67 @@ public class RegistrationController : ControllerBase
         }
 
         return Ok(result.Data);
+    }
+
+    [HttpGet("invites")]
+    [Authorize(Roles = "Admin,Company")]
+    public async Task<IActionResult> GetPendingInvites()
+    {
+        var currentUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var currentUser = await _userService.GetByIdAsync(currentUserId);
+        
+        if (currentUser.IsFailure || currentUser.Data?.CompanyId == null)
+        {
+            return BadRequest(new { Error = "User not associated with company" });
+        }
+
+        var invites = await _unitOfWork.UserInvites.GetPendingByCompanyAsync(currentUser.Data.CompanyId.Value);
+        var inviteResponses = invites.Select(invite => new UserInviteResponse(
+            Id: invite.Id,
+            InviterName: invite.InviterName,
+            InviteeEmail: invite.InviteeEmail,
+            InviteeName: invite.InviteeName,
+            Role: invite.Role,
+            InviteType: invite.InviteType,
+            CompanyName: invite.CompanyName,
+            Cnpj: invite.Cnpj,
+            CompanyType: invite.CompanyType,
+            BusinessModel: invite.BusinessModel,
+            Token: invite.Token,
+            ExpiresAt: invite.ExpiresAt,
+            CreatedAt: invite.CreatedAt,
+            IsExpired: DateTime.UtcNow > invite.ExpiresAt
+        ));
+
+        return Ok(inviteResponses);
+    }
+
+    [HttpPost("cancel-invite/{inviteId}")]
+    [Authorize(Roles = "Admin,Company")]
+    public async Task<IActionResult> CancelInvite(Guid inviteId)
+    {
+        var currentUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        var currentUser = await _userService.GetByIdAsync(currentUserId);
+        
+        if (currentUser.IsFailure || currentUser.Data?.CompanyId == null)
+        {
+            return BadRequest(new { Error = "User not associated with company" });
+        }
+
+        var invite = await _unitOfWork.UserInvites.GetByIdAsync(inviteId);
+        if (invite == null || invite.CompanyId != currentUser.Data.CompanyId)
+        {
+            return NotFound(new { Error = "Invite not found" });
+        }
+
+        if (invite.IsAccepted)
+        {
+            return BadRequest(new { Error = "Cannot cancel accepted invite" });
+        }
+
+        await _unitOfWork.UserInvites.DeleteAsync(inviteId);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Ok(new { Message = "Invite cancelled successfully" });
     }
 }

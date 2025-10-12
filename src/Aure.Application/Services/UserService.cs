@@ -31,8 +31,8 @@ public class UserService : IUserService
         
         if (user == null)
         {
-            _logger.LogWarning("User not found with ID {UserId}", id);
-            return Result.Failure<UserResponse>("User not found");
+            _logger.LogWarning("Usuário não encontrado com ID {UserId}", id);
+            return Result.Failure<UserResponse>("Usuário não encontrado");
         }
 
         var response = _mapper.Map<UserResponse>(user);
@@ -45,8 +45,8 @@ public class UserService : IUserService
         
         if (user == null)
         {
-            _logger.LogWarning("User not found with email {Email}", email);
-            return Result.Failure<UserResponse>("User not found");
+            _logger.LogWarning("Usuário não encontrado com email {Email}", email);
+            return Result.Failure<UserResponse>("Usuário não encontrado");
         }
 
         var response = _mapper.Map<UserResponse>(user);
@@ -57,8 +57,8 @@ public class UserService : IUserService
     {
         var users = await _unitOfWork.Users.GetAllAsync();
         var response = _mapper.Map<IEnumerable<UserResponse>>(users);
-        
-        _logger.LogInformation("Retrieved {UserCount} users", users.Count());
+
+        _logger.LogInformation("Recuperados {UserCount} usuários", users.Count());
         return Result.Success(response);
     }
 
@@ -66,8 +66,8 @@ public class UserService : IUserService
     {
         if (await _unitOfWork.Users.EmailExistsAsync(request.Email))
         {
-            _logger.LogWarning("Attempt to create user with existing email {Email}", request.Email);
-            return Result.Failure<UserResponse>("Email already exists");
+            _logger.LogWarning("Tentativa de criar usuário com email existente {Email}", request.Email);
+            return Result.Failure<UserResponse>("Email já existe");
         }
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -77,8 +77,8 @@ public class UserService : IUserService
         await _unitOfWork.SaveChangesAsync();
 
         var response = _mapper.Map<UserResponse>(user);
-        
-        _logger.LogInformation("User created successfully with ID {UserId}", user.Id);
+
+        _logger.LogInformation("Usuário criado com sucesso com ID {UserId}", user.Id);
         return Result.Success(response);
     }
 
@@ -88,15 +88,15 @@ public class UserService : IUserService
         
         if (user == null)
         {
-            _logger.LogWarning("User not found for update with ID {UserId}", id);
-            return Result.Failure<UserResponse>("User not found");
+            _logger.LogWarning("Usuário não encontrado para atualização com ID {UserId}", id);
+            return Result.Failure<UserResponse>("Usuário não encontrado");
         }
 
         if (!user.Email.Equals(request.Email, StringComparison.OrdinalIgnoreCase) && 
             await _unitOfWork.Users.EmailExistsAsync(request.Email))
         {
-            _logger.LogWarning("Attempt to update user {UserId} with existing email {Email}", id, request.Email);
-            return Result.Failure<UserResponse>("Email already exists");
+            _logger.LogWarning("Tentativa de atualizar usuário {UserId} com email existente {Email}", id, request.Email);
+            return Result.Failure<UserResponse>("Email já existe");
         }
 
         user.UpdateProfile(request.Name, request.Email);
@@ -104,8 +104,8 @@ public class UserService : IUserService
         await _unitOfWork.SaveChangesAsync();
 
         var response = _mapper.Map<UserResponse>(user);
-        
-        _logger.LogInformation("User updated successfully with ID {UserId}", user.Id);
+
+        _logger.LogInformation("Usuário atualizado com sucesso com ID {UserId}", user.Id);
         return Result.Success(response);
     }
 
@@ -115,14 +115,14 @@ public class UserService : IUserService
         
         if (user == null)
         {
-            _logger.LogWarning("User not found for password change with ID {UserId}", id);
-            return Result.Failure("User not found");
+            _logger.LogWarning("Usuário não encontrado para alteração de senha com ID {UserId}", id);
+            return Result.Failure("Usuário não encontrado");
         }
 
         if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
         {
-            _logger.LogWarning("Invalid current password for user {UserId}", id);
-            return Result.Failure("Current password is incorrect");
+            _logger.LogWarning("Senha atual inválida para o usuário {UserId}", id);
+            return Result.Failure("A senha atual está incorreta");
         }
 
         var newPasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
@@ -131,7 +131,7 @@ public class UserService : IUserService
         await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
-        _logger.LogInformation("Password changed successfully for user {UserId}", user.Id);
+        _logger.LogInformation("Senha alterada com sucesso para o usuário {UserId}", user.Id);
         return Result.Success();
     }
 
@@ -141,14 +141,14 @@ public class UserService : IUserService
         
         if (user == null)
         {
-            _logger.LogWarning("User not found for deletion with ID {UserId}", id);
-            return Result.Failure("User not found");
+            _logger.LogWarning("Usuário não encontrado para exclusão com ID {UserId}", id);
+            return Result.Failure("Usuário não encontrado");
         }
 
         await _unitOfWork.Users.DeleteAsync(id);
         await _unitOfWork.SaveChangesAsync();
 
-        _logger.LogInformation("User deleted successfully with ID {UserId}", id);
+        _logger.LogInformation("Usuário deletado com sucesso com ID {UserId}", id);
         return Result.Success();
     }
 
@@ -158,7 +158,7 @@ public class UserService : IUserService
         
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
-            _logger.LogWarning("Invalid login attempt for email {Email}", request.Email);
+            _logger.LogWarning("Tentativa de login inválida para email {Email}", request.Email);
             return Result.Failure<LoginWithUserResponse>("Email ou senha inválidos");
         }
 
@@ -173,33 +173,30 @@ public class UserService : IUserService
             UserEntity: user
         );
 
-        _logger.LogInformation("User logged in successfully with ID {UserId}", user.Id);
+        _logger.LogInformation("Usuário logado com sucesso com ID {UserId}", user.Id);
         return Result.Success(response);
     }
 
     public Task<Result> LogoutAsync(Guid userId)
     {
-        _logger.LogInformation("User logged out with ID {UserId}", userId);
+        _logger.LogInformation("Usuário deslogado com ID {UserId}", userId);
         return Task.FromResult(Result.Success());
     }
 
     public async Task<Result<UserResponse>> RegisterCompanyAdminAsync(RegisterCompanyAdminRequest request)
     {
-        // Verificações em paralelo para melhor performance
-        var emailExistsTask = _unitOfWork.Users.EmailExistsAsync(request.Email);
-        var cnpjExistsTask = _unitOfWork.Companies.CnpjExistsAsync(request.CompanyCnpj);
-        
-        await Task.WhenAll(emailExistsTask, cnpjExistsTask);
-        
-        if (await emailExistsTask)
+        // Verificações sequenciais para evitar problemas de concorrência no EF
+        var emailExists = await _unitOfWork.Users.EmailExistsAsync(request.Email).ConfigureAwait(false);
+        if (emailExists)
         {
-            _logger.LogWarning("Attempt to register admin with existing email {Email}", request.Email);
+            _logger.LogWarning("Tentativa de registrar admin com email existente {Email}", request.Email);
             return Result.Failure<UserResponse>("Email já está em uso");
         }
 
-        if (await cnpjExistsTask)
+        var cnpjExists = await _unitOfWork.Companies.CnpjExistsAsync(request.CompanyCnpj).ConfigureAwait(false);
+        if (cnpjExists)
         {
-            _logger.LogWarning("Attempt to register company with existing CNPJ {Cnpj}", request.CompanyCnpj);
+            _logger.LogWarning("Tentativa de registrar empresa com CNPJ existente {Cnpj}", request.CompanyCnpj);
             return Result.Failure<UserResponse>("CNPJ já está cadastrado");
         }
 
@@ -231,14 +228,14 @@ public class UserService : IUserService
 
             if (!isNameMatch && !isTradeNameMatch)
             {
-                _logger.LogWarning("Company name mismatch for CNPJ {Cnpj}. Provided: {ProvidedName}, Official: {OfficialName}, Trade: {TradeName}", 
+                _logger.LogWarning("Incompatibilidade de nome da empresa para CNPJ {Cnpj}. Fornecido: {ProvidedName}, Oficial: {OfficialName}, Fantasia: {TradeName}", 
                     request.CompanyCnpj, request.CompanyName, validationResult.CompanyName, validationResult.TradeName);
                 return Result.Failure<UserResponse>($"O nome da empresa não corresponde aos registros oficiais. Nome oficial: {validationResult.CompanyName}");
             }
         }
 
         // Criar empresa primeiro
-        var company = new Company(request.CompanyName, formattedCnpj, request.CompanyType);
+        var company = new Company(request.CompanyName, formattedCnpj, request.CompanyType, request.BusinessModel);
         await _unitOfWork.Companies.AddAsync(company);
 
         // Criar usuário admin
@@ -249,53 +246,215 @@ public class UserService : IUserService
         await _unitOfWork.SaveChangesAsync();
 
         var response = _mapper.Map<UserResponse>(user);
-        _logger.LogInformation("Company admin registered successfully with ID {UserId}", user.Id);
+        _logger.LogInformation("Usuário admin da empresa registrado com sucesso com ID {UserId}", user.Id);
         return Result.Success(response);
     }
 
-    public async Task<Result<UserResponse>> InviteUserAsync(InviteUserRequest request, Guid currentUserId, string currentUserRole)
+    public async Task<Result<InviteResponse>> InviteUserAsync(InviteUserRequest request, Guid currentUserId, string currentUserRole)
     {
-        // Verificar se email já existe
+        // Verificar se email já existe como usuário
         if (await _unitOfWork.Users.EmailExistsAsync(request.Email))
         {
-            _logger.LogWarning("Attempt to invite user with existing email {Email}", request.Email);
-            return Result.Failure<UserResponse>("Email already exists");
+            _logger.LogWarning("Tentativa de convidar usuário com email existente {Email}", request.Email);
+            return Result.Failure<InviteResponse>("Email já existe como usuário registrado");
         }
 
-        // Obter company do usuário atual
+        // Verificar se email já tem convite pendente
+        if (await _unitOfWork.UserInvites.EmailHasPendingInviteAsync(request.Email))
+        {
+            _logger.LogWarning("Email {Email} já tem um convite pendente", request.Email);
+            return Result.Failure<InviteResponse>("Email já tem um convite pendente");
+        }
+
+        // Obter dados do usuário atual
         var currentUser = await _unitOfWork.Users.GetByIdAsync(currentUserId);
         if (currentUser?.CompanyId == null)
         {
-            return Result.Failure<UserResponse>("Current user is not associated with a company");
+            return Result.Failure<InviteResponse>("Usuário atual não está associado a uma empresa");
         }
 
-        // Criar usuário com senha temporária
-        var tempPassword = Guid.NewGuid().ToString()[..8];
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(tempPassword);
-        var user = new User(request.Name, request.Email, passwordHash, request.Role, currentUser.CompanyId);
+        // Validações específicas por tipo de convite
+        if (request.InviteType == InviteType.ContractedPJ)
+        {
+            if (string.IsNullOrWhiteSpace(request.CompanyName) || 
+                string.IsNullOrWhiteSpace(request.Cnpj) ||
+                request.CompanyType == null ||
+                request.BusinessModel == null)
+            {
+                return Result.Failure<InviteResponse>("Dados da empresa são obrigatórios para convites PJ");
+            }
 
-        await _unitOfWork.Users.AddAsync(user);
+            // Validar CNPJ
+            var cnpjValidation = await _cnpjValidationService.ValidateAsync(request.Cnpj);
+            if (!cnpjValidation.IsValid)
+            {
+                return Result.Failure<InviteResponse>(cnpjValidation.ErrorMessage ?? "CNPJ inválido");
+            }
+
+            // Verificar se CNPJ já existe (limpar CNPJ primeiro)
+            var cleanCnpj = System.Text.RegularExpressions.Regex.Replace(request.Cnpj, @"\D", "");
+            if (await _unitOfWork.Companies.CnpjExistsAsync(cleanCnpj))
+            {
+                return Result.Failure<InviteResponse>("CNPJ já cadastrado");
+            }
+        }
+
+        // Definir role baseado no tipo de convite
+        var userRole = request.InviteType == InviteType.ContractedPJ 
+            ? UserRole.Provider 
+            : request.Role ?? UserRole.Provider;
+
+        // Criar convite
+        var invite = new UserInvite(
+            inviterName: currentUser.Name,
+            inviteeEmail: request.Email,
+            inviteeName: request.Name,
+            role: userRole,
+            companyId: currentUser.CompanyId.Value,
+            invitedByUserId: currentUserId,
+            inviteType: request.InviteType,
+            businessModel: request.BusinessModel,
+            companyName: request.CompanyName,
+            cnpj: request.Cnpj,
+            companyType: request.CompanyType
+        );
+
+        await _unitOfWork.UserInvites.AddAsync(invite);
         await _unitOfWork.SaveChangesAsync();
 
-        var response = _mapper.Map<UserResponse>(user);
-        _logger.LogInformation("User invited successfully with ID {UserId}", user.Id);
+        var response = new InviteResponse(
+            InviteId: invite.Id,
+            Message: $"Convite enviado para o email: {request.Email}",
+            InviteToken: invite.Token,
+            ExpiresAt: invite.ExpiresAt,
+            InviteType: invite.InviteType
+        );
+
+        _logger.LogInformation("Convite criado com sucesso com ID {InviteId} para o email {Email}", 
+            invite.Id, request.Email);
+        
         return Result.Success(response);
     }
 
-    public Task<Result<UserResponse>> AcceptInviteAsync(string inviteToken, AcceptInviteRequest request)
+    public async Task<Result<UserResponse>> AcceptInviteAsync(string inviteToken, AcceptInviteRequest request)
     {
-        // TODO: Implementar lógica de aceitar convite
-        // Por enquanto, placeholder
-        _logger.LogInformation("Accept invite called with token {Token}", inviteToken);
-        return Task.FromResult(Result.Failure<UserResponse>("Ainda não implementado"));
+        // Buscar convite pelo token
+        var invite = await _unitOfWork.UserInvites.GetByTokenAsync(inviteToken);
+        if (invite == null)
+        {
+            _logger.LogWarning("Token de convite inválido: {Token}", inviteToken);
+            return Result.Failure<UserResponse>("Token de convite inválido");
+        }
+
+        // Verificar se convite já foi aceito
+        if (invite.IsAccepted)
+        {
+            _logger.LogWarning("Convite já aceito: {InviteId}", invite.Id);
+            return Result.Failure<UserResponse>("Convite já aceito");
+        }
+
+        // Verificar se convite expirou
+        if (DateTime.UtcNow > invite.ExpiresAt)
+        {
+            _logger.LogWarning("Invite expired: {InviteId}", invite.Id);
+            return Result.Failure<UserResponse>("Invite expired");
+        }
+
+        // Verificar se email já existe como usuário
+        if (await _unitOfWork.Users.EmailExistsAsync(invite.InviteeEmail))
+        {
+            _logger.LogWarning("Email já existe como usuário: {Email}", invite.InviteeEmail);
+            return Result.Failure<UserResponse>("Email já registrado como usuário");
+        }
+
+        try
+        {
+            var result = await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                Company? pjCompany = null;
+
+                // Se for convite para PJ contratado, criar empresa PJ primeiro
+                if (invite.InviteType == InviteType.ContractedPJ)
+                {
+                    if (string.IsNullOrEmpty(invite.CompanyName) || 
+                        string.IsNullOrEmpty(invite.Cnpj) ||
+                        invite.BusinessModel == null ||
+                        invite.CompanyType == null)
+                    {
+                        throw new InvalidOperationException("Informações de convite PJ inválidas");
+                    }
+
+                    // Criar empresa PJ
+                    pjCompany = new Company(
+                        name: invite.CompanyName,
+                        cnpj: invite.Cnpj,
+                        type: invite.CompanyType.Value,
+                        businessModel: invite.BusinessModel.Value
+                    );
+
+                    await _unitOfWork.Companies.AddAsync(pjCompany);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+
+                // Criar usuário
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                
+                // Para PJ contratado: usuário fica vinculado à própria empresa PJ
+                // Para funcionário: usuário fica vinculado à empresa contratante
+                var companyId = pjCompany?.Id ?? invite.CompanyId;
+                
+                var user = new User(
+                    name: invite.InviteeName,
+                    email: invite.InviteeEmail,
+                    passwordHash: passwordHash,
+                    role: invite.Role,
+                    companyId: companyId
+                );
+
+                // Se for PJ contratado, criar relacionamento entre empresas
+                if (invite.InviteType == InviteType.ContractedPJ && pjCompany != null)
+                {
+                    var relationship = new CompanyRelationship(
+                        clientCompanyId: invite.CompanyId,  // Empresa que contratou
+                        providerCompanyId: pjCompany.Id,    // Empresa PJ contratada
+                        type: RelationshipType.ContractedPJ,
+                        notes: $"PJ contratado via convite - Usuário: {invite.InviteeName}"
+                    );
+
+                    await _unitOfWork.CompanyRelationships.AddAsync(relationship);
+                }
+
+                await _unitOfWork.Users.AddAsync(user);
+                
+                // Marcar convite como aceito
+                invite.MarkAsAccepted();
+                await _unitOfWork.UserInvites.UpdateAsync(invite);
+                
+                await _unitOfWork.SaveChangesAsync();
+
+                return user;
+            });
+
+            var response = _mapper.Map<UserResponse>(result);
+
+            _logger.LogInformation("Convite aceito com sucesso. Usuário {UserId} criado para a empresa {CompanyId}",
+                result.Id, result.CompanyId);
+            
+            return Result.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao aceitar convite {InviteId}", invite.Id);
+            return Result.Failure<UserResponse>("Erro ao aceitar convite");
+        }
     }
 
     public async Task<Result<IEnumerable<UserResponse>>> GetAllByCompanyAsync(Guid companyId)
     {
         var users = await _unitOfWork.Users.GetByCompanyIdAsync(companyId);
         var response = _mapper.Map<IEnumerable<UserResponse>>(users);
-        
-        _logger.LogInformation("Retrieved {UserCount} users for company {CompanyId}", users.Count(), companyId);
+
+        _logger.LogInformation("Recuperados {UserCount} usuários para a empresa {CompanyId}", users.Count(), companyId);
         return Result.Success(response);
     }
 
@@ -305,8 +464,8 @@ public class UserService : IUserService
         
         if (user == null || user.CompanyId != companyId)
         {
-            _logger.LogWarning("User not found or not in company. UserId: {UserId}, CompanyId: {CompanyId}", id, companyId);
-            return Result.Failure<UserResponse>("User not found");
+            _logger.LogWarning("Usuário não encontrado ou não pertence à empresa. UserId: {UserId}, CompanyId: {CompanyId}", id, companyId);
+            return Result.Failure<UserResponse>("Usuário não encontrado");
         }
 
         var response = _mapper.Map<UserResponse>(user);
@@ -319,8 +478,8 @@ public class UserService : IUserService
         
         if (user == null || user.CompanyId != companyId)
         {
-            _logger.LogWarning("User not found or not in company. Email: {Email}, CompanyId: {CompanyId}", email, companyId);
-            return Result.Failure<UserResponse>("User not found");
+            _logger.LogWarning("Usuário não encontrado ou não pertence à empresa. Email: {Email}, CompanyId: {CompanyId}", email, companyId);
+            return Result.Failure<UserResponse>("Usuário não encontrado");
         }
 
         var response = _mapper.Map<UserResponse>(user);

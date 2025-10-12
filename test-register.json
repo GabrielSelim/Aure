@@ -4,5 +4,6 @@
   "password": "MinhaSenh@123",
   "companyName": "Test Company Ltda",
   "companyCnpj": "11.222.333/0001-81",
-  "companyType": "Ltda"
+  "companyType": "Client",
+  "businessModel": "MainCompany"
 }

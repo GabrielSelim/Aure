@@ -37,7 +37,8 @@ public class CompanyRepository : BaseRepository<Company>, ICompanyRepository
     {
         var cleanCnpj = cnpj.Replace(".", "").Replace("-", "").Replace("/", "");
         return await _dbSet
-            .AnyAsync(x => x.Cnpj == cleanCnpj);
+            .AnyAsync(x => x.Cnpj == cleanCnpj)
+            .ConfigureAwait(false);
     }
 
     public override async Task<IEnumerable<Company>> GetAllAsync()

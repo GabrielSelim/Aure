@@ -6,4 +6,8 @@ public record CnpjValidationResult(
     string? TradeName,
     string? Status,
     string? ErrorMessage
-);
+)
+{
+    public string CleanCnpj => System.Text.RegularExpressions.Regex.Replace(
+        ErrorMessage ?? "", @"\D", ""); // Para agora, vou implementar depois
+};

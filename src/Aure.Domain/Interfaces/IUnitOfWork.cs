@@ -4,6 +4,8 @@ public interface IUnitOfWork : IDisposable
 {
     IUserRepository Users { get; }
     ICompanyRepository Companies { get; }
+    ICompanyRelationshipRepository CompanyRelationships { get; }
+    IUserInviteRepository UserInvites { get; }
     IContractRepository Contracts { get; }
     IPaymentRepository Payments { get; }
     
@@ -11,4 +13,5 @@ public interface IUnitOfWork : IDisposable
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();
     Task RollbackTransactionAsync();
+    Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> operation);
 }

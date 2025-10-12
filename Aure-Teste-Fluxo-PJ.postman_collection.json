@@ -1,0 +1,314 @@
+{
+  "info": {
+    "name": "Aure - Teste Fluxo PJ Completo",
+    "description": "Collection para testar o fluxo completo de contratação de PJ",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5203"
+    },
+    {
+      "key": "empresaToken",
+      "value": ""
+    },
+    {
+      "key": "pjToken", 
+      "value": ""
+    },
+    {
+      "key": "inviteToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. LOGIN - Empresa Contratante",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@empresa.com\",\n  \"password\": \"senha123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  const response = pm.response.json();",
+              "  pm.collectionVariables.set('empresaToken', response.token);",
+              "  console.log('Token da empresa salvo:', response.token);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Verificar Usuários Atuais",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{empresaToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/Users",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Users"]
+        }
+      }
+    },
+    {
+      "name": "3. Convidar PJ",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{empresaToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"inviteeName\": \"João Silva\",\n  \"inviteeEmail\": \"joao.silva@consultoria.com\",\n  \"role\": \"Provider\",\n  \"inviteType\": \"ContractedPJ\",\n  \"businessModel\": \"ContractedPJ\",\n  \"companyName\": \"João Silva Consultoria ME\",\n  \"cnpj\": \"12345678000190\",\n  \"companyType\": \"Provider\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Registration/invite-user",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Registration", "invite-user"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  const response = pm.response.json();",
+              "  pm.collectionVariables.set('inviteToken', response.inviteToken);",
+              "  console.log('Token do convite salvo:', response.inviteToken);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Listar Convites Pendentes",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{empresaToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/Registration/invites",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Registration", "invites"]
+        }
+      }
+    },
+    {
+      "name": "5. Aceitar Convite (PJ)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization", 
+            "value": "Bearer {{empresaToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"password\": \"senha123pj\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Registration/accept-invite/{{inviteToken}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Registration", "accept-invite", "{{inviteToken}}"]
+        }
+      }
+    },
+    {
+      "name": "6. LOGIN - Usuário PJ",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"joao.silva@consultoria.com\",\n  \"password\": \"senha123pj\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  const response = pm.response.json();",
+              "  pm.collectionVariables.set('pjToken', response.token);",
+              "  console.log('Token do PJ salvo:', response.token);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TESTE 1 - Empresa vê PJs contratados",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{empresaToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/UsersExtended/contracted-pjs",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "UsersExtended", "contracted-pjs"]
+        }
+      }
+    },
+    {
+      "name": "TESTE 2 - Empresa vê rede completa",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{empresaToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/UsersExtended/network",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "UsersExtended", "network"]
+        }
+      }
+    },
+    {
+      "name": "TESTE 3 - PJ vê quem o contratou",
+      "request": {
+        "method": "GET", 
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{pjToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/UsersExtended/contracted-by",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "UsersExtended", "contracted-by"]
+        }
+      }
+    },
+    {
+      "name": "TESTE 4 - Relacionamentos como cliente",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{empresaToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/CompanyRelationships/as-client",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "CompanyRelationships", "as-client"]
+        }
+      }
+    },
+    {
+      "name": "TESTE 5 - Relacionamentos como provedor",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{pjToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/CompanyRelationships/as-provider",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "CompanyRelationships", "as-provider"]
+        }
+      }
+    },
+    {
+      "name": "VERIFICAÇÃO - Usuários da empresa original",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization", 
+            "value": "Bearer {{empresaToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/Users",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Users"]
+        }
+      }
+    },
+    {
+      "name": "VERIFICAÇÃO - Usuários da empresa PJ",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{pjToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/Users",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Users"]
+        }
+      }
+    }
+  ]
+}

@@ -5,12 +5,14 @@ namespace Aure.Application.DTOs.Company;
 public record CreateCompanyRequest(
     string Name,
     string Cnpj,
-    CompanyType Type
+    CompanyType Type,
+    BusinessModel BusinessModel = BusinessModel.Standard
 );
 
 public record UpdateCompanyRequest(
     string Name,
-    CompanyType Type
+    CompanyType Type,
+    BusinessModel BusinessModel
 );
 
 public record CompanyResponse(
@@ -18,6 +20,7 @@ public record CompanyResponse(
     string Name,
     string Cnpj,
     CompanyType Type,
+    BusinessModel BusinessModel,
     KycStatus KycStatus,
     DateTime CreatedAt,
     DateTime UpdatedAt

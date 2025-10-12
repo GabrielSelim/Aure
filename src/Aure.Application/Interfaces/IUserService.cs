@@ -18,7 +18,7 @@ public interface IUserService
     
     // Registration methods
     Task<Result<UserResponse>> RegisterCompanyAdminAsync(RegisterCompanyAdminRequest request);
-    Task<Result<UserResponse>> InviteUserAsync(InviteUserRequest request, Guid currentUserId, string currentUserRole);
+    Task<Result<InviteResponse>> InviteUserAsync(InviteUserRequest request, Guid currentUserId, string currentUserRole);
     Task<Result<UserResponse>> AcceptInviteAsync(string inviteToken, AcceptInviteRequest request);
     
     // Company-filtered methods
