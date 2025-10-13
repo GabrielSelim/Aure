@@ -39,7 +39,7 @@ public class RegistrationController : ControllerBase
             return BadRequest(new { Error = result.Error });
         }
 
-        return CreatedAtAction(nameof(UsersController.GetUserById), "Users", new { id = result.Data!.Id }, result.Data);
+        return Ok(result.Data);
     }
 
     [HttpPost("invite-user")]

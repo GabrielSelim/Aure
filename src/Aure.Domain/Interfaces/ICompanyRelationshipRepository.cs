@@ -15,6 +15,7 @@ public interface ICompanyRelationshipRepository
     Task<IEnumerable<CompanyRelationship>> GetByClientCompanyIdAsync(Guid clientCompanyId);
     Task<IEnumerable<CompanyRelationship>> GetByProviderCompanyIdAsync(Guid providerCompanyId);
     Task<IEnumerable<CompanyRelationship>> GetActiveRelationshipsByCompanyIdAsync(Guid companyId);
+    Task<IEnumerable<CompanyRelationship>> GetRelationshipsByCompanyIdAndStatusAsync(Guid companyId, RelationshipStatus? status = null);
     Task<CompanyRelationship?> GetRelationshipAsync(Guid clientCompanyId, Guid providerCompanyId, RelationshipType type);
     Task<bool> HasActiveRelationshipAsync(Guid clientCompanyId, Guid providerCompanyId, RelationshipType type);
 }

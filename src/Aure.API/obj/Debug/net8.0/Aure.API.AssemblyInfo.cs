@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Aure.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+764ce368e11d61a58581d6b030df7b240a22e560")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a0b1969864068770eeb7bc21d334e8ed65f95318")]
 [assembly: System.Reflection.AssemblyProductAttribute("Aure.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Aure.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

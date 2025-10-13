@@ -92,6 +92,24 @@ public class CompanyRelationshipRepository : ICompanyRelationshipRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<CompanyRelationship>> GetRelationshipsByCompanyIdAndStatusAsync(Guid companyId, RelationshipStatus? status = null)
+    {
+        var query = _context.CompanyRelationships
+            .Where(r => !r.IsDeleted && 
+                       (r.ClientCompanyId == companyId || r.ProviderCompanyId == companyId));
+
+        if (status.HasValue)
+        {
+            query = query.Where(r => r.Status == status.Value);
+        }
+
+        return await query
+            .Include(r => r.ClientCompany)
+            .Include(r => r.ProviderCompany)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task<CompanyRelationship?> GetRelationshipAsync(Guid clientCompanyId, Guid providerCompanyId, RelationshipType type)
     {
         return await _context.CompanyRelationships

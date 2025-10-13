@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Aure.API.Controllers;
 
 /// <summary>
-/// Controller para gerenciamento de usuários em contexto multi-tenant B2B
+/// Controller para gerenciamento pessoal de usuários
 /// 
 /// FLUXO DE USUÁRIOS:
 /// 1. Admin registra empresa via /api/registration/company-admin
@@ -16,12 +16,12 @@ namespace Aure.API.Controllers;
 /// 4. Usuário faz login via /api/auth/login
 /// 
 /// ENDPOINTS DISPONÍVEIS:
-/// - GET /api/users - Lista usuários da empresa (qualquer usuário autenticado)
-/// - GET /api/users/{id} - Busca usuário específico da empresa
-/// - GET /api/users/email/{email} - Busca usuário por email na empresa
-/// - PUT /api/users/{id} - Atualiza dados do usuário (nome, email)
-/// - PATCH /api/users/{id}/password - Usuario troca própria senha
-/// - DELETE /api/users/{id} - Admin remove usuário da empresa
+/// - GET /api/users/{id} - Busca usuário específico (próprio usuário ou da rede de relacionamentos)
+/// - PUT /api/users/profile - Usuário atualiza seus próprios dados (nome, email)
+/// - PATCH /api/users/password - Usuário troca própria senha
+/// 
+/// NOTA: Para listar usuários da empresa, use /api/CompanyRelationships
+/// NOTA: Para gerenciar PJs, use os endpoints de CompanyRelationships
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -51,115 +51,57 @@ public class UsersController : ControllerBase
         return userResult.IsSuccess ? userResult.Data?.CompanyId : null;
     }
 
-    [HttpGet]
-    [Authorize]
-    public async Task<IActionResult> GetAllUsers()
-    {
-        var companyId = await GetCurrentUserCompanyIdAsync();
-        if (companyId == null)
-        {
-            _logger.LogWarning("User not associated with any company");
-            return BadRequest(new { Error = "User not associated with any company" });
-        }
+    // REMOVIDO: GET /api/users - Lista de usuários
+    // Para listar usuários, use:
+    // - GET /api/CompanyRelationships (relacionamentos da empresa)  
+    // - GET /api/UsersExtended/network (rede completa de usuários)
+    // - GET /api/UsersExtended/contracted-pjs (PJs contratados)
 
-        var result = await _userService.GetAllByCompanyAsync(companyId.Value);
-        
-        if (result.IsFailure)
-        {
-            _logger.LogError("Failed to retrieve users: {Error}", result.Error);
-            return BadRequest(new { Error = result.Error });
-        }
-
-        return Ok(result.Data);
-    }
-
-    [HttpGet("{id:guid}")]
-    [Authorize]
-    public async Task<IActionResult> GetUserById(Guid id)
-    {
-        var companyId = await GetCurrentUserCompanyIdAsync();
-        if (companyId == null)
-        {
-            _logger.LogWarning("User not associated with any company");
-            return BadRequest(new { Error = "User not associated with any company" });
-        }
-
-        var result = await _userService.GetByIdAndCompanyAsync(id, companyId.Value);
-        
-        if (result.IsFailure)
-        {
-            _logger.LogWarning("User not found with ID {UserId}", id);
-            return NotFound(new { Error = result.Error });
-        }
-
-        return Ok(result.Data);
-    }
-
-    [HttpGet("email/{email}")]
-    [Authorize]
-    public async Task<IActionResult> GetUserByEmail(string email)
-    {
-        var companyId = await GetCurrentUserCompanyIdAsync();
-        if (companyId == null)
-        {
-            _logger.LogWarning("User not associated with any company");
-            return BadRequest(new { Error = "User not associated with any company" });
-        }
-
-        var result = await _userService.GetByEmailAndCompanyAsync(email, companyId.Value);
-        
-        if (result.IsFailure)
-        {
-            _logger.LogWarning("User not found with email {Email}", email);
-            return NotFound(new { Error = result.Error });
-        }
-
-        return Ok(result.Data);
-    }
-
+    // REMOVIDO: GET /api/users/{id}
+    // Para buscar usuários específicos, use GET /api/CompanyRelationships/user/{id}
+    
     // REMOVIDO: POST /api/users
     // Para criar usuários, use o fluxo de convite:
     // 1. POST /api/registration/invite (Admin convida usuário)
     // 2. POST /api/registration/accept-invite/{token} (Usuário aceita e define senha)
 
-    [HttpPut("{id:guid}")]
+    /// <summary>
+    /// Usuário atualiza seus próprios dados (nome, email)
+    /// </summary>
+    [HttpPut("profile")]
     [Authorize]
-    public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest request)
+    public async Task<IActionResult> UpdateOwnProfile([FromBody] UpdateUserRequest request)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        var companyId = await GetCurrentUserCompanyIdAsync();
-        if (companyId == null)
+        var currentUserId = GetCurrentUserId();
+        if (currentUserId == Guid.Empty)
         {
-            _logger.LogWarning("User not associated with any company");
-            return BadRequest(new { Error = "User not associated with any company" });
+            _logger.LogWarning("Invalid user ID from token");
+            return BadRequest(new { Error = "Invalid user authentication" });
         }
 
-        // Verificar se o usuário a ser atualizado pertence à mesma empresa
-        var userCheck = await _userService.GetByIdAndCompanyAsync(id, companyId.Value);
-        if (userCheck.IsFailure)
-        {
-            _logger.LogWarning("User {UserId} not found in company {CompanyId}", id, companyId.Value);
-            return NotFound(new { Error = "User not found" });
-        }
-
-        var result = await _userService.UpdateAsync(id, request);
+        var result = await _userService.UpdateAsync(currentUserId, request);
         
         if (result.IsFailure)
         {
-            _logger.LogError("Failed to update user {UserId}: {Error}", id, result.Error);
+            _logger.LogError("Failed to update profile for user {UserId}: {Error}", currentUserId, result.Error);
             return BadRequest(new { Error = result.Error });
         }
 
+        _logger.LogInformation("Profile updated successfully for user {UserId}", currentUserId);
         return Ok(result.Data);
     }
 
-    [HttpPatch("{id:guid}/password")]
+    /// <summary>
+    /// Usuário troca sua própria senha
+    /// </summary>
+    [HttpPatch("password")]
     [Authorize]
-    public async Task<IActionResult> ChangePassword(Guid id, [FromBody] ChangePasswordRequest request)
+    public async Task<IActionResult> ChangeOwnPassword([FromBody] ChangePasswordRequest request)
     {
         if (!ModelState.IsValid)
         {
@@ -167,144 +109,27 @@ public class UsersController : ControllerBase
         }
 
         var currentUserId = GetCurrentUserId();
-        
-        // Usuários só podem trocar a própria senha
-        if (id != currentUserId)
+        if (currentUserId == Guid.Empty)
         {
-            _logger.LogWarning("User {CurrentUserId} attempted to change password for user {TargetUserId}", 
-                              currentUserId, id);
-            return Forbid("You can only change your own password");
+            _logger.LogWarning("Invalid user ID from token");
+            return BadRequest(new { Error = "Invalid user authentication" });
         }
 
-        var companyId = await GetCurrentUserCompanyIdAsync();
-        if (companyId == null)
-        {
-            _logger.LogWarning("User not associated with any company");
-            return BadRequest(new { Error = "User not associated with any company" });
-        }
-
-        var result = await _userService.ChangePasswordAsync(id, request);
+        var result = await _userService.ChangePasswordAsync(currentUserId, request);
         
         if (result.IsFailure)
         {
-            _logger.LogError("Failed to change password for user {UserId}: {Error}", id, result.Error);
+            _logger.LogError("Failed to change password for user {UserId}: {Error}", currentUserId, result.Error);
             return BadRequest(new { Error = result.Error });
         }
 
-        _logger.LogInformation("Password changed successfully for user {UserId}", id);
+        _logger.LogInformation("Password changed successfully for user {UserId}", currentUserId);
         return NoContent();
     }
 
-    [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> RemoveUserFromCompany(Guid id)
-    {
-        var currentUserId = GetCurrentUserId();
-        if (id == currentUserId)
-        {
-            _logger.LogWarning("Admin cannot delete their own account");
-            return BadRequest(new { Error = "Cannot delete your own account" });
-        }
-
-        var companyId = await GetCurrentUserCompanyIdAsync();
-        if (companyId == null)
-        {
-            _logger.LogWarning("Admin user not associated with any company");
-            return BadRequest(new { Error = "Admin user not associated with any company" });
-        }
-
-        // Verificar se o usuário a ser removido pertence à mesma empresa
-        var userCheck = await _userService.GetByIdAndCompanyAsync(id, companyId.Value);
-        if (userCheck.IsFailure)
-        {
-            _logger.LogWarning("User {UserId} not found in company {CompanyId}", id, companyId.Value);
-            return NotFound(new { Error = "User not found" });
-        }
-
-        var result = await _userService.DeleteAsync(id);
-        
-        if (result.IsFailure)
-        {
-            _logger.LogError("Failed to remove user {UserId}: {Error}", id, result.Error);
-            return BadRequest(new { Error = result.Error });
-        }
-
-        _logger.LogInformation("User {UserId} removed from company {CompanyId} by admin {AdminId}", 
-                              id, companyId.Value, currentUserId);
-        return NoContent();
-    }
-
-    [HttpPatch("{id:guid}/deactivate")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> DeactivateUser(Guid id)
-    {
-        var currentUserId = GetCurrentUserId();
-        if (id == currentUserId)
-        {
-            _logger.LogWarning("Admin cannot deactivate their own account");
-            return BadRequest(new { Error = "Cannot deactivate your own account" });
-        }
-
-        var companyId = await GetCurrentUserCompanyIdAsync();
-        if (companyId == null)
-        {
-            _logger.LogWarning("Admin user not associated with any company");
-            return BadRequest(new { Error = "Admin user not associated with any company" });
-        }
-
-        // Verificar se o usuário pertence à mesma empresa
-        var userCheck = await _userService.GetByIdAndCompanyAsync(id, companyId.Value);
-        if (userCheck.IsFailure)
-        {
-            _logger.LogWarning("User {UserId} not found in company {CompanyId}", id, companyId.Value);
-            return NotFound(new { Error = "User not found" });
-        }
-
-        // TODO: Implementar lógica de desativação (soft delete mais elegante)
-        var result = await _userService.DeleteAsync(id);
-        
-        if (result.IsFailure)
-        {
-            _logger.LogError("Failed to deactivate user {UserId}: {Error}", id, result.Error);
-            return BadRequest(new { Error = result.Error });
-        }
-
-        _logger.LogInformation("User {UserId} deactivated in company {CompanyId} by admin {AdminId}", 
-                              id, companyId.Value, currentUserId);
-        return NoContent();
-    }
-
-    /// <summary>
-    /// NOVO: Mostra estatísticas de usuários considerando relacionamentos
-    /// </summary>
-    [HttpGet("stats")]
-    [Authorize]
-    public async Task<IActionResult> GetUserStats()
-    {
-        var companyId = await GetCurrentUserCompanyIdAsync();
-        if (companyId == null)
-        {
-            return BadRequest(new { Error = "User not associated with any company" });
-        }
-
-        try
-        {
-            // Usuários da própria empresa
-            var ownUsersResult = await _userService.GetAllByCompanyAsync(companyId.Value);
-            var ownUsersCount = ownUsersResult.IsSuccess ? ownUsersResult.Data?.Count() ?? 0 : 0;
-
-            // Relacionamentos (requer injeção do UnitOfWork - será implementado se necessário)
-            return Ok(new
-            {
-                CompanyId = companyId.Value,
-                DirectEmployees = ownUsersCount,
-                Message = "Para ver usuários da rede completa, use os endpoints /api/UsersExtended/"
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting user stats for company {CompanyId}", companyId);
-            return BadRequest(new { Error = "Error getting user statistics" });
-        }
-    }
+    // REMOVIDO: DELETE /api/users/{id}
+    // Para gerenciar relacionamentos com PJs, use:
+    // - PUT /api/CompanyRelationships/{id}/activate (ativar PJ)
+    // - PUT /api/CompanyRelationships/{id}/deactivate (desativar PJ)
+    // - DELETE /api/CompanyRelationships/{id} (encerrar relacionamento)
 }
