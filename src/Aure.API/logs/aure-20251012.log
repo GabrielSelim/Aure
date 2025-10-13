@@ -7929,3 +7929,91 @@ ORDER BY c.created_at DESC
 2025-10-12 22:19:36.661 -04:00 [INF] HTTP GET /swagger responded 404 in 14.5925 ms
 2025-10-12 22:19:36.663 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger?id=1c6f0914-790c-46d7-bbed-4b5efa8ebda8&vscodeBrowserReqId=1760321976640 - 404 0 null 19.8816ms
 2025-10-12 22:19:36.666 -04:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:5203/swagger, Response status code: 404
+2025-10-12 22:26:51.423 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/index.html - null null
+2025-10-12 22:26:51.425 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/index.html - 200 null text/html;charset=utf-8 1.9453ms
+2025-10-12 22:26:51.439 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger-ui.css - null null
+2025-10-12 22:26:51.439 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger-ui-bundle.js - null null
+2025-10-12 22:26:51.439 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger-ui-standalone-preset.js - null null
+2025-10-12 22:26:51.441 -04:00 [INF] Sending file. Request path: '/swagger-ui.css'. Physical path: 'N/A'
+2025-10-12 22:26:51.445 -04:00 [INF] Sending file. Request path: '/swagger-ui-standalone-preset.js'. Physical path: 'N/A'
+2025-10-12 22:26:51.445 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger-ui.css - 200 152034 text/css 6.3782ms
+2025-10-12 22:26:51.445 -04:00 [INF] Sending file. Request path: '/swagger-ui-bundle.js'. Physical path: 'N/A'
+2025-10-12 22:26:51.446 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger-ui-standalone-preset.js - 200 230280 text/javascript 6.8392ms
+2025-10-12 22:26:51.449 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger-ui-bundle.js - 200 1456926 text/javascript 9.8508ms
+2025-10-12 22:26:51.658 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - null null
+2025-10-12 22:26:51.659 -04:00 [INF] Sending file. Request path: '/favicon-32x32.png'. Physical path: 'N/A'
+2025-10-12 22:26:51.660 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - 200 628 image/png 2.6643ms
+2025-10-12 22:26:51.676 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - null null
+2025-10-12 22:26:51.676 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger/v1/swagger.json - null null
+2025-10-12 22:26:51.678 -04:00 [INF] Sending file. Request path: '/favicon-32x32.png'. Physical path: 'N/A'
+2025-10-12 22:26:51.680 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - 200 628 image/png 3.772ms
+2025-10-12 22:26:51.688 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 11.6403ms
+2025-10-12 22:27:10.348 -04:00 [INF] Starting Aure API application
+2025-10-12 22:27:10.385 -04:00 [INF] User profile is available. Using 'C:\Users\Gabriel\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-10-12 22:27:10.419 -04:00 [INF] Now listening on: http://localhost:5203
+2025-10-12 22:27:10.421 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-10-12 22:27:10.422 -04:00 [INF] Hosting environment: Development
+2025-10-12 22:27:10.422 -04:00 [INF] Content root path: C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.API
+2025-10-12 22:27:29.939 -04:00 [INF] Application is shutting down...
+2025-10-12 22:27:35.773 -04:00 [INF] Starting Aure API application
+2025-10-12 22:27:35.811 -04:00 [INF] User profile is available. Using 'C:\Users\Gabriel\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-10-12 22:27:35.847 -04:00 [INF] Now listening on: http://localhost:5203
+2025-10-12 22:27:35.849 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-10-12 22:27:35.850 -04:00 [INF] Hosting environment: Development
+2025-10-12 22:27:35.850 -04:00 [INF] Content root path: C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.API
+2025-10-12 22:27:41.264 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/index.html - null null
+2025-10-12 22:27:41.309 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/index.html - 200 null text/html;charset=utf-8 45.8831ms
+2025-10-12 22:27:41.320 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger-ui.css - null null
+2025-10-12 22:27:41.321 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger-ui-bundle.js - null null
+2025-10-12 22:27:41.322 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger-ui-standalone-preset.js - null null
+2025-10-12 22:27:41.332 -04:00 [INF] Sending file. Request path: '/swagger-ui-standalone-preset.js'. Physical path: 'N/A'
+2025-10-12 22:27:41.332 -04:00 [INF] Sending file. Request path: '/swagger-ui-bundle.js'. Physical path: 'N/A'
+2025-10-12 22:27:41.332 -04:00 [INF] Sending file. Request path: '/swagger-ui.css'. Physical path: 'N/A'
+2025-10-12 22:27:41.334 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger-ui-standalone-preset.js - 200 230280 text/javascript 11.8106ms
+2025-10-12 22:27:41.334 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger-ui-bundle.js - 200 1456926 text/javascript 13.9009ms
+2025-10-12 22:27:41.336 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger-ui.css - 200 152034 text/css 15.2731ms
+2025-10-12 22:27:41.380 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - null null
+2025-10-12 22:27:41.383 -04:00 [INF] Sending file. Request path: '/favicon-32x32.png'. Physical path: 'N/A'
+2025-10-12 22:27:41.384 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - 200 628 image/png 4.0704ms
+2025-10-12 22:27:41.543 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - null null
+2025-10-12 22:27:41.543 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger/v1/swagger.json - null null
+2025-10-12 22:27:41.546 -04:00 [INF] Sending file. Request path: '/favicon-32x32.png'. Physical path: 'N/A'
+2025-10-12 22:27:41.549 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - 200 628 image/png 5.0445ms
+2025-10-12 22:27:41.616 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 72.6837ms
+2025-10-12 22:27:49.564 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger?id=1c6f0914-790c-46d7-bbed-4b5efa8ebda8&vscodeBrowserReqId=1760322469561 - null null
+2025-10-12 22:27:49.567 -04:00 [WRN] Failed to determine the https port for redirect.
+2025-10-12 22:27:49.582 -04:00 [INF] HTTP GET /swagger responded 404 in 16.1138 ms
+2025-10-12 22:27:49.584 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger?id=1c6f0914-790c-46d7-bbed-4b5efa8ebda8&vscodeBrowserReqId=1760322469561 - 404 0 null 19.7528ms
+2025-10-12 22:27:49.586 -04:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:5203/swagger, Response status code: 404
+2025-10-12 22:29:48.445 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/index.html - null null
+2025-10-12 22:29:48.448 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/index.html - 200 null text/html;charset=utf-8 2.4939ms
+2025-10-12 22:29:48.456 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger-ui.css - null null
+2025-10-12 22:29:48.457 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger-ui-bundle.js - null null
+2025-10-12 22:29:48.457 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger-ui-standalone-preset.js - null null
+2025-10-12 22:29:48.458 -04:00 [INF] Sending file. Request path: '/swagger-ui.css'. Physical path: 'N/A'
+2025-10-12 22:29:48.461 -04:00 [INF] Sending file. Request path: '/swagger-ui-standalone-preset.js'. Physical path: 'N/A'
+2025-10-12 22:29:48.462 -04:00 [INF] Sending file. Request path: '/swagger-ui-bundle.js'. Physical path: 'N/A'
+2025-10-12 22:29:48.462 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger-ui.css - 200 152034 text/css 6.1235ms
+2025-10-12 22:29:48.463 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger-ui-standalone-preset.js - 200 230280 text/javascript 6.0899ms
+2025-10-12 22:29:48.464 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger-ui-bundle.js - 200 1456926 text/javascript 7.2524ms
+2025-10-12 22:29:48.701 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - null null
+2025-10-12 22:29:48.703 -04:00 [INF] Sending file. Request path: '/favicon-32x32.png'. Physical path: 'N/A'
+2025-10-12 22:29:48.703 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - 200 628 image/png 2.4308ms
+2025-10-12 22:29:48.721 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger/v1/swagger.json - null null
+2025-10-12 22:29:48.722 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - null null
+2025-10-12 22:29:48.724 -04:00 [INF] Sending file. Request path: '/favicon-32x32.png'. Physical path: 'N/A'
+2025-10-12 22:29:48.725 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/favicon-32x32.png - 200 628 image/png 3.1353ms
+2025-10-12 22:29:48.732 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 11.1837ms
+2025-10-12 22:43:31.786 -04:00 [INF] Application is shutting down...
+2025-10-12 22:44:32.674 -04:00 [INF] Starting Aure API application
+2025-10-12 22:44:32.714 -04:00 [INF] User profile is available. Using 'C:\Users\Gabriel\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-10-12 22:44:32.748 -04:00 [INF] Now listening on: http://localhost:5203
+2025-10-12 22:44:32.750 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-10-12 22:44:32.751 -04:00 [INF] Hosting environment: Development
+2025-10-12 22:44:32.751 -04:00 [INF] Content root path: C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.API
+2025-10-12 22:44:54.157 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/?id=1c6f0914-790c-46d7-bbed-4b5efa8ebda8&vscodeBrowserReqId=1760323494135 - null null
+2025-10-12 22:44:54.179 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/?id=1c6f0914-790c-46d7-bbed-4b5efa8ebda8&vscodeBrowserReqId=1760323494135 - 301 0 null 23.4876ms
+2025-10-12 22:44:54.183 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/index.html - null null
+2025-10-12 22:44:54.212 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/index.html - 200 null text/html;charset=utf-8 28.7489ms
+2025-10-12 22:44:54.286 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/swagger/v1/swagger.json - null null
+2025-10-12 22:44:54.371 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 85.9236ms

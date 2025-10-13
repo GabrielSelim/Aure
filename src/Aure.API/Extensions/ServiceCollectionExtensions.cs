@@ -11,6 +11,8 @@ using Aure.Infrastructure.Repositories;
 using Aure.Application.Interfaces;
 using Aure.Application.Services;
 using Aure.Application.Mappings;
+using Aure.Infrastructure.Services;
+using Aure.Infrastructure.Configuration;
 
 namespace Aure.API.Extensions;
 
@@ -46,12 +48,25 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<ICnpjValidationService, CnpjValidationService>();
+        services.AddScoped<ISefazService, SefazService>();
+
+        // Configurações SEFAZ
+        services.Configure<SefazSettings>(configuration.GetSection("SefazSettings"));
+        services.Configure<InvoiceSettings>(configuration.GetSection("InvoiceSettings"));
 
         // HttpClient para validação de CNPJ
         services.AddHttpClient<ICnpjValidationService, CnpjValidationService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(10);
             client.DefaultRequestHeaders.Add("User-Agent", "Aure-System/1.0");
+        });
+
+        // HttpClient para SEFAZ
+        services.AddHttpClient<ISefazService, SefazService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Add("User-Agent", "Aure-System/1.0");
+            client.DefaultRequestHeaders.Add("Content-Type", "application/soap+xml; charset=utf-8");
         });
 
         // Health Checks básicos

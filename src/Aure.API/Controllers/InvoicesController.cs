@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Aure.Domain.Interfaces;
 using Aure.Domain.Entities;
 using Aure.Domain.Enums;
+using Aure.Application.Interfaces;
 using System.Security.Claims;
 
 namespace Aure.API.Controllers;
@@ -13,11 +14,16 @@ namespace Aure.API.Controllers;
 public class InvoicesController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ISefazService _sefazService;
     private readonly ILogger<InvoicesController> _logger;
 
-    public InvoicesController(IUnitOfWork unitOfWork, ILogger<InvoicesController> logger)
+    public InvoicesController(
+        IUnitOfWork unitOfWork, 
+        ISefazService sefazService,
+        ILogger<InvoicesController> logger)
     {
         _unitOfWork = unitOfWork;
+        _sefazService = sefazService;
         _logger = logger;
     }
 
@@ -449,6 +455,269 @@ public class InvoicesController : ControllerBase
         {
             _logger.LogError(ex, "Erro ao obter XML da nota fiscal {InvoiceId}", id);
             return BadRequest(new { mensagem = "Erro ao obter XML da nota fiscal" });
+        }
+    }
+
+    /// <summary>
+    /// Emitir nota fiscal via SEFAZ
+    /// </summary>
+    [HttpPost("{id:guid}/emitir-sefaz")]
+    public async Task<IActionResult> IssueInvoiceToSefaz(Guid id)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { mensagem = "Token de usuário inválido" });
+            }
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null || user.CompanyId == null)
+            {
+                return NotFound(new { mensagem = "Usuário ou empresa não encontrada" });
+            }
+
+            var invoice = await _unitOfWork.Invoices.GetByIdAsync(id);
+            if (invoice == null)
+            {
+                return NotFound(new { mensagem = "Nota fiscal não encontrada" });
+            }
+
+            // Verificar se o usuário tem acesso à nota fiscal
+            if (invoice.Contract.ClientId != user.CompanyId && invoice.Contract.ProviderId != user.CompanyId)
+            {
+                return Forbid("Você não tem acesso a esta nota fiscal");
+            }
+
+            if (invoice.Status != InvoiceStatus.Draft)
+            {
+                return BadRequest(new { mensagem = "Nota fiscal deve estar em status de rascunho para ser emitida" });
+            }
+
+            // Emitir na SEFAZ
+            var sefazResponse = await _sefazService.IssueInvoiceAsync(invoice);
+
+            if (sefazResponse.Success)
+            {
+                // Atualizar status da nota fiscal usando método da entidade
+                invoice.IssueInvoice(sefazResponse.Protocol ?? "");
+
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("Nota fiscal {InvoiceId} emitida com sucesso na SEFAZ. Protocolo: {Protocol}", 
+                    id, sefazResponse.Protocol);
+
+                return Ok(new
+                {
+                    mensagem = "Nota fiscal emitida com sucesso na SEFAZ",
+                    protocolo = sefazResponse.Protocol,
+                    chaveAcesso = invoice.AccessKey,
+                    processadoEm = sefazResponse.ProcessedAt,
+                    invoice = new
+                    {
+                        Id = invoice.Id,
+                        InvoiceNumber = invoice.InvoiceNumber,
+                        Series = invoice.Series,
+                        Status = invoice.Status.ToString(),
+                        AccessKey = invoice.AccessKey,
+                        SefazProtocol = invoice.SefazProtocol
+                    }
+                });
+            }
+            else
+            {
+                // Atualizar status para erro usando método da entidade
+                invoice.MarkAsError();
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogError("Erro ao emitir nota fiscal {InvoiceId} na SEFAZ: {ErrorMessage}", 
+                    id, sefazResponse.Message);
+
+                return BadRequest(new
+                {
+                    mensagem = "Erro ao emitir nota fiscal na SEFAZ",
+                    erro = sefazResponse.Message,
+                    codigoErro = sefazResponse.ErrorCode
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro inesperado ao emitir nota fiscal {InvoiceId} na SEFAZ", id);
+            return BadRequest(new { mensagem = "Erro inesperado ao emitir nota fiscal na SEFAZ" });
+        }
+    }
+
+    /// <summary>
+    /// Cancelar nota fiscal via SEFAZ
+    /// </summary>
+    [HttpPost("{id:guid}/cancelar-sefaz")]
+    public async Task<IActionResult> CancelInvoiceInSefaz(Guid id, [FromBody] CancelInvoiceRequest request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { mensagem = "Token de usuário inválido" });
+            }
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null || user.CompanyId == null)
+            {
+                return NotFound(new { mensagem = "Usuário ou empresa não encontrada" });
+            }
+
+            var invoice = await _unitOfWork.Invoices.GetByIdAsync(id);
+            if (invoice == null)
+            {
+                return NotFound(new { mensagem = "Nota fiscal não encontrada" });
+            }
+
+            // Verificar se o usuário tem acesso à nota fiscal
+            if (invoice.Contract.ClientId != user.CompanyId && invoice.Contract.ProviderId != user.CompanyId)
+            {
+                return Forbid("Você não tem acesso a esta nota fiscal");
+            }
+
+            if (invoice.Status != InvoiceStatus.Issued)
+            {
+                return BadRequest(new { mensagem = "Nota fiscal deve estar emitida para ser cancelada" });
+            }
+
+            if (string.IsNullOrEmpty(invoice.AccessKey))
+            {
+                return BadRequest(new { mensagem = "Chave de acesso não encontrada" });
+            }
+
+            // Cancelar na SEFAZ
+            var sefazResponse = await _sefazService.CancelInvoiceAsync(invoice.AccessKey, request.Reason);
+
+            if (sefazResponse.Success)
+            {
+                // Atualizar status da nota fiscal usando método da entidade
+                invoice.CancelInvoice(request.Reason);
+
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("Nota fiscal {InvoiceId} cancelada com sucesso na SEFAZ", id);
+
+                return Ok(new
+                {
+                    mensagem = "Nota fiscal cancelada com sucesso na SEFAZ",
+                    protocolo = sefazResponse.Protocol,
+                    processadoEm = sefazResponse.ProcessedAt,
+                    justificativa = request.Reason
+                });
+            }
+            else
+            {
+                _logger.LogError("Erro ao cancelar nota fiscal {InvoiceId} na SEFAZ: {ErrorMessage}", 
+                    id, sefazResponse.Message);
+
+                return BadRequest(new
+                {
+                    mensagem = "Erro ao cancelar nota fiscal na SEFAZ",
+                    erro = sefazResponse.Message,
+                    codigoErro = sefazResponse.ErrorCode
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro inesperado ao cancelar nota fiscal {InvoiceId} na SEFAZ", id);
+            return BadRequest(new { mensagem = "Erro inesperado ao cancelar nota fiscal na SEFAZ" });
+        }
+    }
+
+    /// <summary>
+    /// Consultar status da nota fiscal na SEFAZ
+    /// </summary>
+    [HttpGet("{id:guid}/status-sefaz")]
+    public async Task<IActionResult> CheckInvoiceStatusInSefaz(Guid id)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { mensagem = "Token de usuário inválido" });
+            }
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null || user.CompanyId == null)
+            {
+                return NotFound(new { mensagem = "Usuário ou empresa não encontrada" });
+            }
+
+            var invoice = await _unitOfWork.Invoices.GetByIdAsync(id);
+            if (invoice == null)
+            {
+                return NotFound(new { mensagem = "Nota fiscal não encontrada" });
+            }
+
+            // Verificar se o usuário tem acesso à nota fiscal
+            if (invoice.Contract.ClientId != user.CompanyId && invoice.Contract.ProviderId != user.CompanyId)
+            {
+                return Forbid("Você não tem acesso a esta nota fiscal");
+            }
+
+            if (string.IsNullOrEmpty(invoice.AccessKey))
+            {
+                return BadRequest(new { mensagem = "Chave de acesso não encontrada" });
+            }
+
+            // Consultar status na SEFAZ
+            var statusResponse = await _sefazService.CheckStatusAsync(invoice.AccessKey);
+
+            return Ok(new
+            {
+                chaveAcesso = invoice.AccessKey,
+                statusSefaz = statusResponse.Status,
+                protocolo = statusResponse.Protocol,
+                mensagem = statusResponse.Message,
+                sucesso = statusResponse.Success,
+                ultimaAtualizacao = statusResponse.LastUpdate,
+                invoice = new
+                {
+                    Id = invoice.Id,
+                    InvoiceNumber = invoice.InvoiceNumber,
+                    Series = invoice.Series,
+                    Status = invoice.Status.ToString(),
+                    TotalAmount = invoice.TotalAmount
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao consultar status da nota fiscal {InvoiceId} na SEFAZ", id);
+            return BadRequest(new { mensagem = "Erro ao consultar status da nota fiscal na SEFAZ" });
+        }
+    }
+
+    /// <summary>
+    /// Validar certificado digital SEFAZ
+    /// </summary>
+    [HttpGet("validar-certificado-sefaz")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ValidateSefazCertificate()
+    {
+        try
+        {
+            var isValid = await _sefazService.ValidateCertificateAsync();
+
+            return Ok(new
+            {
+                certificadoValido = isValid,
+                mensagem = isValid ? "Certificado digital válido" : "Certificado digital inválido ou expirado",
+                verificadoEm = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao validar certificado SEFAZ");
+            return BadRequest(new { mensagem = "Erro ao validar certificado SEFAZ" });
         }
     }
 }
