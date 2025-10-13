@@ -19,6 +19,16 @@ public class UnitOfWork : IUnitOfWork
         UserInvites = new UserInviteRepository(_context);
         Contracts = new ContractRepository(_context);
         Payments = new PaymentRepository(_context);
+        Signatures = new SignatureRepository(_context);
+        SplitRules = new SplitRuleRepository(_context);
+        SplitExecutions = new SplitExecutionRepository(_context);
+        LedgerEntries = new LedgerEntryRepository(_context);
+        TokenizedAssets = new TokenizedAssetRepository(_context);
+        Invoices = new InvoiceRepository(_context);
+        TaxCalculations = new TaxCalculationRepository(_context);
+        AuditLogs = new AuditLogRepository(_context);
+        KycRecords = new KycRecordRepository(_context);
+        Notifications = new NotificationRepository(_context);
     }
 
     public IUserRepository Users { get; }
@@ -27,6 +37,16 @@ public class UnitOfWork : IUnitOfWork
     public IUserInviteRepository UserInvites { get; }
     public IContractRepository Contracts { get; }
     public IPaymentRepository Payments { get; }
+    public ISignatureRepository Signatures { get; }
+    public ISplitRuleRepository SplitRules { get; }
+    public ISplitExecutionRepository SplitExecutions { get; }
+    public ILedgerEntryRepository LedgerEntries { get; }
+    public ITokenizedAssetRepository TokenizedAssets { get; }
+    public IInvoiceRepository Invoices { get; }
+    public ITaxCalculationRepository TaxCalculations { get; }
+    public IAuditLogRepository AuditLogs { get; }
+    public IKycRecordRepository KycRecords { get; }
+    public INotificationRepository Notifications { get; }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

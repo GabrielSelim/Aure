@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Aure.Domain.Interfaces;
+using Aure.Domain.Enums;
 using System.Security.Claims;
 
 namespace Aure.API.Controllers;
@@ -56,23 +57,23 @@ public class CompanyRelationshipsController : ControllerBase
             var relationshipsList = relationships.ToList();
             var result = new
             {
-                FilteredBy = status ?? "All",
-                TotalRelationships = relationshipsList.Count,
-                StatusCounts = relationshipsList.GroupBy(r => r.Status.ToString())
+                FiltradoPor = status ?? "Todos",
+                TotalRelacionamentos = relationshipsList.Count,
+                ContagemPorStatus = relationshipsList.GroupBy(r => r.Status.ToString())
                     .ToDictionary(g => g.Key, g => g.Count()),
-                Relationships = relationshipsList.Select(r => new
+                Relacionamentos = relationshipsList.Select(r => new
                 {
                     Id = r.Id,
-                    Type = r.Type.ToString(),
+                    Tipo = r.Type.ToString(),
                     Status = r.Status.ToString(),
-                    StartDate = r.StartDate,
-                    EndDate = r.EndDate,
-                    Notes = r.Notes,
-                    IsClient = r.ClientCompanyId == user.CompanyId,
-                    IsProvider = r.ProviderCompanyId == user.CompanyId,
-                    RelatedCompany = r.ClientCompanyId == user.CompanyId 
-                        ? new { Id = r.ProviderCompanyId, Name = r.ProviderCompany.Name, Cnpj = r.ProviderCompany.Cnpj }
-                        : new { Id = r.ClientCompanyId, Name = r.ClientCompany.Name, Cnpj = r.ClientCompany.Cnpj }
+                    DataInicio = r.StartDate,
+                    DataFim = r.EndDate,
+                    Observacoes = r.Notes,
+                    EhCliente = r.ClientCompanyId == user.CompanyId,
+                    EhFornecedor = r.ProviderCompanyId == user.CompanyId,
+                    EmpresaRelacionada = r.ClientCompanyId == user.CompanyId 
+                        ? new { Id = r.ProviderCompanyId, Nome = r.ProviderCompany.Name, Cnpj = r.ProviderCompany.Cnpj }
+                        : new { Id = r.ClientCompanyId, Nome = r.ClientCompany.Name, Cnpj = r.ClientCompany.Cnpj }
                 })
             };
 
@@ -86,10 +87,202 @@ public class CompanyRelationshipsController : ControllerBase
     }
 
     /// <summary>
+    /// Obter valores a pagar este mês baseado nos relacionamentos ativos
+    /// </summary>
+    [HttpGet("compromissos-mensais")]
+    public async Task<IActionResult> GetCompromissosMensais()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Token de usuário inválido" });
+            }
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null || user.CompanyId == null)
+            {
+                return NotFound(new { message = "Usuário ou empresa não encontrada" });
+            }
+
+            var currentMonth = DateTime.UtcNow.Month;
+            var currentYear = DateTime.UtcNow.Year;
+
+            // Buscar relacionamentos ativos onde a empresa é cliente
+            var clientRelationships = await _unitOfWork.CompanyRelationships.GetByClientCompanyIdAsync(user.CompanyId.Value);
+            clientRelationships = clientRelationships.Where(r => r.Status == Domain.Enums.RelationshipStatus.Active);
+
+            // Buscar contratos ativos para esses relacionamentos
+            var monthlyCommitments = new List<object>();
+            decimal totalCommitments = 0;
+
+            foreach (var relationship in clientRelationships)
+            {
+                var contracts = await _unitOfWork.Contracts.GetByClientIdAsync(user.CompanyId.Value);
+                var activeContracts = contracts.Where(c => 
+                    c.ProviderId == relationship.ProviderCompanyId &&
+                    c.Status == ContractStatus.Active && 
+                    !c.IsExpired &&
+                    c.MonthlyValue.HasValue &&
+                    c.StartDate <= DateTime.UtcNow &&
+                    (c.ExpirationDate == null || c.ExpirationDate >= DateTime.UtcNow)
+                );
+
+                var relationshipTotal = activeContracts.Sum(c => c.MonthlyValue!.Value);
+                if (relationshipTotal > 0)
+                {
+                    monthlyCommitments.Add(new
+                    {
+                        RelationshipId = relationship.Id,
+                        ProviderCompany = new 
+                        { 
+                            relationship.ProviderCompany.Id, 
+                            relationship.ProviderCompany.Name, 
+                            relationship.ProviderCompany.Cnpj 
+                        },
+                        RelationshipType = relationship.Type.ToString(),
+                        MonthlyTotal = relationshipTotal,
+                        ContractCount = activeContracts.Count(),
+                        Contracts = activeContracts.Select(c => new
+                        {
+                            ContractId = c.Id,
+                            Title = c.Title,
+                            MonthlyValue = c.MonthlyValue!.Value,
+                            StartDate = c.StartDate,
+                            ExpirationDate = c.ExpirationDate
+                        })
+                    });
+                    totalCommitments += relationshipTotal;
+                }
+            }
+
+            return Ok(new
+            {
+                Mes = currentMonth,
+                Ano = currentYear,
+                NomeMes = new DateTime(currentYear, currentMonth, 1).ToString("MMMM yyyy", new System.Globalization.CultureInfo("pt-BR")),
+                TotalCompromissos = totalCommitments,
+                QuantidadeRelacionamentos = monthlyCommitments.Count,
+                CompromissosMensais = monthlyCommitments.Select(c => new
+                {
+                    RelacionamentoId = ((dynamic)c).RelationshipId,
+                    EmpresaFornecedora = ((dynamic)c).ProviderCompany,
+                    TipoRelacionamento = ((dynamic)c).RelationshipType,
+                    TotalMensal = ((dynamic)c).MonthlyTotal,
+                    QuantidadeContratos = ((dynamic)c).ContractCount,
+                    Contratos = ((dynamic)c).Contracts
+                })
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar compromissos mensais");
+            return BadRequest(new { message = "Erro ao buscar compromissos mensais" });
+        }
+    }
+
+    /// <summary>
+    /// Obter valores a receber este mês baseado nos relacionamentos como provedor
+    /// </summary>
+    [HttpGet("receitas-mensais")]
+    public async Task<IActionResult> GetReceitasMensais()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Token de usuário inválido" });
+            }
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null || user.CompanyId == null)
+            {
+                return NotFound(new { message = "Usuário ou empresa não encontrada" });
+            }
+
+            var currentMonth = DateTime.UtcNow.Month;
+            var currentYear = DateTime.UtcNow.Year;
+
+            // Buscar relacionamentos ativos onde a empresa é provedora
+            var providerRelationships = await _unitOfWork.CompanyRelationships.GetByProviderCompanyIdAsync(user.CompanyId.Value);
+            providerRelationships = providerRelationships.Where(r => r.Status == RelationshipStatus.Active);
+
+            // Buscar contratos ativos para esses relacionamentos
+            var monthlyIncome = new List<object>();
+            decimal totalIncome = 0;
+
+            foreach (var relationship in providerRelationships)
+            {
+                var contracts = await _unitOfWork.Contracts.GetByProviderIdAsync(user.CompanyId.Value);
+                var activeContracts = contracts.Where(c => 
+                    c.ClientId == relationship.ClientCompanyId &&
+                    c.Status == ContractStatus.Active && 
+                    !c.IsExpired &&
+                    c.MonthlyValue.HasValue &&
+                    c.StartDate <= DateTime.UtcNow &&
+                    (c.ExpirationDate == null || c.ExpirationDate >= DateTime.UtcNow)
+                );
+
+                var relationshipTotal = activeContracts.Sum(c => c.MonthlyValue!.Value);
+                if (relationshipTotal > 0)
+                {
+                    monthlyIncome.Add(new
+                    {
+                        RelationshipId = relationship.Id,
+                        ClientCompany = new 
+                        { 
+                            relationship.ClientCompany.Id, 
+                            relationship.ClientCompany.Name, 
+                            relationship.ClientCompany.Cnpj 
+                        },
+                        RelationshipType = relationship.Type.ToString(),
+                        MonthlyTotal = relationshipTotal,
+                        ContractCount = activeContracts.Count(),
+                        Contracts = activeContracts.Select(c => new
+                        {
+                            ContractId = c.Id,
+                            Title = c.Title,
+                            MonthlyValue = c.MonthlyValue!.Value,
+                            StartDate = c.StartDate,
+                            ExpirationDate = c.ExpirationDate
+                        })
+                    });
+                    totalIncome += relationshipTotal;
+                }
+            }
+
+            return Ok(new
+            {
+                Mes = currentMonth,
+                Ano = currentYear,
+                NomeMes = new DateTime(currentYear, currentMonth, 1).ToString("MMMM yyyy", new System.Globalization.CultureInfo("pt-BR")),
+                TotalReceitas = totalIncome,
+                QuantidadeRelacionamentos = monthlyIncome.Count,
+                ReceitasMensais = monthlyIncome.Select(i => new
+                {
+                    RelacionamentoId = ((dynamic)i).RelationshipId,
+                    EmpresaCliente = ((dynamic)i).ClientCompany,
+                    TipoRelacionamento = ((dynamic)i).RelationshipType,
+                    TotalMensal = ((dynamic)i).MonthlyTotal,
+                    QuantidadeContratos = ((dynamic)i).ContractCount,
+                    Contratos = ((dynamic)i).Contracts
+                })
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar receitas mensais");
+            return BadRequest(new { message = "Erro ao buscar receitas mensais" });
+        }
+    }
+
+    /// <summary>
     /// Obter relacionamentos onde a empresa é cliente (contrata outras empresas)
     /// </summary>
-    [HttpGet("as-client")]
-    public async Task<IActionResult> GetAsClient()
+    [HttpGet("como-cliente")]
+    public async Task<IActionResult> GetComoCliente()
     {
         try
         {
@@ -110,17 +303,17 @@ public class CompanyRelationshipsController : ControllerBase
             var result = relationships.Select(r => new
             {
                 Id = r.Id,
-                Type = r.Type.ToString(),
+                Tipo = r.Type.ToString(),
                 Status = r.Status.ToString(),
-                StartDate = r.StartDate,
-                EndDate = r.EndDate,
-                Notes = r.Notes,
-                ContractedCompany = new 
+                DataInicio = r.StartDate,
+                DataFim = r.EndDate,
+                Observacoes = r.Notes,
+                EmpresaContratada = new 
                 { 
                     Id = r.ProviderCompanyId, 
-                    Name = r.ProviderCompany.Name, 
+                    Nome = r.ProviderCompany.Name, 
                     Cnpj = r.ProviderCompany.Cnpj,
-                    BusinessModel = r.ProviderCompany.BusinessModel.ToString()
+                    ModeloNegocio = r.ProviderCompany.BusinessModel.ToString()
                 }
             });
 
@@ -136,8 +329,8 @@ public class CompanyRelationshipsController : ControllerBase
     /// <summary>
     /// Obter relacionamentos onde a empresa é provedor (foi contratada por outras empresas)
     /// </summary>
-    [HttpGet("as-provider")]
-    public async Task<IActionResult> GetAsProvider()
+    [HttpGet("como-fornecedor")]
+    public async Task<IActionResult> GetComoFornecedor()
     {
         try
         {
@@ -158,17 +351,17 @@ public class CompanyRelationshipsController : ControllerBase
             var result = relationships.Select(r => new
             {
                 Id = r.Id,
-                Type = r.Type.ToString(),
+                Tipo = r.Type.ToString(),
                 Status = r.Status.ToString(),
-                StartDate = r.StartDate,
-                EndDate = r.EndDate,
-                Notes = r.Notes,
-                ClientCompany = new 
+                DataInicio = r.StartDate,
+                DataFim = r.EndDate,
+                Observacoes = r.Notes,
+                EmpresaCliente = new 
                 { 
                     Id = r.ClientCompanyId, 
-                    Name = r.ClientCompany.Name, 
+                    Nome = r.ClientCompany.Name, 
                     Cnpj = r.ClientCompany.Cnpj,
-                    BusinessModel = r.ClientCompany.BusinessModel.ToString()
+                    ModeloNegocio = r.ClientCompany.BusinessModel.ToString()
                 }
             });
 
@@ -184,9 +377,9 @@ public class CompanyRelationshipsController : ControllerBase
     /// <summary>
     /// Ativar relacionamento com PJ (apenas Admin/Company)
     /// </summary>
-    [HttpPut("{relationshipId:guid}/activate")]
+    [HttpPut("{relationshipId:guid}/ativar")]
     [Authorize(Roles = "Admin,Company")]
-    public async Task<IActionResult> ActivateRelationship(Guid relationshipId)
+    public async Task<IActionResult> AtivarRelacionamento(Guid relationshipId)
     {
         try
         {
@@ -229,10 +422,10 @@ public class CompanyRelationshipsController : ControllerBase
 
             return Ok(new
             {
-                message = "Relacionamento ativado com sucesso",
-                relationshipId = relationshipId,
+                mensagem = "Relacionamento ativado com sucesso",
+                relacionamentoId = relationshipId,
                 status = "Active",
-                updatedAt = relationship.UpdatedAt
+                atualizadoEm = relationship.UpdatedAt
             });
         }
         catch (Exception ex)
@@ -245,9 +438,9 @@ public class CompanyRelationshipsController : ControllerBase
     /// <summary>
     /// Desativar relacionamento com PJ (apenas Admin/Company)
     /// </summary>
-    [HttpPut("{relationshipId:guid}/deactivate")]
+    [HttpPut("{relationshipId:guid}/desativar")]
     [Authorize(Roles = "Admin,Company")]
-    public async Task<IActionResult> DeactivateRelationship(Guid relationshipId)
+    public async Task<IActionResult> DesativarRelacionamento(Guid relationshipId)
     {
         try
         {
@@ -290,11 +483,11 @@ public class CompanyRelationshipsController : ControllerBase
 
             return Ok(new
             {
-                message = "Relacionamento desativado com sucesso",
-                relationshipId = relationshipId,
+                mensagem = "Relacionamento desativado com sucesso",
+                relacionamentoId = relationshipId,
                 status = "Inactive",
-                updatedAt = relationship.UpdatedAt,
-                note = "PJ não terá mais acesso aos sistemas da empresa contratante"
+                atualizadoEm = relationship.UpdatedAt,
+                observacao = "PJ não terá mais acesso aos sistemas da empresa contratante"
             });
         }
         catch (Exception ex)
@@ -307,9 +500,9 @@ public class CompanyRelationshipsController : ControllerBase
     /// <summary>
     /// Buscar usuários de um relacionamento específico
     /// </summary>
-    [HttpGet("{relationshipId:guid}/users")]
+    [HttpGet("{relationshipId:guid}/usuarios")]
     [Authorize]
-    public async Task<IActionResult> GetRelationshipUsers(Guid relationshipId)
+    public async Task<IActionResult> GetUsuariosRelacionamento(Guid relationshipId)
     {
         try
         {
@@ -374,52 +567,52 @@ public class CompanyRelationshipsController : ControllerBase
 
             var result = new
             {
-                RelationshipId = relationship.Id,
-                RelationshipType = relationship.Type.ToString(),
-                RelationshipStatus = relationship.Status.ToString(),
-                StartDate = relationship.StartDate,
-                EndDate = relationship.EndDate,
-                Notes = relationship.Notes,
-                ClientCompany = new
+                RelacionamentoId = relationship.Id,
+                TipoRelacionamento = relationship.Type.ToString(),
+                StatusRelacionamento = relationship.Status.ToString(),
+                DataInicio = relationship.StartDate,
+                DataFim = relationship.EndDate,
+                Observacoes = relationship.Notes,
+                EmpresaCliente = new
                 {
                     Id = clientCompany.Id,
-                    Name = clientCompany.Name,
+                    Nome = clientCompany.Name,
                     Cnpj = clientCompany.Cnpj,
-                    BusinessModel = clientCompany.BusinessModel.ToString(),
-                    Users = filteredClientUsers.Select(u => new
+                    ModeloNegocio = clientCompany.BusinessModel.ToString(),
+                    Usuarios = filteredClientUsers.Select(u => new
                     {
-                        UserId = u.Id,
-                        Name = u.Name,
+                        UsuarioId = u.Id,
+                        Nome = u.Name,
                         Email = u.Email,
-                        Role = u.Role.ToString(),
-                        CreatedAt = u.CreatedAt,
-                        IsAccessible = true
+                        Funcao = u.Role.ToString(),
+                        CriadoEm = u.CreatedAt,
+                        EhAcessivel = true
                     })
                 },
-                ProviderCompany = new
+                EmpresaFornecedora = new
                 {
                     Id = providerCompany.Id,
-                    Name = providerCompany.Name,
+                    Nome = providerCompany.Name,
                     Cnpj = providerCompany.Cnpj,
-                    BusinessModel = providerCompany.BusinessModel.ToString(),
-                    Users = filteredProviderUsers.Select(u => new
+                    ModeloNegocio = providerCompany.BusinessModel.ToString(),
+                    Usuarios = filteredProviderUsers.Select(u => new
                     {
-                        UserId = u.Id,
-                        Name = u.Name,
+                        UsuarioId = u.Id,
+                        Nome = u.Name,
                         Email = u.Email,
-                        Role = u.Role.ToString(),
-                        CreatedAt = u.CreatedAt,
-                        IsAccessible = true
+                        Funcao = u.Role.ToString(),
+                        CriadoEm = u.CreatedAt,
+                        EhAcessivel = true
                     })
                 },
-                TotalUsers = filteredClientUsers.Count() + filteredProviderUsers.Count(),
-                CurrentUserAccess = new
+                TotalUsuarios = filteredClientUsers.Count() + filteredProviderUsers.Count(),
+                AcessoUsuarioAtual = new
                 {
-                    CanSeeClientUsers = true,
-                    CanSeeProviderUsers = true,
-                    IsFromClientCompany = currentUser.CompanyId == relationship.ClientCompanyId,
-                    IsFromProviderCompany = currentUser.CompanyId == relationship.ProviderCompanyId,
-                    UserRole = currentUser.Role.ToString()
+                    PodeVerUsuariosCliente = true,
+                    PodeVerUsuariosFornecedor = true,
+                    EhDaEmpresaCliente = currentUser.CompanyId == relationship.ClientCompanyId,
+                    EhDaEmpresaFornecedora = currentUser.CompanyId == relationship.ProviderCompanyId,
+                    FuncaoUsuario = currentUser.Role.ToString()
                 }
             };
 

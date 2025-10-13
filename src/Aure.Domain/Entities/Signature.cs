@@ -16,7 +16,7 @@ public class Signature : BaseEntity
 
     private Signature() { }
 
-    public Signature(Guid contractId, Guid userId, string signatureHash, SignatureMethod method)
+    public Signature(Guid contractId, Guid userId, SignatureMethod method, string signatureHash)
     {
         ContractId = contractId;
         UserId = userId;

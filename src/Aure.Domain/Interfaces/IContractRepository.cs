@@ -9,6 +9,7 @@ public interface IContractRepository
     Task<IEnumerable<Contract>> GetAllAsync();
     Task<IEnumerable<Contract>> GetByClientIdAsync(Guid clientId);
     Task<IEnumerable<Contract>> GetByProviderIdAsync(Guid providerId);
+    Task<IEnumerable<Contract>> GetByCompanyIdAsync(Guid companyId);
     Task<IEnumerable<Contract>> GetByStatusAsync(ContractStatus status);
     Task<IEnumerable<Contract>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
     Task AddAsync(Contract contract);

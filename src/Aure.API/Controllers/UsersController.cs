@@ -69,6 +69,7 @@ public class UsersController : ControllerBase
     /// Usuário atualiza seus próprios dados (nome, email)
     /// </summary>
     [HttpPut("profile")]
+    [HttpPut("perfil")]
     [Authorize]
     public async Task<IActionResult> UpdateOwnProfile([FromBody] UpdateUserRequest request)
     {
@@ -81,7 +82,7 @@ public class UsersController : ControllerBase
         if (currentUserId == Guid.Empty)
         {
             _logger.LogWarning("Invalid user ID from token");
-            return BadRequest(new { Error = "Invalid user authentication" });
+            return BadRequest(new { Erro = "Autenticação de usuário inválida" });
         }
 
         var result = await _userService.UpdateAsync(currentUserId, request);
@@ -89,7 +90,7 @@ public class UsersController : ControllerBase
         if (result.IsFailure)
         {
             _logger.LogError("Failed to update profile for user {UserId}: {Error}", currentUserId, result.Error);
-            return BadRequest(new { Error = result.Error });
+            return BadRequest(new { Erro = result.Error });
         }
 
         _logger.LogInformation("Profile updated successfully for user {UserId}", currentUserId);
@@ -100,6 +101,7 @@ public class UsersController : ControllerBase
     /// Usuário troca sua própria senha
     /// </summary>
     [HttpPatch("password")]
+    [HttpPatch("senha")]
     [Authorize]
     public async Task<IActionResult> ChangeOwnPassword([FromBody] ChangePasswordRequest request)
     {
@@ -112,7 +114,7 @@ public class UsersController : ControllerBase
         if (currentUserId == Guid.Empty)
         {
             _logger.LogWarning("Invalid user ID from token");
-            return BadRequest(new { Error = "Invalid user authentication" });
+            return BadRequest(new { Erro = "Autenticação de usuário inválida" });
         }
 
         var result = await _userService.ChangePasswordAsync(currentUserId, request);
@@ -120,7 +122,7 @@ public class UsersController : ControllerBase
         if (result.IsFailure)
         {
             _logger.LogError("Failed to change password for user {UserId}: {Error}", currentUserId, result.Error);
-            return BadRequest(new { Error = result.Error });
+            return BadRequest(new { Erro = result.Error });
         }
 
         _logger.LogInformation("Password changed successfully for user {UserId}", currentUserId);

@@ -20,7 +20,7 @@ public class AuthController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("login")]
+    [HttpPost("entrar")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (!ModelState.IsValid)
@@ -33,7 +33,7 @@ public class AuthController : ControllerBase
         if (result.IsFailure)
         {
             _logger.LogWarning("Failed login attempt for email {Email}", request.Email);
-            return Unauthorized(new { message = result.Error });
+            return Unauthorized(new { mensagem = result.Error });
         }
 
         var accessToken = _jwtService.GenerateAccessToken(result.Data!.UserEntity);
@@ -42,54 +42,54 @@ public class AuthController : ControllerBase
 
         var response = new
         {
-            accessToken,
-            refreshToken,
-            expiresAt,
-            user = result.Data.User
+            tokenAcesso = accessToken,
+            tokenRenovacao = refreshToken,
+            expiraEm = expiresAt,
+            usuario = result.Data.User
         };
 
         _logger.LogInformation("Successful login for user {UserId}", result.Data.User.Id);
         return Ok(response);
     }
 
-    [HttpPost("logout")]
+    [HttpPost("sair")]
     public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
     {
         var result = await _userService.LogoutAsync(request.UserId);
         
         if (result.IsFailure)
         {
-            return BadRequest(new { Error = result.Error });
+            return BadRequest(new { Erro = result.Error });
         }
 
         return NoContent();
     }
 
-    [HttpGet("profile")]
+    [HttpGet("perfil")]
     [Authorize]
-    public async Task<IActionResult> GetProfile()
+    public async Task<IActionResult> GetPerfil()
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
         {
-            return Unauthorized(new { Error = "Invalid token" });
+            return Unauthorized(new { Erro = "Token inválido" });
         }
 
         var result = await _userService.GetByIdAsync(userId);
         
         if (result.IsFailure)
         {
-            return NotFound(new { Error = result.Error });
+            return NotFound(new { Erro = result.Error });
         }
 
         return Ok(result.Data);
     }
 
-    [HttpPost("refresh-token")]
+    [HttpPost("renovar-token")]
     public Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
-        return Task.FromResult<IActionResult>(Ok(new { Message = "Refresh token endpoint - JWT implementation needed" }));
+        return Task.FromResult<IActionResult>(Ok(new { Mensagem = "Endpoint de renovação de token - Implementação JWT necessária" }));
     }
 }
 

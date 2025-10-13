@@ -23,8 +23,8 @@ public class RegistrationController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("company-admin")]
-    public async Task<IActionResult> RegisterCompanyAdmin([FromBody] RegisterCompanyAdminRequest request)
+    [HttpPost("admin-empresa")]
+    public async Task<IActionResult> RegistrarAdminEmpresa([FromBody] RegisterCompanyAdminRequest request)
     {
         if (!ModelState.IsValid)
         {
@@ -36,15 +36,15 @@ public class RegistrationController : ControllerBase
         if (result.IsFailure)
         {
             _logger.LogError("Falha ao registrar admin da empresa: {Error}", result.Error);
-            return BadRequest(new { Error = result.Error });
+            return BadRequest(new { erro = result.Error });
         }
 
         return Ok(result.Data);
     }
 
-    [HttpPost("invite-user")]
+    [HttpPost("convidar-usuario")]
     [Authorize(Roles = "Admin,Company")]
-    public async Task<IActionResult> InviteUser([FromBody] InviteUserRequest request)
+    public async Task<IActionResult> ConvidarUsuario([FromBody] InviteUserRequest request)
     {
         if (!ModelState.IsValid)
         {
@@ -58,15 +58,15 @@ public class RegistrationController : ControllerBase
         
         if (result.IsFailure)
         {
-            _logger.LogError("Failed to invite user: {Error}", result.Error);
-            return BadRequest(new { Error = result.Error });
+            _logger.LogError("Falha ao convidar usuário: {Error}", result.Error);
+            return BadRequest(new { erro = result.Error });
         }
 
         return Ok(result.Data);
     }
 
-    [HttpPost("accept-invite/{inviteToken}")]
-    public async Task<IActionResult> AcceptInvite(string inviteToken, [FromBody] AcceptInviteRequest request)
+    [HttpPost("aceitar-convite/{inviteToken}")]
+    public async Task<IActionResult> AceitarConvite(string inviteToken, [FromBody] AcceptInviteRequest request)
     {
         if (!ModelState.IsValid)
         {
@@ -77,72 +77,73 @@ public class RegistrationController : ControllerBase
         
         if (result.IsFailure)
         {
-            _logger.LogError("Failed to accept invite: {Error}", result.Error);
-            return BadRequest(new { Error = result.Error });
+            _logger.LogError("Falha ao aceitar convite: {Error}", result.Error);
+            return BadRequest(new { erro = result.Error });
         }
 
         return Ok(result.Data);
     }
 
-    [HttpGet("invites")]
+    [HttpGet("convites")]
     [Authorize(Roles = "Admin,Company")]
-    public async Task<IActionResult> GetPendingInvites()
+    public async Task<IActionResult> ObterConvitesPendentes()
     {
         var currentUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
         var currentUser = await _userService.GetByIdAsync(currentUserId);
         
         if (currentUser.IsFailure || currentUser.Data?.CompanyId == null)
         {
-            return BadRequest(new { Error = "User not associated with company" });
+            return BadRequest(new { erro = "Usuário não associado a uma empresa" });
         }
 
         var invites = await _unitOfWork.UserInvites.GetPendingByCompanyAsync(currentUser.Data.CompanyId.Value);
-        var inviteResponses = invites.Select(invite => new UserInviteResponse(
-            Id: invite.Id,
-            InviterName: invite.InviterName,
-            InviteeEmail: invite.InviteeEmail,
-            InviteeName: invite.InviteeName,
-            Role: invite.Role,
-            InviteType: invite.InviteType,
-            CompanyName: invite.CompanyName,
-            Cnpj: invite.Cnpj,
-            CompanyType: invite.CompanyType,
-            BusinessModel: invite.BusinessModel,
-            Token: invite.Token,
-            ExpiresAt: invite.ExpiresAt,
-            CreatedAt: invite.CreatedAt,
-            IsExpired: DateTime.UtcNow > invite.ExpiresAt
-        ));
+        var respostasConvites = invites.Select(invite => new
+        {
+            Id = invite.Id,
+            NomeConvidador = invite.InviterName,
+            EmailConvidado = invite.InviteeEmail,
+            NomeConvidado = invite.InviteeName,
+            Funcao = invite.Role.ToString(),
+            TipoConvite = invite.InviteType.ToString(),
+            NomeEmpresa = invite.CompanyName,
+            Cnpj = invite.Cnpj,
+            TipoEmpresa = invite.CompanyType?.ToString(),
+            ModeloNegocio = invite.BusinessModel?.ToString(),
+            Token = invite.Token,
+            ExpiraEm = invite.ExpiresAt,
+            CriadoEm = invite.CreatedAt,
+            EstaExpirado = DateTime.UtcNow > invite.ExpiresAt
+        });
 
-        return Ok(inviteResponses);
+        return Ok(respostasConvites);
     }
 
-    [HttpPost("cancel-invite/{inviteId}")]
+    [HttpPost("cancelar-convite/{inviteId}")]
     [Authorize(Roles = "Admin,Company")]
-    public async Task<IActionResult> CancelInvite(Guid inviteId)
+    public async Task<IActionResult> CancelarConvite(Guid inviteId)
     {
         var currentUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
         var currentUser = await _userService.GetByIdAsync(currentUserId);
         
         if (currentUser.IsFailure || currentUser.Data?.CompanyId == null)
         {
-            return BadRequest(new { Error = "User not associated with company" });
+            return BadRequest(new { erro = "Usuário não associado a uma empresa" });
         }
 
         var invite = await _unitOfWork.UserInvites.GetByIdAsync(inviteId);
         if (invite == null || invite.CompanyId != currentUser.Data.CompanyId)
         {
-            return NotFound(new { Error = "Invite not found" });
+            return NotFound(new { erro = "Convite não encontrado" });
         }
 
         if (invite.IsAccepted)
         {
-            return BadRequest(new { Error = "Cannot cancel accepted invite" });
+            return BadRequest(new { erro = "Não é possível cancelar um convite já aceito" });
         }
 
         await _unitOfWork.UserInvites.DeleteAsync(inviteId);
         await _unitOfWork.SaveChangesAsync();
 
-        return Ok(new { Message = "Invite cancelled successfully" });
+        return Ok(new { mensagem = "Convite cancelado com sucesso" });
     }
 }

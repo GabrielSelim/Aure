@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Aure.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a0b1969864068770eeb7bc21d334e8ed65f95318")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bc7039f145d62c7324b2f84214d47476958e61b0")]
 [assembly: System.Reflection.AssemblyProductAttribute("Aure.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Aure.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

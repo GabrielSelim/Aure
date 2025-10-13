@@ -44,6 +44,32 @@ public class Invoice : BaseEntity
         Status = InvoiceStatus.Draft;
     }
 
+    public Invoice(Guid contractId, Guid? paymentId, string invoiceNumber, string series, DateTime? dueDate, decimal totalAmount, decimal taxAmount)
+    {
+        ContractId = contractId;
+        PaymentId = paymentId;
+        InvoiceNumber = invoiceNumber;
+        Series = series;
+        DueDate = dueDate;
+        TotalAmount = totalAmount;
+        TaxAmount = taxAmount;
+        Status = InvoiceStatus.Draft;
+        AccessKey = GenerateAccessKey();
+        XmlContent = string.Empty;
+    }
+
+    private string GenerateAccessKey()
+    {
+        // Gerar chave de acesso de 44 dígitos
+        var random = new Random();
+        var accessKey = string.Empty;
+        for (int i = 0; i < 44; i++)
+        {
+            accessKey += random.Next(0, 9).ToString();
+        }
+        return accessKey;
+    }
+
     public void IssueInvoice(string sefazProtocol)
     {
         Status = InvoiceStatus.Issued;

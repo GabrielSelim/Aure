@@ -30,6 +30,18 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICompanyRepository, CompanyRepository>();
         services.AddScoped<ICompanyRelationshipRepository, CompanyRelationshipRepository>();
         services.AddScoped<IUserInviteRepository, UserInviteRepository>();
+        services.AddScoped<IContractRepository, ContractRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<ISignatureRepository, SignatureRepository>();
+        services.AddScoped<ISplitRuleRepository, SplitRuleRepository>();
+        services.AddScoped<ISplitExecutionRepository, SplitExecutionRepository>();
+        services.AddScoped<ILedgerEntryRepository, LedgerEntryRepository>();
+        services.AddScoped<ITokenizedAssetRepository, TokenizedAssetRepository>();
+        services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+        services.AddScoped<ITaxCalculationRepository, TaxCalculationRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IKycRecordRepository, KycRecordRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
 
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IJwtService, JwtService>();

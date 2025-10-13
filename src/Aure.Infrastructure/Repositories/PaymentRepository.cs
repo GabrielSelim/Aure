@@ -19,6 +19,15 @@ public class PaymentRepository : BaseRepository<Payment>, IPaymentRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Payment>> GetByCompanyIdAsync(Guid companyId)
+    {
+        return await _dbSet
+            .Where(x => x.Contract.ClientId == companyId || x.Contract.ProviderId == companyId)
+            .Include(x => x.Contract)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<Payment>> GetByStatusAsync(PaymentStatus status)
     {
         return await _dbSet

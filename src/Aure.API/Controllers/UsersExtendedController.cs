@@ -48,9 +48,9 @@ public class UsersExtendedController : ControllerBase
     /// Lista usuários da rede da empresa (empresa própria + empresas relacionadas)
     /// Aplica regras de segurança baseadas no role do usuário
     /// </summary>
-    [HttpGet("network")]
+    [HttpGet("rede")]
     [Authorize]
-    public async Task<IActionResult> GetNetworkUsers()
+    public async Task<IActionResult> GetUsuariosRede()
     {
         try
         {
@@ -83,16 +83,16 @@ public class UsersExtendedController : ControllerBase
                 // Adicionar o próprio usuário
                 networkUsers.Add(new
                 {
-                    UserId = currentUser.Id,
-                    Name = currentUser.Name,
+                    UsuarioId = currentUser.Id,
+                    Nome = currentUser.Name,
                     Email = currentUser.Email,
-                    Role = currentUser.Role.ToString(),
-                    CompanyId = currentUser.CompanyId,
-                    CompanyName = ownCompany?.Name ?? "Empresa não encontrada",
-                    CompanyCnpj = ownCompany?.Cnpj,
-                    BusinessModel = ownCompany?.BusinessModel.ToString(),
-                    Relationship = "Self",
-                    IsDirectEmployee = true
+                    Funcao = currentUser.Role.ToString(),
+                    EmpresaId = currentUser.CompanyId,
+                    NomeEmpresa = ownCompany?.Name ?? "Empresa não encontrada",
+                    CnpjEmpresa = ownCompany?.Cnpj,
+                    ModeloNegocio = ownCompany?.BusinessModel.ToString(),
+                    Relacionamento = "Proprio",
+                    EhFuncionarioDireto = true
                 });
 
                 // Buscar apenas contatos principais (Admin/Company) das empresas que contrataram este PJ
@@ -110,16 +110,16 @@ public class UsersExtendedController : ControllerBase
                     {
                         networkUsers.Add(new
                         {
-                            UserId = user.Id,
-                            Name = user.Name,
+                            UsuarioId = user.Id,
+                            Nome = user.Name,
                             Email = user.Email,
-                            Role = user.Role.ToString(),
-                            CompanyId = user.CompanyId,
-                            CompanyName = contract.ClientCompany.Name,
-                            CompanyCnpj = contract.ClientCompany.Cnpj,
-                            BusinessModel = contract.ClientCompany.BusinessModel.ToString(),
-                            Relationship = "ContractingCompanyContact",
-                            IsDirectEmployee = false
+                            Funcao = user.Role.ToString(),
+                            EmpresaId = user.CompanyId,
+                            NomeEmpresa = contract.ClientCompany.Name,
+                            CnpjEmpresa = contract.ClientCompany.Cnpj,
+                            ModeloNegocio = contract.ClientCompany.BusinessModel.ToString(),
+                            Relacionamento = "ContatoEmpresaContratante",
+                            EhFuncionarioDireto = false
                         });
                     }
                 }
@@ -139,16 +139,16 @@ public class UsersExtendedController : ControllerBase
                 {
                     networkUsers.Add(new
                     {
-                        UserId = user.Id,
-                        Name = user.Name,
+                        UsuarioId = user.Id,
+                        Nome = user.Name,
                         Email = user.Email,
-                        Role = user.Role.ToString(),
-                        CompanyId = user.CompanyId,
-                        CompanyName = ownCompany?.Name ?? "Empresa não encontrada",
-                        CompanyCnpj = ownCompany?.Cnpj,
-                        BusinessModel = ownCompany?.BusinessModel.ToString(),
-                        Relationship = "OwnCompany",
-                        IsDirectEmployee = true
+                        Funcao = user.Role.ToString(),
+                        EmpresaId = user.CompanyId,
+                        NomeEmpresa = ownCompany?.Name ?? "Empresa não encontrada",
+                        CnpjEmpresa = ownCompany?.Cnpj,
+                        ModeloNegocio = ownCompany?.BusinessModel.ToString(),
+                        Relacionamento = "PropriaEmpresa",
+                        EhFuncionarioDireto = true
                     });
                 }
 
@@ -167,18 +167,18 @@ public class UsersExtendedController : ControllerBase
                     {
                         networkUsers.Add(new
                         {
-                            UserId = user.Id,
-                            Name = user.Name,
+                            UsuarioId = user.Id,
+                            Nome = user.Name,
                             Email = user.Email,
-                            Role = user.Role.ToString(),
-                            CompanyId = user.CompanyId,
-                            CompanyName = relatedCompany.Name,
-                            CompanyCnpj = relatedCompany.Cnpj,
-                            BusinessModel = relatedCompany.BusinessModel.ToString(),
-                            Relationship = relationship.Type.ToString(),
-                            RelationshipStatus = relationship.Status.ToString(),
-                            IsDirectEmployee = false,
-                            RelationshipNotes = relationship.Notes
+                            Funcao = user.Role.ToString(),
+                            EmpresaId = user.CompanyId,
+                            NomeEmpresa = relatedCompany.Name,
+                            CnpjEmpresa = relatedCompany.Cnpj,
+                            ModeloNegocio = relatedCompany.BusinessModel.ToString(),
+                            Relacionamento = relationship.Type.ToString(),
+                            StatusRelacionamento = relationship.Status.ToString(),
+                            EhFuncionarioDireto = false,
+                            ObservacoesRelacionamento = relationship.Notes
                         });
                     }
                 }
@@ -186,12 +186,12 @@ public class UsersExtendedController : ControllerBase
 
             return Ok(new
             {
-                TotalUsers = networkUsers.Count,
-                OwnCompanyUsers = networkUsers.Count(u => (bool)(u.GetType().GetProperty("IsDirectEmployee")?.GetValue(u) ?? false)),
-                RelatedCompanyUsers = networkUsers.Count(u => !(bool)(u.GetType().GetProperty("IsDirectEmployee")?.GetValue(u) ?? false)),
-                Users = networkUsers,
-                UserRole = currentUser.Role.ToString(),
-                SecurityNote = currentUser.Role == UserRole.Provider ? "Limited access - PJ can only see self and contracting company contacts" : "Full network access"
+                TotalUsuarios = networkUsers.Count,
+                UsuariosPropriaEmpresa = networkUsers.Count(u => (bool)(u.GetType().GetProperty("EhFuncionarioDireto")?.GetValue(u) ?? false)),
+                UsuariosEmpresasRelacionadas = networkUsers.Count(u => !(bool)(u.GetType().GetProperty("EhFuncionarioDireto")?.GetValue(u) ?? false)),
+                Usuarios = networkUsers,
+                FuncaoUsuario = currentUser.Role.ToString(),
+                NotaSeguranca = currentUser.Role == UserRole.Provider ? "Acesso limitado - PJ pode ver apenas a si mesmo e contatos da empresa contratante" : "Acesso completo à rede"
             });
         }
         catch (Exception ex)
@@ -204,9 +204,9 @@ public class UsersExtendedController : ControllerBase
     /// <summary>
     /// Lista apenas usuários PJs contratados pela empresa
     /// </summary>
-    [HttpGet("contracted-pjs")]
+    [HttpGet("pjs-contratados")]
     [Authorize(Roles = "Admin,Company")]
-    public async Task<IActionResult> GetContractedPJs()
+    public async Task<IActionResult> GetPjsContratados()
     {
         try
         {
@@ -230,23 +230,23 @@ public class UsersExtendedController : ControllerBase
                 {
                     contractedPJs.Add(new
                     {
-                        UserId = user.Id,
-                        Name = user.Name,
+                        UsuarioId = user.Id,
+                        Nome = user.Name,
                         Email = user.Email,
-                        Role = user.Role.ToString(),
-                        PjCompany = new
+                        Funcao = user.Role.ToString(),
+                        EmpresaPj = new
                         {
                             Id = relationship.ProviderCompany.Id,
-                            Name = relationship.ProviderCompany.Name,
+                            Nome = relationship.ProviderCompany.Name,
                             Cnpj = relationship.ProviderCompany.Cnpj,
-                            BusinessModel = relationship.ProviderCompany.BusinessModel.ToString()
+                            ModeloNegocio = relationship.ProviderCompany.BusinessModel.ToString()
                         },
-                        ContractInfo = new
+                        InfoContrato = new
                         {
-                            RelationshipId = relationship.Id,
-                            StartDate = relationship.StartDate,
+                            IdRelacionamento = relationship.Id,
+                            DataInicio = relationship.StartDate,
                             Status = relationship.Status.ToString(),
-                            Notes = relationship.Notes
+                            Observacoes = relationship.Notes
                         }
                     });
                 }
@@ -254,9 +254,9 @@ public class UsersExtendedController : ControllerBase
 
             return Ok(new
             {
-                TotalContractedPJs = contractedPJs.Count,
-                ActiveContracts = pjRelationships.Count(),
-                ContractedPJs = contractedPJs
+                TotalPjsContratados = contractedPJs.Count,
+                ContratosAtivos = pjRelationships.Count(),
+                PjsContratados = contractedPJs
             });
         }
         catch (Exception ex)
@@ -269,9 +269,9 @@ public class UsersExtendedController : ControllerBase
     /// <summary>
     /// Lista empresas que contrataram esta empresa PJ
     /// </summary>
-    [HttpGet("contracted-by")]
+    [HttpGet("contratado-por")]
     [Authorize]
-    public async Task<IActionResult> GetContractedBy()
+    public async Task<IActionResult> GetContratadoPor()
     {
         try
         {
@@ -287,26 +287,26 @@ public class UsersExtendedController : ControllerBase
 
             var contractedBy = contractRelationships.Select(relationship => new
             {
-                RelationshipId = relationship.Id,
-                ClientCompany = new
+                IdRelacionamento = relationship.Id,
+                EmpresaCliente = new
                 {
                     Id = relationship.ClientCompany.Id,
-                    Name = relationship.ClientCompany.Name,
+                    Nome = relationship.ClientCompany.Name,
                     Cnpj = relationship.ClientCompany.Cnpj,
-                    BusinessModel = relationship.ClientCompany.BusinessModel.ToString()
+                    ModeloNegocio = relationship.ClientCompany.BusinessModel.ToString()
                 },
-                ContractInfo = new
+                InfoContrato = new
                 {
-                    StartDate = relationship.StartDate,
+                    DataInicio = relationship.StartDate,
                     Status = relationship.Status.ToString(),
-                    Notes = relationship.Notes
+                    Observacoes = relationship.Notes
                 }
             });
 
             return Ok(new
             {
-                TotalContracts = contractedBy.Count(),
-                ContractedBy = contractedBy
+                TotalContratos = contractedBy.Count(),
+                ContratadoPor = contractedBy
             });
         }
         catch (Exception ex)
@@ -320,9 +320,9 @@ public class UsersExtendedController : ControllerBase
     /// Busca usuário por ID considerando a rede de relacionamentos
     /// Aplica regras de segurança baseadas no role do usuário
     /// </summary>
-    [HttpGet("network/{userId}")]
+    [HttpGet("rede/{userId}")]
     [Authorize]
-    public async Task<IActionResult> GetNetworkUser(Guid userId)
+    public async Task<IActionResult> GetUsuarioRede(Guid userId)
     {
         try
         {
@@ -360,16 +360,16 @@ public class UsersExtendedController : ControllerBase
                     
                     return Ok(new
                     {
-                        UserId = user.Id,
-                        Name = user.Name,
+                        UsuarioId = user.Id,
+                        Nome = user.Name,
                         Email = user.Email,
-                        Role = user.Role.ToString(),
-                        CompanyId = user.CompanyId,
-                        CompanyName = ownCompany?.Name ?? "Empresa não encontrada",
-                        CompanyCnpj = ownCompany?.Cnpj,
-                        BusinessModel = ownCompany?.BusinessModel.ToString(),
-                        Relationship = "Self",
-                        IsDirectEmployee = true
+                        Funcao = user.Role.ToString(),
+                        EmpresaId = user.CompanyId,
+                        NomeEmpresa = ownCompany?.Name ?? "Empresa não encontrada",
+                        CnpjEmpresa = ownCompany?.Cnpj,
+                        ModeloNegocio = ownCompany?.BusinessModel.ToString(),
+                        Relacionamento = "ProprioUsuario",
+                        EhFuncionarioDireto = true
                     });
                 }
 
@@ -395,16 +395,16 @@ public class UsersExtendedController : ControllerBase
                 
                 return Ok(new
                 {
-                    UserId = user.Id,
-                    Name = user.Name,
+                    UsuarioId = user.Id,
+                    Nome = user.Name,
                     Email = user.Email,
-                    Role = user.Role.ToString(),
-                    CompanyId = user.CompanyId,
-                    CompanyName = userCompany?.Name,
-                    CompanyCnpj = userCompany?.Cnpj,
-                    BusinessModel = userCompany?.BusinessModel.ToString(),
-                    Relationship = "ContractingCompanyContact",
-                    IsDirectEmployee = false
+                    Funcao = user.Role.ToString(),
+                    EmpresaId = user.CompanyId,
+                    NomeEmpresa = userCompany?.Name,
+                    CnpjEmpresa = userCompany?.Cnpj,
+                    ModeloNegocio = userCompany?.BusinessModel.ToString(),
+                    Relacionamento = "ContatoEmpresaContratante",
+                    EhFuncionarioDireto = false
                 });
             }
             else
@@ -418,16 +418,16 @@ public class UsersExtendedController : ControllerBase
                     
                     return Ok(new
                     {
-                        UserId = user.Id,
-                        Name = user.Name,
+                        UsuarioId = user.Id,
+                        Nome = user.Name,
                         Email = user.Email,
-                        Role = user.Role.ToString(),
-                        CompanyId = user.CompanyId,
-                        CompanyName = ownCompany?.Name ?? "Empresa não encontrada",
-                        CompanyCnpj = ownCompany?.Cnpj,
-                        BusinessModel = ownCompany?.BusinessModel.ToString(),
-                        Relationship = "OwnCompany",
-                        IsDirectEmployee = true
+                        Funcao = user.Role.ToString(),
+                        EmpresaId = user.CompanyId,
+                        NomeEmpresa = ownCompany?.Name ?? "Empresa não encontrada",
+                        CnpjEmpresa = ownCompany?.Cnpj,
+                        ModeloNegocio = ownCompany?.BusinessModel.ToString(),
+                        Relacionamento = "PropriaEmpresa",
+                        EhFuncionarioDireto = true
                     });
                 }
 
@@ -446,18 +446,18 @@ public class UsersExtendedController : ControllerBase
 
                 return Ok(new
                 {
-                    UserId = user.Id,
-                    Name = user.Name,
+                    UsuarioId = user.Id,
+                    Nome = user.Name,
                     Email = user.Email,
-                    Role = user.Role.ToString(),
-                    CompanyId = user.CompanyId,
-                    CompanyName = userCompany?.Name,
-                    CompanyCnpj = userCompany?.Cnpj,
-                    BusinessModel = userCompany?.BusinessModel.ToString(),
-                    Relationship = userRelationship.Type.ToString(),
-                    RelationshipStatus = userRelationship.Status.ToString(),
-                    IsDirectEmployee = false,
-                    IsFromContractedPJ = isFromProviderCompany
+                    Funcao = user.Role.ToString(),
+                    EmpresaId = user.CompanyId,
+                    NomeEmpresa = userCompany?.Name,
+                    CnpjEmpresa = userCompany?.Cnpj,
+                    ModeloNegocio = userCompany?.BusinessModel.ToString(),
+                    Relacionamento = userRelationship.Type.ToString(),
+                    StatusRelacionamento = userRelationship.Status.ToString(),
+                    EhFuncionarioDireto = false,
+                    EhDePjContratado = isFromProviderCompany
                 });
             }
         }

@@ -8,7 +8,12 @@ public class Contract : BaseEntity
     public Guid ClientId { get; private set; }
     public Guid ProviderId { get; private set; }
     public string Title { get; private set; } = string.Empty;
+    public string Description { get; private set; } = string.Empty;
     public decimal ValueTotal { get; private set; }
+    public decimal? MonthlyValue { get; private set; }
+    public DateTime? SignedDate { get; private set; }
+    public DateTime? ExpirationDate { get; private set; }
+    public DateTime StartDate { get; private set; }
     public string? IpfsCid { get; private set; }
     public string Sha256Hash { get; private set; } = string.Empty;
     public ContractStatus Status { get; private set; }
@@ -29,12 +34,17 @@ public class Contract : BaseEntity
 
     private Contract() { }
 
-    public Contract(Guid clientId, Guid providerId, string title, decimal valueTotal, string sha256Hash)
+    public Contract(Guid clientId, Guid providerId, string title, string description, decimal valueTotal, 
+                   decimal? monthlyValue, DateTime startDate, DateTime? expirationDate, string sha256Hash)
     {
         ClientId = clientId;
         ProviderId = providerId;
         Title = title;
+        Description = description;
         ValueTotal = valueTotal;
+        MonthlyValue = monthlyValue;
+        StartDate = startDate;
+        ExpirationDate = expirationDate;
         Sha256Hash = sha256Hash;
         Status = ContractStatus.Draft;
     }
@@ -55,6 +65,34 @@ public class Contract : BaseEntity
     public void ActivateContract()
     {
         Status = ContractStatus.Active;
+        if (!SignedDate.HasValue)
+        {
+            SignedDate = DateTime.UtcNow;
+        }
+        UpdateTimestamp();
+    }
+
+    public void SignContract()
+    {
+        if (!SignedDate.HasValue)
+        {
+            SignedDate = DateTime.UtcNow;
+        }
+        UpdateTimestamp();
+    }
+
+    public bool IsExpired => ExpirationDate.HasValue && DateTime.UtcNow > ExpirationDate.Value;
+    
+    public bool IsActive => Status == ContractStatus.Active && !IsExpired;
+
+    public bool CanBeModified()
+    {
+        return Status == ContractStatus.Draft;
+    }
+
+    public void UpdateStatus(ContractStatus status)
+    {
+        Status = status;
         UpdateTimestamp();
     }
 

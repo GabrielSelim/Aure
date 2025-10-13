@@ -30,6 +30,16 @@ public class ContractRepository : BaseRepository<Contract>, IContractRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Contract>> GetByCompanyIdAsync(Guid companyId)
+    {
+        return await _dbSet
+            .Where(x => x.ClientId == companyId || x.ProviderId == companyId)
+            .Include(x => x.Client)
+            .Include(x => x.Provider)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<Contract>> GetByStatusAsync(ContractStatus status)
     {
         return await _dbSet
