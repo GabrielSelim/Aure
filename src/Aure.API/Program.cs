@@ -24,7 +24,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { 
         Title = "Aure API", 
         Version = "v1",
-        Description = "Fintech backend system with DDD architecture"
+        Description = "Api para o sistema Aure!"
     });
 
     // Configuração de autenticação JWT no Swagger

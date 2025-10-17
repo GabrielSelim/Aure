@@ -128,10 +128,4 @@ public class UsersController : ControllerBase
         _logger.LogInformation("Password changed successfully for user {UserId}", currentUserId);
         return NoContent();
     }
-
-    // REMOVIDO: DELETE /api/users/{id}
-    // Para gerenciar relacionamentos com PJs, use:
-    // - PUT /api/CompanyRelationships/{id}/activate (ativar PJ)
-    // - PUT /api/CompanyRelationships/{id}/deactivate (desativar PJ)
-    // - DELETE /api/CompanyRelationships/{id} (encerrar relacionamento)
 }
