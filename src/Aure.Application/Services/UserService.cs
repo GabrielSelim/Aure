@@ -16,13 +16,15 @@ public class UserService : IUserService
     private readonly IMapper _mapper;
     private readonly ILogger<UserService> _logger;
     private readonly ICnpjValidationService _cnpjValidationService;
+    private readonly IEmailService _emailService;
 
-    public UserService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<UserService> logger, ICnpjValidationService cnpjValidationService)
+    public UserService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<UserService> logger, ICnpjValidationService cnpjValidationService, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _logger = logger;
         _cnpjValidationService = cnpjValidationService;
+        _emailService = emailService;
     }
 
     public async Task<Result<UserResponse>> GetByIdAsync(Guid id)
@@ -273,6 +275,13 @@ public class UserService : IUserService
             return Result.Failure<InviteResponse>("Usuário atual não está associado a uma empresa");
         }
 
+        // Obter dados da empresa
+        var currentCompany = await _unitOfWork.Companies.GetByIdAsync(currentUser.CompanyId.Value);
+        if (currentCompany == null)
+        {
+            return Result.Failure<InviteResponse>("Empresa do usuário atual não encontrada");
+        }
+
         // Validações específicas por tipo de convite
         if (request.InviteType == InviteType.ContractedPJ)
         {
@@ -322,9 +331,28 @@ public class UserService : IUserService
         await _unitOfWork.UserInvites.AddAsync(invite);
         await _unitOfWork.SaveChangesAsync();
 
+        // Enviar email de convite
+        var emailSent = await _emailService.SendInviteEmailAsync(
+            recipientEmail: request.Email,
+            recipientName: request.Name,
+            inviteToken: invite.Token,
+            inviterName: currentUser.Name,
+            companyName: currentCompany.Name
+        );
+
+        var message = emailSent 
+            ? $"Convite enviado com sucesso para o email: {request.Email}"
+            : $"Convite criado, mas houve falha ao enviar email para: {request.Email}";
+
+        if (!emailSent)
+        {
+            _logger.LogWarning("Falha ao enviar email de convite para {Email}, mas convite foi salvo com ID {InviteId}", 
+                request.Email, invite.Id);
+        }
+
         var response = new InviteResponse(
             InviteId: invite.Id,
-            Message: $"Convite enviado para o email: {request.Email}",
+            Message: message,
             InviteToken: invite.Token,
             ExpiresAt: invite.ExpiresAt,
             InviteType: invite.InviteType

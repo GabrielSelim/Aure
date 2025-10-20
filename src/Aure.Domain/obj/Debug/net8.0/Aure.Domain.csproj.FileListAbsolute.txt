@@ -10,3 +10,15 @@ C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Domain\obj\Debug\net
 C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Domain\obj\Debug\net8.0\refint\Aure.Domain.dll
 C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Domain\obj\Debug\net8.0\Aure.Domain.pdb
 C:\Users\Gabriel\OneDrive\Documentos\Projetos\Aure\src\Aure.Domain\obj\Debug\net8.0\ref\Aure.Domain.dll
+C:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\bin\Debug\net8.0\Aure.Domain.deps.json
+c:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\bin\Debug\net8.0\Aure.Domain.dll
+c:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\bin\Debug\net8.0\Aure.Domain.pdb
+c:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\obj\Debug\net8.0\Aure.Domain.GeneratedMSBuildEditorConfig.editorconfig
+c:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\obj\Debug\net8.0\Aure.Domain.AssemblyInfoInputs.cache
+c:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\obj\Debug\net8.0\Aure.Domain.AssemblyInfo.cs
+c:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\obj\Debug\net8.0\Aure.Domain.csproj.CoreCompileInputs.cache
+c:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\obj\Debug\net8.0\Aure.Domain.sourcelink.json
+c:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\obj\Debug\net8.0\Aure.Domain.dll
+c:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\obj\Debug\net8.0\refint\Aure.Domain.dll
+c:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\obj\Debug\net8.0\Aure.Domain.pdb
+C:\Users\gabriel\source\repos\GabrielSelim\Aure\src\Aure.Domain\obj\Debug\net8.0\ref\Aure.Domain.dll

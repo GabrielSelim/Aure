@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Gabriel\\OneDrive\\Documentos\\Projetos\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj": {}
+    "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Gabriel\\OneDrive\\Documentos\\Projetos\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj": {
+    "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Gabriel\\OneDrive\\Documentos\\Projetos\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj",
+        "projectUniqueName": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj",
         "projectName": "Aure.Domain",
-        "projectPath": "C:\\Users\\Gabriel\\OneDrive\\Documentos\\Projetos\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj",
-        "packagesPath": "C:\\Users\\Gabriel\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Gabriel\\OneDrive\\Documentos\\Projetos\\Aure\\src\\Aure.Domain\\obj\\",
+        "projectPath": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj",
+        "packagesPath": "C:\\Users\\gabriel\\.nuget\\packages\\",
+        "outputPath": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Gabriel\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\gabriel\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],

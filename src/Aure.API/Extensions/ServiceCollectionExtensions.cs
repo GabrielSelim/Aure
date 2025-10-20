@@ -49,10 +49,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<ICnpjValidationService, CnpjValidationService>();
         services.AddScoped<ISefazService, SefazService>();
+        services.AddScoped<IEmailService, EmailService>();
 
-        // Configurações SEFAZ
+        // Configurações
         services.Configure<SefazSettings>(configuration.GetSection("SefazSettings"));
         services.Configure<InvoiceSettings>(configuration.GetSection("InvoiceSettings"));
+        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
 
         // HttpClient para validação de CNPJ
         services.AddHttpClient<ICnpjValidationService, CnpjValidationService>(client =>
