@@ -3111,11 +3111,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Application\\Aure.Application.csproj": {
-              "projectPath": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Application\\Aure.Application.csproj"
+            "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Application\\Aure.Application.csproj": {
+              "projectPath": "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Application\\Aure.Application.csproj"
             },
-            "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj": {
-              "projectPath": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj"
+            "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj": {
+              "projectPath": "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Domain\\Aure.Domain.csproj"
             }
           }
         }

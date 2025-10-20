@@ -1,24 +1,610 @@
-# 🚀 PROMPT COMPLETO PARA FRONTEND REACT - SISTEMA AURE
+# 🚀 PROMPT COMPLETO - FRONTEND REACT/NEXT.JS
+# Sistema Aure - Interface de Usuário Completa
+# Data: 20/10/2025
 
-Preciso que você crie um sistema frontend completo em **React 18+ com TypeScript** para integração com a API backend Aure (sistema fintech completo). O frontend deve ser moderno, responsivo e seguir as melhores práticas de desenvolvimento.
+## 📋 INSTRUÇÕES PARA O COPILOT
 
-## 🎯 IMPORTANTE PARA IA/COPILOT:
-- **Arquitetura**: Clean Architecture com separação de responsabilidades
-- **Performance**: Lazy loading, code splitting, React.memo quando necessário
-- **UX/UI**: Design system consistente, feedback visual, loading states
-- **Acessibilidade**: ARIA labels, navegação por teclado, contraste adequado
-- **Responsividade**: Mobile-first, design adaptativo para todas as telas
-- **Segurança**: Sanitização de dados, validação client-side rigorosa
+Preciso que você crie um **frontend completo em React com Next.js** para o Sistema Aure, seguindo rigorosamente as especificações abaixo:
 
-## 📋 ESPECIFICAÇÕES TÉCNICAS
+---
 
-### Stack Tecnológica Principal
-- **Framework**: React 18+ com TypeScript
-- **Build Tool**: Vite (mais rápido que Create React App)
-- **Estado Global**: Zustand ou Redux Toolkit Query
-- **Roteamento**: React Router v6
-- **HTTP Client**: Axios com interceptors
-- **Formulários**: React Hook Form + Zod validation
+## 🎯 ESPECIFICAÇÕES OBRIGATÓRIAS
+
+### **Estrutura do Projeto:**
+- **Framework:** Next.js 14+ (App Router)
+- **Linguagem:** TypeScript
+- **Estilização:** Tailwind CSS
+- **Componentes UI:** Shadcn/ui
+- **Gerenciamento de Estado:** Zustand
+- **Validação:** Zod + React Hook Form
+- **HTTP Client:** Axios
+- **Autenticação:** JWT com Context API
+- **Nomenclatura:** **100% em português** (sem termos em inglês)
+
+### **Princípios de Desenvolvimento:**
+- ✅ **Componentização total** - cada elemento deve ser um componente reutilizável
+- ✅ **Código limpo** - sem console.log, sem mocks desnecessários
+- ✅ **Nomenclatura portuguesa** - arquivos, variáveis, funções, componentes
+- ✅ **Responsividade completa** - mobile-first
+- ✅ **Acessibilidade** - ARIA labels e navegação por teclado
+- ✅ **Performance** - lazy loading e otimizações
+
+---
+
+## 🏗️ ESTRUTURA DE PASTAS OBRIGATÓRIA
+
+```
+aure-frontend/
+├── src/
+│   ├── app/                          # App Router Next.js
+│   │   ├── (autenticado)/            # Rotas protegidas
+│   │   │   ├── painel/              # Dashboard principal
+│   │   │   ├── empresas/            # Gestão de empresas
+│   │   │   ├── usuarios/            # Gestão de usuários
+│   │   │   ├── convites/            # Sistema de convites
+│   │   │   ├── contratos/           # Gestão de contratos
+│   │   │   ├── pagamentos/          # Sistema de pagamentos
+│   │   │   ├── relatorios/          # Relatórios e análises
+│   │   │   └── layout.tsx
+│   │   ├── (publico)/               # Rotas públicas
+│   │   │   ├── entrar/              # Login
+│   │   │   ├── registrar/           # Registro
+│   │   │   ├── aceitar-convite/     # Aceitar convites
+│   │   │   └── layout.tsx
+│   │   ├── layout.tsx               # Layout raiz
+│   │   ├── page.tsx                 # Página inicial
+│   │   ├── loading.tsx              # Loading global
+│   │   ├── error.tsx                # Error boundary
+│   │   └── not-found.tsx            # 404
+│   ├── componentes/                 # Componentes reutilizáveis
+│   │   ├── ui/                      # Componentes base (shadcn)
+│   │   ├── layout/                  # Componentes de layout
+│   │   │   ├── CabecalhoNavegacao.tsx
+│   │   │   ├── BarraLateral.tsx
+│   │   │   ├── RodapePagina.tsx
+│   │   │   └── LayoutAutenticado.tsx
+│   │   ├── formularios/             # Componentes de formulário
+│   │   │   ├── FormularioLogin.tsx
+│   │   │   ├── FormularioRegistro.tsx
+│   │   │   ├── FormularioConvite.tsx
+│   │   │   └── FormularioEmpresa.tsx
+│   │   ├── tabelas/                 # Componentes de tabela
+│   │   │   ├── TabelaUsuarios.tsx
+│   │   │   ├── TabelaEmpresas.tsx
+│   │   │   ├── TabelaConvites.tsx
+│   │   │   └── TabelaContratos.tsx
+│   │   ├── cartoes/                 # Componentes de card
+│   │   │   ├── CartaoEstatistica.tsx
+│   │   │   ├── CartaoEmpresa.tsx
+│   │   │   ├── CartaoUsuario.tsx
+│   │   │   └── CartaoConvite.tsx
+│   │   ├── modais/                  # Componentes de modal
+│   │   │   ├── ModalConfirmacao.tsx
+│   │   │   ├── ModalDetalhes.tsx
+│   │   │   └── ModalEdicao.tsx
+│   │   └── comum/                   # Componentes comuns
+│   │       ├── Carregando.tsx
+│   │       ├── MensagemErro.tsx
+│   │       ├── MensagemSucesso.tsx
+│   │       ├── BotaoAcao.tsx
+│   │       └── IndicadorStatus.tsx
+│   ├── servicos/                    # Serviços de API
+│   │   ├── api.ts                   # Configuração Axios
+│   │   ├── autenticacao.ts          # Serviços de auth
+│   │   ├── usuarios.ts              # Serviços de usuários
+│   │   ├── empresas.ts              # Serviços de empresas
+│   │   ├── convites.ts              # Serviços de convites
+│   │   ├── contratos.ts             # Serviços de contratos
+│   │   └── pagamentos.ts            # Serviços de pagamentos
+│   ├── contextos/                   # Context providers
+│   │   ├── ContextoAutenticacao.tsx # Context de autenticação
+│   │   ├── ContextoNotificacao.tsx  # Context de notificações
+│   │   └── ContextoTema.tsx         # Context de tema
+│   ├── armazenamento/               # Zustand stores
+│   │   ├── loja-usuario.ts          # Store do usuário
+│   │   ├── loja-empresa.ts          # Store da empresa
+│   │   ├── loja-convites.ts         # Store de convites
+│   │   └── loja-notificacao.ts      # Store de notificações
+│   ├── validacoes/                  # Schemas Zod
+│   │   ├── esquema-login.ts         # Schema de login
+│   │   ├── esquema-registro.ts      # Schema de registro
+│   │   ├── esquema-convite.ts       # Schema de convite
+│   │   └── esquema-empresa.ts       # Schema de empresa
+│   ├── utilidades/                  # Funções utilitárias
+│   │   ├── formatadores.ts          # Formatação de dados
+│   │   ├── validadores.ts           # Validações customizadas
+│   │   ├── constantes.ts            # Constantes da aplicação
+│   │   └── ajudantes.ts             # Funções auxiliares
+│   ├── tipos/                       # Definições de tipos
+│   │   ├── usuario.ts               # Tipos de usuário
+│   │   ├── empresa.ts               # Tipos de empresa
+│   │   ├── convite.ts               # Tipos de convite
+│   │   ├── contrato.ts              # Tipos de contrato
+│   │   └── api.ts                   # Tipos de API
+│   └── estilos/                     # Estilos globais
+│       └── globals.css              # CSS global com Tailwind
+```
+
+---
+
+## 🎨 DESIGN SYSTEM OBRIGATÓRIO
+
+### **Paleta de Cores (Usar em Tailwind):**
+```typescript
+// tailwind.config.js
+const cores = {
+  primaria: {
+    50: '#eff6ff',
+    100: '#dbeafe', 
+    500: '#3b82f6',
+    600: '#2563eb',
+    900: '#1e3a8a'
+  },
+  secundaria: {
+    50: '#f0f9ff',
+    500: '#06b6d4',
+    600: '#0891b2'
+  },
+  sucesso: {
+    50: '#f0fdf4',
+    500: '#22c55e',
+    600: '#16a34a'
+  },
+  erro: {
+    50: '#fef2f2',
+    500: '#ef4444',
+    600: '#dc2626'
+  },
+  alerta: {
+    50: '#fffbeb',
+    500: '#f59e0b',
+    600: '#d97706'
+  },
+  neutro: {
+    50: '#f9fafb',
+    100: '#f3f4f6',
+    200: '#e5e7eb',
+    500: '#6b7280',
+    700: '#374151',
+    900: '#111827'
+  }
+}
+```
+
+### **Tipografia:**
+- **Títulos:** Inter ou similar (font-bold)
+- **Corpo:** Inter ou similar (font-normal)
+- **Código:** JetBrains Mono ou similar
+
+---
+
+## 📱 PÁGINAS OBRIGATÓRIAS
+
+### **1. Páginas Públicas**
+
+#### **Página de Login (/entrar)**
+```typescript
+// Componentes necessários:
+- FormularioLogin
+- LinkEsqueceuSenha
+- LinkRegistrar
+- LogoEmpresa
+
+// Funcionalidades:
+- Validação em tempo real
+- Lembrar usuário
+- Redirecionamento após login
+- Mensagens de erro claras
+```
+
+#### **Página de Registro (/registrar)**
+```typescript
+// Tipos de registro:
+- Administrador de Empresa
+- Usuário Individual
+- Aceitar Convite
+
+// Validações obrigatórias:
+- CNPJ em tempo real (BrasilAPI)
+- Email único
+- Senha forte
+- Confirmação de senha
+```
+
+#### **Página Aceitar Convite (/aceitar-convite/[token])**
+```typescript
+// Funcionalidades:
+- Validação de token
+- Exibir dados do convite
+- Formulário de definição de senha
+- Confirmação de aceite
+```
+
+### **2. Páginas Autenticadas**
+
+#### **Dashboard Principal (/painel)**
+```typescript
+// Componentes obrigatórios:
+- ResumoEstatisticas (4 cards principais)
+- GraficoAtividades (últimos 30 dias)
+- ListaConvitesPendentes
+- ListaContratosAtivos
+- NotificacaoesRecentes
+
+// Estatísticas por tipo de usuário:
+// Admin Empresa: PJs contratados, usuários, contratos, faturamento
+// PJ: Contratos ativos, pagamentos, projetos, clientes
+```
+
+#### **Gestão de Usuários (/usuarios)**
+```typescript
+// Funcionalidades:
+- TabelaUsuarios com filtros
+- ModalAdicionarUsuario
+- ModalEditarUsuario
+- ModalDetalhesUsuario
+- BotaoConvidarUsuario
+- FiltrosPorTipo (Admin, PJ, Funcionário)
+- PaginacaoTabela
+```
+
+#### **Sistema de Convites (/convites)**
+```typescript
+// Abas obrigatórias:
+- ConvitesPendentes
+- ConvitesEnviados
+- ConvitesAceitos
+- ConvitesExpirados
+
+// Funcionalidades:
+- FormularioNovoConvite
+- BotaoReenviarConvite
+- BotaoCancelarConvite
+- FiltrosPorTipo
+- HistoricoConvites
+```
+
+#### **Gestão de Empresas (/empresas)**
+```typescript
+// Para Admin do Sistema:
+- TabelaTodasEmpresas
+- ModalDetalhesEmpresa
+- FiltrosPorTipo
+- RelatorioEmpresas
+
+// Para Admin de Empresa:
+- DetalhesMinhaEmpresa
+- ListaPJsContratados
+- RelacionamentosEmpresa
+- ConfiguracoesEmpresa
+```
+
+---
+
+## 🔧 FUNCIONALIDADES TÉCNICAS OBRIGATÓRIAS
+
+### **Autenticação JWT:**
+```typescript
+// Context de Autenticação deve incluir:
+interface ContextoAutenticacao {
+  usuario: Usuario | null;
+  empresa: Empresa | null;
+  token: string | null;
+  estaLogado: boolean;
+  estaCarregando: boolean;
+  fazerLogin: (email: string, senha: string) => Promise<void>;
+  fazerLogout: () => void;
+  atualizarUsuario: (dados: Usuario) => void;
+  verificarToken: () => Promise<boolean>;
+}
+```
+
+### **Interceptadores HTTP:**
+```typescript
+// Axios deve ter interceptadores para:
+- Adicionar token automaticamente
+- Refresh token automático
+- Tratamento de erros 401/403
+- Loading states globais
+- Retry automático para falhas de rede
+```
+
+### **Validações em Tempo Real:**
+```typescript
+// Todas as validações devem ser em tempo real:
+- CNPJ (integração com BrasilAPI)
+- Email (verificação de formato e disponibilidade)
+- CPF (validação de formato)
+- CEP (busca automática de endereço)
+- Telefone (formatação automática)
+```
+
+### **Estados de Loading:**
+```typescript
+// Implementar estados para:
+- Carregamento de páginas
+- Carregamento de formulários
+- Carregamento de tabelas
+- Carregamento de componentes
+- Skeleton screens para melhor UX
+```
+
+---
+
+## 🚀 INTEGRAÇÃO COM API BACKEND
+
+### **Base URL de Desenvolvimento:**
+```typescript
+const API_BASE_URL = 'http://localhost:5203/api';
+```
+
+### **Endpoints Principais:**
+```typescript
+// Autenticação
+POST /Auth/entrar
+POST /Auth/sair
+POST /Auth/renovar-token
+
+// Usuários
+GET /Users
+GET /Users/{id}
+PUT /Users/{id}
+DELETE /Users/{id}
+
+// Registro e Convites
+POST /Registration/admin-empresa
+POST /Registration/convidar-usuario
+POST /Registration/aceitar-convite/{token}
+GET /Registration/convites
+
+// Empresas
+GET /Companies
+GET /Companies/{id}
+PUT /Companies/{id}
+
+// Relacionamentos
+GET /UsersExtended/pjs-contratados
+GET /UsersExtended/contratado-por
+GET /UsersExtended/rede-completa
+GET /CompanyRelationships/como-cliente
+GET /CompanyRelationships/como-fornecedor
+```
+
+### **Tipos TypeScript para API:**
+```typescript
+// Todos os tipos devem corresponder exatamente às DTOs do backend:
+interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  papel: 'Admin' | 'Provider' | 'Employee';
+  empresaId: string;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+interface Empresa {
+  id: string;
+  nome: string;
+  cnpj: string;
+  tipo: 'Client' | 'Provider';
+  modeloNegocio: 'MainCompany' | 'ContractedPJ';
+  statusKyc: 'Pending' | 'Approved' | 'Rejected';
+  criadaEm: string;
+  atualizadaEm: string;
+}
+
+interface Convite {
+  id: string;
+  nomeConvidado: string;
+  emailConvidado: string;
+  tipoConvite: 'ContractedPJ' | 'Employee';
+  nomeEmpresa: string;
+  cnpj: string;
+  tipoEmpresa: 'Client' | 'Provider';
+  modeloNegocio: 'MainCompany' | 'ContractedPJ';
+  token: string;
+  expiraEm: string;
+  estaExpirado: boolean;
+  foiAceito: boolean;
+}
+```
+
+---
+
+## 🎯 FLUXOS DE USUÁRIO OBRIGATÓRIOS
+
+### **Fluxo 1: Empresa Contratando PJ**
+1. Admin faz login
+2. Acessa "Convites" → "Novo Convite"
+3. Preenche dados do PJ (nome, email, CNPJ da empresa PJ)
+4. Sistema valida CNPJ em tempo real
+5. Envia convite
+6. PJ recebe email e aceita convite
+7. Sistema cria usuário PJ + empresa PJ + relacionamento
+8. Admin visualiza PJ na lista "PJs Contratados"
+
+### **Fluxo 2: Visualização de Relacionamentos**
+1. Admin acessa "Usuários" → "Rede Completa"
+2. Vê todos os usuários da própria empresa
+3. Vê todos os PJs contratados
+4. Pode filtrar por tipo de relacionamento
+5. Pode acessar detalhes de cada relacionamento
+
+### **Fluxo 3: PJ Visualizando Contratos**
+1. PJ faz login
+2. Acessa "Contratos" → "Meus Contratos"
+3. Vê empresas que o contrataram
+4. Pode visualizar detalhes de cada contrato
+5. Pode acessar informações da empresa contratante
+
+---
+
+## 🔒 SEGURANÇA OBRIGATÓRIA
+
+### **Proteção de Rotas:**
+```typescript
+// Implementar middleware para:
+- Verificar autenticação em rotas protegidas
+- Verificar permissões por tipo de usuário
+- Redirecionar usuários não autenticados
+- Proteger rotas administrativas
+```
+
+### **Validação de Permissões:**
+```typescript
+// Por tipo de usuário:
+Admin: Acesso total a sua empresa + convites + usuários
+PJ: Acesso aos próprios contratos + empresas que o contrataram
+Funcionário: Acesso limitado conforme permissões
+```
+
+---
+
+## 🎨 UX/UI OBRIGATÓRIAS
+
+### **Responsividade:**
+- ✅ Design mobile-first
+- ✅ Breakpoints: sm (640px), md (768px), lg (1024px), xl (1280px)
+- ✅ Menu lateral colapsa em mobile
+- ✅ Tabelas com scroll horizontal em mobile
+- ✅ Modais adaptados para mobile
+
+### **Acessibilidade:**
+- ✅ ARIA labels em todos os componentes
+- ✅ Navegação por teclado
+- ✅ Contraste de cores adequado
+- ✅ Textos alternativos em imagens
+- ✅ Focus indicators visíveis
+
+### **Feedback Visual:**
+- ✅ Loading states em todas as ações
+- ✅ Mensagens de sucesso/erro claras
+- ✅ Confirmações para ações destrutivas
+- ✅ Indicadores de status visuais
+- ✅ Tooltips informativos
+
+---
+
+## 📦 DEPENDÊNCIAS OBRIGATÓRIAS
+
+```json
+{
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "typescript": "^5.0.0",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-dropdown-menu": "^2.0.6",
+    "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-select": "^2.0.0",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-toast": "^1.1.5",
+    "react-hook-form": "^7.47.0",
+    "@hookform/resolvers": "^3.3.2",
+    "zod": "^3.22.4",
+    "zustand": "^4.4.6",
+    "axios": "^1.6.0",
+    "tailwindcss": "^3.3.5",
+    "@tailwindcss/forms": "^0.5.7",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0",
+    "lucide-react": "^0.292.0",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "eslint": "^8.53.0",
+    "eslint-config-next": "^14.0.0",
+    "prettier": "^3.1.0",
+    "prettier-plugin-tailwindcss": "^0.5.7"
+  }
+}
+```
+
+---
+
+## 🚀 COMANDOS DE CONFIGURAÇÃO
+
+```bash
+# Criar projeto
+npx create-next-app@latest aure-frontend --typescript --tailwind --eslint --app
+
+# Instalar dependências adicionais
+npm install @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-label @radix-ui/react-select @radix-ui/react-slot @radix-ui/react-toast react-hook-form @hookform/resolvers zod zustand axios @tailwindcss/forms class-variance-authority clsx tailwind-merge lucide-react date-fns
+
+# Configurar Shadcn/ui
+npx shadcn-ui@latest init
+npx shadcn-ui@latest add button input label select dialog dropdown-menu toast card table
+```
+
+---
+
+## ✅ CHECKLIST DE ENTREGA
+
+### **Estrutura:**
+- [ ] Todas as pastas criadas conforme especificação
+- [ ] Nomenclatura 100% em português
+- [ ] Componentes organizados por categoria
+- [ ] Tipos TypeScript definidos
+
+### **Funcionalidades Core:**
+- [ ] Sistema de autenticação JWT completo
+- [ ] Proteção de rotas implementada
+- [ ] Validações em tempo real funcionando
+- [ ] Integração com API backend
+
+### **UI/UX:**
+- [ ] Design system implementado
+- [ ] Responsividade completa
+- [ ] Acessibilidade básica
+- [ ] Loading states em todas as ações
+
+### **Páginas Principais:**
+- [ ] Login/Registro funcionando
+- [ ] Dashboard com estatísticas
+- [ ] Sistema de convites completo
+- [ ] Gestão de usuários
+- [ ] Visualização de relacionamentos
+
+### **Qualidade:**
+- [ ] Código limpo (sem console.log)
+- [ ] Tratamento de erros
+- [ ] Validações robustas
+- [ ] Performance otimizada
+
+---
+
+## 🎯 RESULTADO FINAL ESPERADO
+
+Um frontend **completo, profissional e totalmente funcional** que:
+
+1. **Integre perfeitamente** com a API backend existente
+2. **Implemente todos os fluxos** do sistema Aure
+3. **Seja componentizado** e reutilizável
+4. **Use nomenclatura portuguesa** em todo o código
+5. **Seja responsivo** e acessível
+6. **Tenha alta qualidade** de código
+7. **Seja fácil de manter** e expandir
+
+**Este projeto deve estar pronto para produção imediatamente após a criação!**
+
+---
+
+## 🚨 OBSERVAÇÕES FINAIS
+
+- **NÃO usar mocks** - integrar diretamente com a API
+- **NÃO usar console.log** - usar logging adequado se necessário
+- **NÃO usar termos em inglês** - toda nomenclatura em português
+- **SIM componentizar tudo** - cada elemento deve ser um componente
+- **SIM seguir padrões** - código limpo e organizado
+- **SIM ser completo** - todos os fluxos implementados
+
+**Agora crie este frontend completo seguindo exatamente estas especificações!**
 - **UI Framework**: Tailwind CSS + shadcn/ui ou Mantine
 - **Icons**: Lucide React ou React Icons
 - **Tabelas**: TanStack Table v8

@@ -1,68 +1,177 @@
+# 🚀 Docker Compose - Sistema Aure
+# Configuração completa para desenvolvimento e produção
+# Data: 20/10/2025
+
 version: '3.8'
 
 services:
+  # 🗄️ Banco de Dados PostgreSQL
   postgres:
     image: postgres:15-alpine
     container_name: aure-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: aure_db
       POSTGRES_USER: aure_user
       POSTGRES_PASSWORD: aure_password
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - aure-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U aure_user -d aure_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
+  # 🔧 Redis (Cache e Sessions)
   redis:
     image: redis:7-alpine
     container_name: aure-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass aure_redis_password
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     networks:
       - aure-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # 🌐 API Backend .NET 8
   api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: aure-api
-    ports:
-      - "8080:8080"
-      - "8081:8081"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Docker
-      - ASPNETCORE_URLS=http://+:8080;https://+:8081
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=aure_db;Username=aure_user;Password=aure_password;Include Error Detail=true
-      - Redis__ConnectionString=redis:6379
-      - ASPNETCORE_HTTPS_PORTS=8081
-      - ASPNETCORE_HTTP_PORTS=8080
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - aure-network
+    environment:
+      # 🔗 Connection Strings
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=aure_db;Username=aure_user;Password=aure_password;Include Error Detail=true
+      - Redis__ConnectionString=redis:6379,password=aure_redis_password
+      
+      # 🔐 JWT Settings
+      - JwtSettings__SecretKey=aure-super-secret-key-for-jwt-token-generation-2025
+      - JwtSettings__Issuer=Aure.API
+      - JwtSettings__Audience=Aure.WebApp
+      - JwtSettings__ExpirationMinutes=60
+      
+      # 📧 Email Settings (Gmail SMTP)
+      - EmailSettings__SmtpHost=smtp.gmail.com
+      - EmailSettings__SmtpPort=587
+      - EmailSettings__UseSsl=false
+      - EmailSettings__Username=seu-email@gmail.com
+      - EmailSettings__Password=sua-senha-de-app
+      - EmailSettings__FromEmail=seu-email@gmail.com
+      - EmailSettings__FromName=Sistema Aure
+      - EmailSettings__BaseUrl=http://localhost:5203
+      
+      # 🛠️ Environment
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:5203
+      - TZ=America/Sao_Paulo
+      
+      # 📝 Logging
+      - Logging__LogLevel__Default=Information
+      - Logging__LogLevel__Microsoft.AspNetCore=Warning
+      - Logging__LogLevel__Microsoft.EntityFrameworkCore=Information
+      
+      # 🔍 Serilog
+      - Serilog__MinimumLevel__Default=Information
+      - Serilog__WriteTo__0__Name=Console
+      - Serilog__WriteTo__1__Name=File
+      - Serilog__WriteTo__1__Args__path=./logs/aure-.log
+      - Serilog__WriteTo__1__Args__rollingInterval=Day
+      - Serilog__WriteTo__1__Args__retainedFileCountLimit=30
+    ports:
+      - "5203:5203"
     volumes:
       - ./logs:/app/logs
-    restart: unless-stopped
+      - ./src/Aure.Infrastructure/Templates:/app/Templates:ro
+    networks:
+      - aure-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5203/swagger || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
 
+  # 📊 Adminer (Administração de Banco)
+  adminer:
+    image: adminer:latest
+    container_name: aure-adminer
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+      - ADMINER_DESIGN=dracula
+    networks:
+      - aure-network
+
+  # 🌐 Frontend React/Next.js (quando estiver pronto)
+  # frontend:
+  #   build:
+  #     context: ./aure-frontend
+  #     dockerfile: Dockerfile
+  #   container_name: aure-frontend
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - api
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=http://localhost:5203/api
+  #     - NODE_ENV=production
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - aure-network
+
+  # 🔄 Nginx (Reverse Proxy - Produção)
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: aure-nginx
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - api
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./nginx/ssl:/etc/nginx/ssl:ro
+  #   networks:
+  #     - aure-network
+
+# 📂 Volumes Persistentes
 volumes:
   postgres_data:
+    driver: local
+  
+  redis_data:
+    driver: local
 
+# 🌐 Networks
 networks:
   aure-network:
     driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

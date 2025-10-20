@@ -4663,11 +4663,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.API\\Aure.API.csproj",
+      "projectUniqueName": "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.API\\Aure.API.csproj",
       "projectName": "Aure.API",
-      "projectPath": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.API\\Aure.API.csproj",
+      "projectPath": "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.API\\Aure.API.csproj",
       "packagesPath": "C:\\Users\\gabriel\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.API\\obj\\",
+      "outputPath": "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.API\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -4688,11 +4688,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Application\\Aure.Application.csproj": {
-              "projectPath": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Application\\Aure.Application.csproj"
+            "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Application\\Aure.Application.csproj": {
+              "projectPath": "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Application\\Aure.Application.csproj"
             },
-            "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Infrastructure\\Aure.Infrastructure.csproj": {
-              "projectPath": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Infrastructure\\Aure.Infrastructure.csproj"
+            "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Infrastructure\\Aure.Infrastructure.csproj": {
+              "projectPath": "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.Infrastructure\\Aure.Infrastructure.csproj"
             }
           }
         }

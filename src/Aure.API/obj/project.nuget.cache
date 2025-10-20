@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "1puIBhL6Sdo=",
+  "dgSpecHash": "tnSzN9y6rx8=",
   "success": true,
-  "projectFilePath": "c:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.API\\Aure.API.csproj",
+  "projectFilePath": "C:\\Users\\gabriel\\source\\repos\\GabrielSelim\\Aure\\src\\Aure.API\\Aure.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\gabriel\\.nuget\\packages\\automapper\\13.0.1\\automapper.13.0.1.nupkg.sha512",
     "C:\\Users\\gabriel\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",

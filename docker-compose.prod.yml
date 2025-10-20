@@ -1,0 +1,282 @@
+# 🚀 Docker Compose - Produção
+# Configuração otimizada para ambiente de produção
+# Data: 20/10/2025
+
+version: '3.8'
+
+services:
+  # 🗄️ PostgreSQL Produção
+  postgres:
+    image: postgres:15-alpine
+    container_name: aure-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_DB: aure_db
+      POSTGRES_USER: aure_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "127.0.0.1:5432:5432"  # Bind apenas no localhost
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - aure-internal
+    secrets:
+      - postgres_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aure_user -d aure_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  # 🔧 Redis Produção
+  redis:
+    image: redis:7-alpine
+    container_name: aure-redis-prod
+    restart: always
+    command: redis-server --appendonly yes --requirepass-file /run/secrets/redis_password
+    ports:
+      - "127.0.0.1:6379:6379"  # Bind apenas no localhost
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - aure-internal
+    secrets:
+      - redis_password
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+
+  # 🌐 API Backend Produção
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: aure-api-prod
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # 🔗 Connection Strings
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=aure_db;Username=aure_user;Password_File=/run/secrets/postgres_password;Include Error Detail=false
+      - Redis__ConnectionString=redis:6379,password_file=/run/secrets/redis_password
+      
+      # 🔐 JWT Settings
+      - JwtSettings__SecretKey_File=/run/secrets/jwt_secret
+      - JwtSettings__Issuer=Aure.API
+      - JwtSettings__Audience=Aure.WebApp
+      - JwtSettings__ExpirationMinutes=60
+      
+      # 📧 Email Settings
+      - EmailSettings__SmtpHost=smtp.gmail.com
+      - EmailSettings__SmtpPort=587
+      - EmailSettings__UseSsl=false
+      - EmailSettings__Username_File=/run/secrets/email_username
+      - EmailSettings__Password_File=/run/secrets/email_password
+      - EmailSettings__FromEmail_File=/run/secrets/email_username
+      - EmailSettings__FromName=Sistema Aure
+      - EmailSettings__BaseUrl=https://aure.com.br
+      
+      # 🛠️ Environment
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5203
+      - TZ=America/Sao_Paulo
+      
+      # 📝 Logging
+      - Logging__LogLevel__Default=Warning
+      - Logging__LogLevel__Microsoft.AspNetCore=Error
+      - Logging__LogLevel__Microsoft.EntityFrameworkCore=Error
+      
+      # 🔍 Serilog
+      - Serilog__MinimumLevel__Default=Warning
+      - Serilog__WriteTo__0__Name=Console
+      - Serilog__WriteTo__1__Name=File
+      - Serilog__WriteTo__1__Args__path=./logs/aure-.log
+      - Serilog__WriteTo__1__Args__rollingInterval=Day
+      - Serilog__WriteTo__1__Args__retainedFileCountLimit=90
+    ports:
+      - "127.0.0.1:5203:5203"  # Bind apenas no localhost
+    volumes:
+      - ./logs:/app/logs
+      - ./src/Aure.Infrastructure/Templates:/app/Templates:ro
+    networks:
+      - aure-internal
+      - aure-external
+    secrets:
+      - postgres_password
+      - redis_password
+      - jwt_secret
+      - email_username
+      - email_password
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5203/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+
+  # 🌐 Frontend Produção
+  frontend:
+    build:
+      context: ./aure-frontend
+      dockerfile: Dockerfile.prod
+    container_name: aure-frontend-prod
+    restart: always
+    depends_on:
+      - api
+    environment:
+      - NEXT_PUBLIC_API_URL=https://api.aure.com.br/api
+      - NODE_ENV=production
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - aure-external
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # 🔄 Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: aure-nginx-prod
+    restart: always
+    depends_on:
+      - api
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    networks:
+      - aure-external
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # 📊 Monitoring - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: aure-prometheus
+    restart: always
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - aure-internal
+
+  # 📈 Monitoring - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: aure-grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD_FILE=/run/secrets/grafana_admin_password
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - aure-internal
+    secrets:
+      - grafana_admin_password
+
+# 🔐 Secrets para Produção
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  email_username:
+    file: ./secrets/email_username.txt
+  email_password:
+    file: ./secrets/email_password.txt
+  grafana_admin_password:
+    file: ./secrets/grafana_admin_password.txt
+
+# 📂 Volumes Persistentes
+volumes:
+  postgres_prod_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/aure/data/postgres
+  
+  redis_prod_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/aure/data/redis
+  
+  prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/aure/data/prometheus
+  
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/aure/data/grafana
+
+# 🌐 Networks
+networks:
+  aure-internal:
+    driver: bridge
+    internal: true
+    
+  aure-external:
+    driver: bridge

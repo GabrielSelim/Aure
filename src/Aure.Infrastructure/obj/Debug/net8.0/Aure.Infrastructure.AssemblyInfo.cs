@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Aure.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b4a12eebdd21f74dd15ab9670328ec00d1ace74b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+59d30eabe61e326009d266a2b37f0cc44912eaaf")]
 [assembly: System.Reflection.AssemblyProductAttribute("Aure.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Aure.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
