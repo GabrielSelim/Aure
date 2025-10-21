@@ -6759,3 +6759,13 @@ POSITION: 41
 2025-10-21 10:54:05.821 -03:00 [INF] Executed endpoint 'Aure.API.Controllers.AuditController.GetNotificacoes (Aure.API)'
 2025-10-21 10:54:05.822 -03:00 [INF] HTTP GET /api/Audit/notificacoes responded 400 in 34.5337 ms
 2025-10-21 10:54:05.823 -03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/api/Audit/notificacoes - 400 null application/json; charset=utf-8 35.9286ms
+2025-10-21 11:12:46.749 -03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/health - null null
+2025-10-21 11:12:46.753 -03:00 [INF] Executing endpoint 'Health checks'
+2025-10-21 11:12:46.802 -03:00 [INF] Executed endpoint 'Health checks'
+2025-10-21 11:12:46.803 -03:00 [INF] HTTP GET /health responded 200 in 51.0428 ms
+2025-10-21 11:12:46.804 -03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/health - 200 null text/plain 54.5281ms
+2025-10-21 11:12:46.868 -03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5203/favicon.ico - null null
+2025-10-21 11:12:46.870 -03:00 [INF] HTTP GET /favicon.ico responded 404 in 0.2764 ms
+2025-10-21 11:12:46.870 -03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5203/favicon.ico - 404 0 null 2.5317ms
+2025-10-21 11:12:46.871 -03:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:5203/favicon.ico, Response status code: 404
+2025-10-21 11:15:57.352 -03:00 [INF] Application is shutting down...
