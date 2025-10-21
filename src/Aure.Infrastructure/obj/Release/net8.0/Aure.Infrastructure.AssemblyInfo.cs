@@ -11,12 +11,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("Aure.Domain")]
-[assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("Aure.Infrastructure")]
+[assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3674e6a8c826ac14c1592f135d8f826561a60918")]
-[assembly: System.Reflection.AssemblyProductAttribute("Aure.Domain")]
-[assembly: System.Reflection.AssemblyTitleAttribute("Aure.Domain")]
+[assembly: System.Reflection.AssemblyProductAttribute("Aure.Infrastructure")]
+[assembly: System.Reflection.AssemblyTitleAttribute("Aure.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 
 // Gerado pela classe WriteCodeFragment do MSBuild.

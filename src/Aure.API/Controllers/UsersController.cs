@@ -51,24 +51,9 @@ public class UsersController : ControllerBase
         return userResult.IsSuccess ? userResult.Data?.CompanyId : null;
     }
 
-    // REMOVIDO: GET /api/users - Lista de usuários
-    // Para listar usuários, use:
-    // - GET /api/CompanyRelationships (relacionamentos da empresa)  
-    // - GET /api/UsersExtended/network (rede completa de usuários)
-    // - GET /api/UsersExtended/contracted-pjs (PJs contratados)
-
-    // REMOVIDO: GET /api/users/{id}
-    // Para buscar usuários específicos, use GET /api/CompanyRelationships/user/{id}
-    
-    // REMOVIDO: POST /api/users
-    // Para criar usuários, use o fluxo de convite:
-    // 1. POST /api/registration/invite (Admin convida usuário)
-    // 2. POST /api/registration/accept-invite/{token} (Usuário aceita e define senha)
-
     /// <summary>
     /// Usuário atualiza seus próprios dados (nome, email)
     /// </summary>
-    [HttpPut("profile")]
     [HttpPut("perfil")]
     [Authorize]
     public async Task<IActionResult> UpdateOwnProfile([FromBody] UpdateUserRequest request)
@@ -81,7 +66,7 @@ public class UsersController : ControllerBase
         var currentUserId = GetCurrentUserId();
         if (currentUserId == Guid.Empty)
         {
-            _logger.LogWarning("Invalid user ID from token");
+            _logger.LogWarning("ID de usuário inválido do token");
             return BadRequest(new { Erro = "Autenticação de usuário inválida" });
         }
 
@@ -89,18 +74,17 @@ public class UsersController : ControllerBase
         
         if (result.IsFailure)
         {
-            _logger.LogError("Failed to update profile for user {UserId}: {Error}", currentUserId, result.Error);
+            _logger.LogError("Falha ao atualizar perfil do usuário {UserId}: {Error}", currentUserId, result.Error);
             return BadRequest(new { Erro = result.Error });
         }
 
-        _logger.LogInformation("Profile updated successfully for user {UserId}", currentUserId);
+        _logger.LogInformation("Perfil atualizado com sucesso para o usuário {UserId}", currentUserId);
         return Ok(result.Data);
     }
 
     /// <summary>
     /// Usuário troca sua própria senha
     /// </summary>
-    [HttpPatch("password")]
     [HttpPatch("senha")]
     [Authorize]
     public async Task<IActionResult> ChangeOwnPassword([FromBody] ChangePasswordRequest request)
@@ -113,7 +97,7 @@ public class UsersController : ControllerBase
         var currentUserId = GetCurrentUserId();
         if (currentUserId == Guid.Empty)
         {
-            _logger.LogWarning("Invalid user ID from token");
+            _logger.LogWarning("ID de usuário inválido do token");
             return BadRequest(new { Erro = "Autenticação de usuário inválida" });
         }
 
@@ -121,11 +105,11 @@ public class UsersController : ControllerBase
         
         if (result.IsFailure)
         {
-            _logger.LogError("Failed to change password for user {UserId}: {Error}", currentUserId, result.Error);
+            _logger.LogError("Falha ao trocar senha do usuário {UserId}: {Error}", currentUserId, result.Error);
             return BadRequest(new { Erro = result.Error });
         }
 
-        _logger.LogInformation("Password changed successfully for user {UserId}", currentUserId);
+        _logger.LogInformation("Senha trocada com sucesso para o usuário {UserId}", currentUserId);
         return NoContent();
     }
 }
