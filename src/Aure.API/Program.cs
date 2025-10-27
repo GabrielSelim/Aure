@@ -1,6 +1,8 @@
 using Aure.API.Extensions;
 using Aure.API.Filters;
+using Aure.Application.Interfaces;
 using Aure.Infrastructure.Data;
+using Hangfire;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -73,6 +75,11 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docke
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Aure API V1");
         c.RoutePrefix = string.Empty;
     });
+    
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[] { new HangfireAuthorizationFilter() }
+    });
 }
 
 app.UseSerilogRequestLogging();
@@ -86,6 +93,13 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+// Configurar jobs recorrentes do Hangfire
+using (var scope = app.Services.CreateScope())
+{
+    var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+    await notificationService.ScheduleRecurringNotificationsAsync();
+}
 
 try
 {

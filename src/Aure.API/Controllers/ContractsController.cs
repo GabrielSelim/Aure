@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Aure.Domain.Interfaces;
 using Aure.Domain.Entities;
 using Aure.Domain.Enums;
+using Aure.Application.Interfaces;
 using System.Security.Claims;
 
 namespace Aure.API.Controllers;
@@ -13,11 +14,16 @@ namespace Aure.API.Controllers;
 public class ContractsController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<ContractsController> _logger;
 
-    public ContractsController(IUnitOfWork unitOfWork, ILogger<ContractsController> logger)
+    public ContractsController(
+        IUnitOfWork unitOfWork, 
+        INotificationService notificationService,
+        ILogger<ContractsController> logger)
     {
         _unitOfWork = unitOfWork;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -392,6 +398,9 @@ public class ContractsController : ControllerBase
 
             _logger.LogInformation("Contrato {ContractId} criado pela empresa {CompanyId}", contract.Id, user.CompanyId);
 
+            // Enviar notificação para funcionário PJ sobre novo contrato
+            _ = Task.Run(async () => await _notificationService.SendContractCreatedToPJAsync(contract.Id));
+
             return CreatedAtAction(nameof(GetContract), new { id = contract.Id }, new
             {
                 Id = contract.Id,
@@ -462,6 +471,12 @@ public class ContractsController : ControllerBase
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation("Contrato {ContractId} assinado pelo usuário {UserId}", id, userId);
+
+            // Enviar notificação para gestores sobre contrato assinado
+            if (isFullySigned)
+            {
+                _ = Task.Run(async () => await _notificationService.SendContractSignedToManagersAsync(id));
+            }
 
             return Ok(new
             {

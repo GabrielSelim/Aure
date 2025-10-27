@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Aure.Domain.Interfaces;
 using Aure.Domain.Entities;
 using Aure.Domain.Enums;
+using Aure.Application.Interfaces;
 using System.Security.Claims;
 
 namespace Aure.API.Controllers;
@@ -14,11 +15,13 @@ public class PaymentsController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<PaymentsController> _logger;
+    private readonly INotificationService _notificationService;
 
-    public PaymentsController(IUnitOfWork unitOfWork, ILogger<PaymentsController> logger)
+    public PaymentsController(IUnitOfWork unitOfWork, ILogger<PaymentsController> logger, INotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -322,6 +325,9 @@ public class PaymentsController : ControllerBase
             payment.ProcessPayment();
             await _unitOfWork.Payments.UpdateAsync(payment);
             await _unitOfWork.SaveChangesAsync();
+
+            await _notificationService.SendPaymentNotificationToPJAsync(id);
+            await _notificationService.SendPaymentProcessedToManagersAsync(id);
 
             _logger.LogInformation("Pagamento {PaymentId} processado pela empresa {CompanyId}", id, user.CompanyId);
 

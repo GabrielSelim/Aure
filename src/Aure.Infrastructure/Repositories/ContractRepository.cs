@@ -86,4 +86,14 @@ public class ContractRepository : BaseRepository<Contract>, IContractRepository
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Contract>> GetActiveContractsAsync()
+    {
+        return await _dbSet
+            .Where(x => x.Status == ContractStatus.Active && x.ExpirationDate.HasValue)
+            .Include(x => x.Client)
+            .Include(x => x.Provider)
+            .OrderBy(x => x.ExpirationDate)
+            .ToListAsync();
+    }
 }

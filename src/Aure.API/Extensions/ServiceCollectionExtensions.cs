@@ -5,6 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Serilog;
 using FluentValidation;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Aure.Infrastructure.Data;
 using Aure.Domain.Interfaces;
 using Aure.Infrastructure.Repositories;
@@ -50,6 +52,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICnpjValidationService, CnpjValidationService>();
         services.AddScoped<ISefazService, SefazService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<INotificationTemplateService, NotificationTemplateService>();
 
         // Configurações
         services.Configure<SefazSettings>(configuration.GetSection("SefazSettings"));
@@ -74,6 +78,20 @@ public static class ServiceCollectionExtensions
         // Health Checks básicos
         services.AddHealthChecks()
             .AddDbContextCheck<AureDbContext>("database");
+
+        services.AddHangfire(config =>
+        {
+            config.UsePostgreSqlStorage(c => c.UseNpgsqlConnection(configuration.GetConnectionString("DefaultConnection")));
+            config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180);
+            config.UseSimpleAssemblyNameTypeSerializer();
+            config.UseRecommendedSerializerSettings();
+        });
+
+        services.AddHangfireServer(options =>
+        {
+            options.WorkerCount = 2;
+            options.Queues = new[] { "notificacoes", "contratos", "pagamentos", "default" };
+        });
 
         services.AddAutoMapper(typeof(ApplicationMappingProfile));
 

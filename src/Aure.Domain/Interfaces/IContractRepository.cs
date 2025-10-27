@@ -17,4 +17,5 @@ public interface IContractRepository
     Task DeleteAsync(Guid id);
     Task<bool> ExistsAsync(Guid id);
     Task<decimal> GetTotalValueByCompanyAsync(Guid companyId);
+    Task<IEnumerable<Contract>> GetActiveContractsAsync();
 }

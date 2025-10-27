@@ -159,9 +159,11 @@ public class SefazService : ISefazService
         try
         {
             // Implementação simplificada - na prática você usaria uma biblioteca como ACBr.Net.NFe
-            var xml = new StringBuilder();
-            xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-            xml.AppendLine($"<NFe xmlns=\"http://www.portalfiscal.inf.br/nfe\">");
+            return await Task.Run(() =>
+            {
+                var xml = new StringBuilder();
+                xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                xml.AppendLine($"<NFe xmlns=\"http://www.portalfiscal.inf.br/nfe\">");
             xml.AppendLine("  <infNFe versao=\"4.00\">");
             xml.AppendLine($"    <ide>");
             xml.AppendLine($"      <cUF>35</cUF>"); // São Paulo
@@ -210,17 +212,18 @@ public class SefazService : ISefazService
             xml.AppendLine($"        <vDesc>0.00</vDesc>");
             xml.AppendLine($"        <vII>0.00</vII>");
             xml.AppendLine($"        <vIPI>0.00</vIPI>");
-            xml.AppendLine($"        <vPIS>0.00</vPIS>");
-            xml.AppendLine($"        <vCOFINS>0.00</vCOFINS>");
-            xml.AppendLine($"        <vOutro>0.00</vOutro>");
-            xml.AppendLine($"        <vNF>{invoice.TotalAmount:F2}</vNF>");
-            xml.AppendLine($"      </ICMSTot>");
-            xml.AppendLine($"    </total>");
+                xml.AppendLine($"        <vPIS>0.00</vPIS>");
+                xml.AppendLine($"        <vCOFINS>0.00</vCOFINS>");
+                xml.AppendLine($"        <vOutro>0.00</vOutro>");
+                xml.AppendLine($"        <vNF>{invoice.TotalAmount:F2}</vNF>");
+                xml.AppendLine($"      </ICMSTot>");
+                xml.AppendLine($"    </total>");
 
-            xml.AppendLine("  </infNFe>");
-            xml.AppendLine("</NFe>");
+                xml.AppendLine("  </infNFe>");
+                xml.AppendLine("</NFe>");
 
-            return xml.ToString();
+                return xml.ToString();
+            });
         }
         catch (Exception ex)
         {
