@@ -197,7 +197,7 @@ public class InvoicesController : ControllerBase
     /// </summary>
     [HttpPost]
     [HttpPost("criar")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai,Financeiro")]
     public async Task<IActionResult> CreateInvoice([FromBody] CreateInvoiceRequest request)
     {
         try
@@ -278,7 +278,7 @@ public class InvoicesController : ControllerBase
     /// Emitir uma nota fiscal (enviar para SEFAZ)
     /// </summary>
     [HttpPut("{id:guid}/emitir")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai,Financeiro")]
     public async Task<IActionResult> IssueInvoice(Guid id)
     {
         try
@@ -348,7 +348,7 @@ public class InvoicesController : ControllerBase
     /// Cancelar uma nota fiscal
     /// </summary>
     [HttpPost("{id:guid}/cancelar")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai,Financeiro")]
     public async Task<IActionResult> CancelInvoice(Guid id, [FromBody] CancelInvoiceRequest request)
     {
         try

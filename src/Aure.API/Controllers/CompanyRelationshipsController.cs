@@ -378,7 +378,7 @@ public class CompanyRelationshipsController : ControllerBase
     /// Ativar relacionamento com PJ (apenas Admin/Company)
     /// </summary>
     [HttpPut("{relationshipId:guid}/ativar")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai,Financeiro")]
     public async Task<IActionResult> AtivarRelacionamento(Guid relationshipId)
     {
         try
@@ -439,7 +439,7 @@ public class CompanyRelationshipsController : ControllerBase
     /// Desativar relacionamento com PJ (apenas Admin/Company)
     /// </summary>
     [HttpPut("{relationshipId:guid}/desativar")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai,Financeiro")]
     public async Task<IActionResult> DesativarRelacionamento(Guid relationshipId)
     {
         try
@@ -532,7 +532,7 @@ public class CompanyRelationshipsController : ControllerBase
             }
 
             // Aplicar regras de segurança para PJs
-            if (currentUser.Role == Domain.Enums.UserRole.Provider)
+            if (currentUser.Role == Domain.Enums.UserRole.FuncionarioPJ)
             {
                 // PJs só podem ver relacionamentos onde eles são o provedor
                 if (relationship.ProviderCompanyId != currentUser.CompanyId)
@@ -557,12 +557,12 @@ public class CompanyRelationshipsController : ControllerBase
             var filteredClientUsers = clientUsers.AsEnumerable();
             var filteredProviderUsers = providerUsers.AsEnumerable();
 
-            if (currentUser.Role == Domain.Enums.UserRole.Provider)
+            if (currentUser.Role == Domain.Enums.UserRole.FuncionarioPJ)
             {
-                // PJs só podem ver contatos principais (Admin/Company) da empresa contratante
+                // PJs só podem ver contatos principais (DonoEmpresaPai/Financeiro) da empresa contratante
                 filteredClientUsers = clientUsers.Where(u => 
-                    u.Role == Domain.Enums.UserRole.Admin || 
-                    u.Role == Domain.Enums.UserRole.Company);
+                    u.Role == Domain.Enums.UserRole.DonoEmpresaPai || 
+                    u.Role == Domain.Enums.UserRole.Financeiro);
             }
 
             var result = new

@@ -43,7 +43,7 @@ public class RegistrationController : ControllerBase
     }
 
     [HttpPost("convidar-usuario")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> ConvidarUsuario([FromBody] InviteUserRequest request)
     {
         if (!ModelState.IsValid)
@@ -85,7 +85,7 @@ public class RegistrationController : ControllerBase
     }
 
     [HttpGet("convites")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> ObterConvitesPendentes()
     {
         var currentUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
@@ -119,7 +119,7 @@ public class RegistrationController : ControllerBase
     }
 
     [HttpPost("cancelar-convite/{inviteId}")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> CancelarConvite(Guid inviteId)
     {
         var currentUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);

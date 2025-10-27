@@ -155,7 +155,7 @@ public class PaymentsController : ControllerBase
     /// Criar um novo pagamento
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentRequest request)
     {
         try
@@ -224,6 +224,7 @@ public class PaymentsController : ControllerBase
     /// Obter resumo financeiro dos pagamentos
     /// </summary>
     [HttpGet("resumo-financeiro")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> GetResumoFinanceiro()
     {
         try
@@ -278,7 +279,7 @@ public class PaymentsController : ControllerBase
     /// Processar um pagamento (marcar como pago)
     /// </summary>
     [HttpPut("{id:guid}/processar")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> ProcessarPagamento(Guid id)
     {
         try
@@ -344,7 +345,7 @@ public class PaymentsController : ControllerBase
     /// Cancelar um pagamento
     /// </summary>
     [HttpPut("{id:guid}/cancelar")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> CancelarPagamento(Guid id)
     {
         try

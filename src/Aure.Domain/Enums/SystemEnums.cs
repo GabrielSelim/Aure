@@ -2,9 +2,11 @@ namespace Aure.Domain.Enums;
 
 public enum UserRole
 {
-    Admin = 1,
-    Company = 2,
-    Provider = 3
+    DonoEmpresaPai = 1,    // Dono com todos os privilégios (pagamentos + operacional)
+    Financeiro = 2,        // Gestão financeira e operacional (sem autorizar pagamentos)
+    Juridico = 3,          // Contratos e documentação legal (sem dados financeiros sensíveis)
+    FuncionarioCLT = 4,    // Funcionário com carteira assinada
+    FuncionarioPJ = 5      // Prestador de serviço (Pessoa Jurídica)
 }
 
 public enum CompanyType

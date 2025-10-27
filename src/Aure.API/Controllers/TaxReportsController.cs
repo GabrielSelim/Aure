@@ -24,7 +24,7 @@ public class TaxReportsController : ControllerBase
     /// Obter relatório de impostos por período
     /// </summary>
     [HttpGet("impostos")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> GetRelatorioImpostos(
         [FromQuery] DateTime startDate,
         [FromQuery] DateTime endDate,
@@ -121,7 +121,7 @@ public class TaxReportsController : ControllerBase
     /// Obter livro de registro de saídas
     /// </summary>
     [HttpGet("livro-saidas")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> GetLivroSaidas(
         [FromQuery] DateTime startDate,
         [FromQuery] DateTime endDate)
@@ -197,7 +197,7 @@ public class TaxReportsController : ControllerBase
     /// Obter dados para SPED Fiscal
     /// </summary>
     [HttpGet("sped-fiscal")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> GetSpedFiscalData(
         [FromQuery] DateTime startDate,
         [FromQuery] DateTime endDate)
@@ -302,7 +302,7 @@ public class TaxReportsController : ControllerBase
     /// Obter conciliação contábil
     /// </summary>
     [HttpGet("conciliacao-contabil")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> GetConciliacaoContabil(
         [FromQuery] DateTime startDate,
         [FromQuery] DateTime endDate)

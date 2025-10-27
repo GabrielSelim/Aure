@@ -24,7 +24,7 @@ public class TokenizedAssetsController : ControllerBase
     /// Tokenizar um contrato na blockchain
     /// </summary>
     [HttpPost("tokenizar")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> TokenizeContract([FromBody] TokenizeContractRequest request)
     {
         try
@@ -212,7 +212,7 @@ public class TokenizedAssetsController : ControllerBase
     /// </summary>
     [HttpPut("{id:guid}")]
     [HttpPut("{id:guid}/atualizar")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> UpdateTokenizedAsset(Guid id, [FromBody] UpdateTokenizedAssetRequest request)
     {
         try

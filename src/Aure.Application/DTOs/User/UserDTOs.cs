@@ -55,7 +55,7 @@ public record RegisterCompanyAdminRequest(
 public record InviteUserRequest(
     string Name,
     string Email,
-    UserRole? Role,                    // Opcional - será Provider para ContractedPJ
+    UserRole? Role,                    // Opcional - será FuncionarioPJ para ContractedPJ
     InviteType InviteType,
     string? CompanyName = null,         // Para PJ contratado
     string? Cnpj = null,               // Para PJ contratado

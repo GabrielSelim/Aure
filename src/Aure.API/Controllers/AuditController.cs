@@ -24,7 +24,7 @@ public class AuditController : ControllerBase
     /// Obter logs de auditoria
     /// </summary>
     [HttpGet("logs")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> GetAuditLogs(
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null,
@@ -80,7 +80,7 @@ public class AuditController : ControllerBase
     /// Obter registros KYC da empresa
     /// </summary>
     [HttpGet("kyc")]
-    [Authorize(Roles = "Admin,Company")]
+    [Authorize(Roles = "DonoEmpresaPai,Financeiro,Juridico")]
     public async Task<IActionResult> GetKycRecords([FromQuery] string? status = null)
     {
         try
@@ -133,7 +133,7 @@ public class AuditController : ControllerBase
     /// Obter relatório de compliance
     /// </summary>
     [HttpGet("relatorio-compliance")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "DonoEmpresaPai")]
     public async Task<IActionResult> GetRelatorioCompliance(
         [FromQuery] DateTime startDate,
         [FromQuery] DateTime endDate)

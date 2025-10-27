@@ -240,9 +240,9 @@ public class UserService : IUserService
         var company = new Company(request.CompanyName, formattedCnpj, request.CompanyType, request.BusinessModel);
         await _unitOfWork.Companies.AddAsync(company);
 
-        // Criar usuário admin
+        // Criar usuário dono da empresa pai
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        var user = new User(request.Name, request.Email, passwordHash, UserRole.Admin, company.Id);
+        var user = new User(request.Name, request.Email, passwordHash, UserRole.DonoEmpresaPai, company.Id);
 
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
@@ -310,8 +310,8 @@ public class UserService : IUserService
 
         // Definir role baseado no tipo de convite
         var userRole = request.InviteType == InviteType.ContractedPJ 
-            ? UserRole.Provider 
-            : request.Role ?? UserRole.Provider;
+            ? UserRole.FuncionarioPJ 
+            : request.Role ?? UserRole.FuncionarioCLT;
 
         // Criar convite
         var invite = new UserInvite(

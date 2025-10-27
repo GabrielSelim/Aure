@@ -74,11 +74,11 @@ public class UsersExtendedController : ControllerBase
 
             // REGRAS DE SEGURANÇA BASEADAS NO ROLE:
             
-            if (currentUser.Role == UserRole.Provider)
+            if (currentUser.Role == UserRole.FuncionarioPJ)
             {
-                // PJs (Providers) têm acesso MUITO limitado:
+                // PJs (FuncionarioPJ) têm acesso MUITO limitado:
                 // 1. Apenas a si mesmos
-                // 2. Apenas contatos Admin/Company da empresa que os contratou (não outros funcionários)
+                // 2. Apenas contatos DonoEmpresaPai/Financeiro da empresa que os contratou (não outros funcionários)
                 
                 // Adicionar o próprio usuário
                 networkUsers.Add(new
@@ -102,9 +102,9 @@ public class UsersExtendedController : ControllerBase
 
                 foreach (var contract in activeContracts)
                 {
-                    // Buscar apenas usuários Admin/Company da empresa contratante
+                    // Buscar apenas usuários DonoEmpresaPai/Financeiro da empresa contratante
                     var clientUsers = await _unitOfWork.Users.GetByCompanyIdAsync(contract.ClientCompanyId);
-                    var contactUsers = clientUsers.Where(u => u.Role == UserRole.Admin || u.Role == UserRole.Company);
+                    var contactUsers = clientUsers.Where(u => u.Role == UserRole.DonoEmpresaPai || u.Role == UserRole.Financeiro);
 
                     foreach (var user in contactUsers)
                     {
@@ -191,7 +191,7 @@ public class UsersExtendedController : ControllerBase
                 UsuariosEmpresasRelacionadas = networkUsers.Count(u => !(bool)(u.GetType().GetProperty("EhFuncionarioDireto")?.GetValue(u) ?? false)),
                 Usuarios = networkUsers,
                 FuncaoUsuario = currentUser.Role.ToString(),
-                NotaSeguranca = currentUser.Role == UserRole.Provider ? "Acesso limitado - PJ pode ver apenas a si mesmo e contatos da empresa contratante" : "Acesso completo à rede"
+                NotaSeguranca = currentUser.Role == UserRole.FuncionarioPJ ? "Acesso limitado - PJ pode ver apenas a si mesmo e contatos da empresa contratante" : "Acesso completo à rede"
             });
         }
         catch (Exception ex)
@@ -347,11 +347,11 @@ public class UsersExtendedController : ControllerBase
 
             // REGRAS DE SEGURANÇA BASEADAS NO ROLE:
 
-            if (currentUser.Role == UserRole.Provider)
+            if (currentUser.Role == UserRole.FuncionarioPJ)
             {
                 // PJs só podem ver:
                 // 1. A si mesmos
-                // 2. Contatos Admin/Company das empresas que os contrataram
+                // 2. Contatos DonoEmpresaPai/Financeiro das empresas que os contrataram
                 
                 // Verificar se está tentando ver a si mesmo
                 if (userId == currentUserId)
@@ -385,10 +385,10 @@ public class UsersExtendedController : ControllerBase
                     return Forbid("Acesso negado: Você só pode visualizar seus próprios dados e contatos das empresas que o contrataram");
                 }
 
-                // Verificar se o usuário solicitado é Admin ou Company da empresa contratante
-                if (user.Role != UserRole.Admin && user.Role != UserRole.Company)
+                // Verificar se o usuário solicitado é DonoEmpresaPai ou Financeiro da empresa contratante
+                if (user.Role != UserRole.DonoEmpresaPai && user.Role != UserRole.Financeiro)
                 {
-                    return Forbid("Acesso negado: PJs só podem ver contatos principais (Admin/Company) das empresas contratantes");
+                    return Forbid("Acesso negado: PJs só podem ver contatos principais (DonoEmpresaPai/Financeiro) das empresas contratantes");
                 }
 
                 var userCompany = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
