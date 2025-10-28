@@ -68,6 +68,12 @@ public class UserInvite : BaseEntity
         IsAccepted = true;
     }
 
+    public void RegenerateToken(int expirationHours = 168)
+    {
+        Token = GenerateInviteToken();
+        ExpiresAt = DateTime.UtcNow.AddHours(expirationHours);
+    }
+
     private static string GenerateInviteToken()
     {
         return Convert.ToBase64String(Guid.NewGuid().ToByteArray())

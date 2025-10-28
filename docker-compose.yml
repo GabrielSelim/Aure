@@ -74,9 +74,9 @@ services:
       - EmailSettings__SmtpHost=smtp.gmail.com
       - EmailSettings__SmtpPort=587
       - EmailSettings__UseSsl=false
-      - EmailSettings__Username=seu-email@gmail.com
-      - EmailSettings__Password=sua-senha-de-app
-      - EmailSettings__FromEmail=seu-email@gmail.com
+      - EmailSettings__Username=aurecontroll@gmail.com
+      - EmailSettings__Password=wotorcxxfepwxvvu
+      - EmailSettings__FromEmail=aurecontroll@gmail.com
       - EmailSettings__FromName=Sistema Aure
       - EmailSettings__BaseUrl=http://localhost:5203
       

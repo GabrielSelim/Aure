@@ -1,71 +1,157 @@
+using System.ComponentModel;
+
 namespace Aure.Domain.Enums;
 
+/// <summary>
+/// Hierarquia de permissões no sistema
+/// </summary>
 public enum UserRole
 {
-    DonoEmpresaPai = 1,    // Dono com todos os privilégios (pagamentos + operacional)
-    Financeiro = 2,        // Gestão financeira e operacional (sem autorizar pagamentos)
-    Juridico = 3,          // Contratos e documentação legal (sem dados financeiros sensíveis)
-    FuncionarioCLT = 4,    // Funcionário com carteira assinada
-    FuncionarioPJ = 5      // Prestador de serviço (Pessoa Jurídica)
+    [Description("Dono da Empresa Pai - Todos os privilégios (pagamentos + operacional)")]
+    DonoEmpresaPai = 1,
+    
+    [Description("Financeiro - Gestão financeira e operacional (sem autorizar pagamentos)")]
+    Financeiro = 2,
+    
+    [Description("Jurídico - Contratos e documentação legal (sem dados financeiros sensíveis)")]
+    Juridico = 3,
+    
+    [Description("Funcionário CLT - Funcionário com carteira assinada")]
+    FuncionarioCLT = 4,
+    
+    [Description("Funcionário PJ - Prestador de serviço (Pessoa Jurídica)")]
+    FuncionarioPJ = 5
 }
 
+/// <summary>
+/// Tipo de empresa no sistema
+/// </summary>
 public enum CompanyType
 {
+    [Description("Cliente - Empresa que contrata serviços")]
     Client = 1,
+    
+    [Description("Fornecedor/Prestador - Empresa que presta serviços")]
     Provider = 2,
+    
+    [Description("Ambos - Empresa que atua como cliente e fornecedor")]
     Both = 3
 }
 
+/// <summary>
+/// Modelo de negócio da empresa
+/// </summary>
 public enum BusinessModel
 {
-    Standard = 1,         // Empresa padrão
-    MainCompany = 2,      // Empresa que contrata PJs
-    ContractedPJ = 3,     // PJ contratado
-    Freelancer = 4        // Freelancer individual
+    [Description("Padrão - Empresa comum")]
+    Standard = 1,
+    
+    [Description("Empresa Principal - Empresa que contrata PJs")]
+    MainCompany = 2,
+    
+    [Description("PJ Contratado - Pessoa Jurídica contratada por outra empresa")]
+    ContractedPJ = 3,
+    
+    [Description("Freelancer - Profissional autônomo individual")]
+    Freelancer = 4
 }
 
+/// <summary>
+/// Tipo de convite para novos usuários
+/// </summary>
 public enum InviteType
 {
-    Employee = 0,          // Funcionário interno da empresa
-    ContractedPJ = 1,      // PJ contratado que terá sua própria empresa criada  
-    ExternalUser = 2       // Usuário externo para acesso específico
+    [Description("Funcionário Interno - Usuário interno da empresa (Financeiro/Jurídico)")]
+    Internal = 0,
+    
+    [Description("PJ Contratado - Pessoa Jurídica que terá empresa criada automaticamente")]
+    ContractedPJ = 1,
+    
+    [Description("Usuário Externo - Acesso específico para usuário externo")]
+    ExternalUser = 2
 }
 
+/// <summary>
+/// Status de verificação KYC (Know Your Customer)
+/// </summary>
 public enum KycStatus
 {
+    [Description("Pendente - Aguardando verificação")]
     Pending = 1,
+    
+    [Description("Aprovado - Verificação concluída com sucesso")]
     Approved = 2,
+    
+    [Description("Rejeitado - Verificação falhou")]
     Rejected = 3
 }
 
+/// <summary>
+/// Status do contrato
+/// </summary>
 public enum ContractStatus
 {
+    [Description("Rascunho - Contrato em elaboração")]
     Draft = 1,
+    
+    [Description("Ativo - Contrato em vigência")]
     Active = 2,
+    
+    [Description("Concluído - Contrato finalizado")]
     Completed = 3,
+    
+    [Description("Cancelado - Contrato cancelado antes da conclusão")]
     Cancelled = 4
 }
 
+/// <summary>
+/// Status do pagamento
+/// </summary>
 public enum PaymentStatus
 {
+    [Description("Pendente - Aguardando processamento")]
     Pending = 1,
+    
+    [Description("Completado - Pagamento processado com sucesso")]
     Completed = 2,
+    
+    [Description("Falhou - Erro no processamento")]
     Failed = 3,
+    
+    [Description("Cancelado - Pagamento cancelado")]
     Cancelled = 4
 }
 
+/// <summary>
+/// Método de pagamento
+/// </summary>
 public enum PaymentMethod
 {
+    [Description("PIX - Pagamento instantâneo")]
     PIX = 1,
+    
+    [Description("TED - Transferência Eletrônica Disponível")]
     TED = 2,
+    
+    [Description("Cartão de Crédito")]
     CreditCard = 3,
+    
+    [Description("Boleto Bancário")]
     Boleto = 4
 }
 
+/// <summary>
+/// Método de assinatura de contrato
+/// </summary>
 public enum SignatureMethod
 {
+    [Description("Digital - Assinatura digital com certificado")]
     Digital = 1,
+    
+    [Description("Eletrônica - Assinatura eletrônica simples")]
     Electronic = 2,
+    
+    [Description("Manual - Assinatura física em papel")]
     Manual = 3
 }
 

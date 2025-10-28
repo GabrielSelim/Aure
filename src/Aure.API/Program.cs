@@ -55,6 +55,9 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
     
+    // Habilitar anotações do Swagger
+    c.EnableAnnotations();
+    
     // Configuração para mostrar enums como strings no Swagger
     c.SchemaFilter<EnumSchemaFilter>();
     

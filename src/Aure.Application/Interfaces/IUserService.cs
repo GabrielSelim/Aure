@@ -20,6 +20,7 @@ public interface IUserService
     Task<Result<UserResponse>> RegisterCompanyAdminAsync(RegisterCompanyAdminRequest request);
     Task<Result<InviteResponse>> InviteUserAsync(InviteUserRequest request, Guid currentUserId, string currentUserRole);
     Task<Result<UserResponse>> AcceptInviteAsync(string inviteToken, AcceptInviteRequest request);
+    Task<Result<InviteResponse>> ResendInviteEmailAsync(Guid inviteId, Guid currentUserId);
     
     // Company-filtered methods
     Task<Result<IEnumerable<UserResponse>>> GetAllByCompanyAsync(Guid companyId);

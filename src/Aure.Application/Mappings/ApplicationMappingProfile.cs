@@ -26,6 +26,8 @@ public class ApplicationMappingProfile : Profile
 
         CreateMap<Payment, PaymentResponse>();
         CreateMap<CreatePaymentRequest, Payment>();
+
+        CreateMap<UserInvite, InviteResponse>();
     }
 
     private static string GenerateContractHash(CreateContractRequest request)

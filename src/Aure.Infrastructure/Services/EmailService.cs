@@ -50,11 +50,15 @@ public class EmailService : IEmailService
                 ? MailKit.Security.SecureSocketOptions.StartTls 
                 : (_emailSettings.UseSsl ? MailKit.Security.SecureSocketOptions.SslOnConnect : MailKit.Security.SecureSocketOptions.None);
             
+            _logger.LogInformation("Conectando ao SMTP: {Host}:{Port} com {Options}", _emailSettings.SmtpHost, _emailSettings.SmtpPort, secureSocketOptions);
             await client.ConnectAsync(_emailSettings.SmtpHost, _emailSettings.SmtpPort, secureSocketOptions);
+            _logger.LogInformation("Conexão estabelecida. Iniciando autenticação...");
             
             if (!string.IsNullOrEmpty(_emailSettings.Username) && !string.IsNullOrEmpty(_emailSettings.Password))
             {
+                _logger.LogInformation("Autenticando com usuário: {Username}, Senha tem {Length} caracteres", _emailSettings.Username, _emailSettings.Password?.Length ?? 0);
                 await client.AuthenticateAsync(_emailSettings.Username, _emailSettings.Password);
+                _logger.LogInformation("Autenticação bem-sucedida!");
             }
 
             await client.SendAsync(message);

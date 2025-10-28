@@ -10,7 +10,49 @@ Testar completamente o sistema de notificações automáticas implementado, incl
 
 ---
 
-## 🚀 1. Preparação do Ambiente
+## � Valores Aceitos nos Enums (IMPORTANTE!)
+
+### CompanyType (Tipo de Empresa)
+- `Client` - Empresa cliente que contrata serviços
+- `Provider` - Empresa fornecedora/prestadora de serviços  
+- `Both` - Empresa que atua como cliente e fornecedor
+
+### BusinessModel (Modelo de Negócio)
+- `Standard` - Empresa padrão/comum
+- `MainCompany` - Empresa principal que contrata PJs
+- `ContractedPJ` - Pessoa Jurídica contratada
+- `Freelancer` - Profissional autônomo individual
+
+### UserRole (Papel do Usuário)
+- `DonoEmpresaPai` - Dono com todos os privilégios
+- `Financeiro` - Gestão financeira (sem autorizar pagamentos)
+- `Juridico` - Contratos e documentação legal
+- `FuncionarioCLT` - Funcionário com carteira assinada
+- `FuncionarioPJ` - Prestador de serviço PJ
+
+### InviteType (Tipo de Convite)
+- `Internal` - Usuário interno (Financeiro/Jurídico)
+- `ContractedPJ` - PJ contratado (cria empresa automaticamente)
+- `ExternalUser` - Usuário externo
+
+### PaymentMethod (Método de Pagamento)
+- `PIX` - Pagamento instantâneo
+- `TED` - Transferência eletrônica
+- `CreditCard` - Cartão de crédito
+- `Boleto` - Boleto bancário
+
+### SignatureMethod (Método de Assinatura)
+- `Digital` - Assinatura digital com certificado
+- `Electronic` - Assinatura eletrônica simples
+- `Manual` - Assinatura física em papel
+
+**⚠️ ATENÇÃO:**
+- CNPJs devem ser enviados **apenas com números** (14 dígitos)
+- Exemplo: `47960950000121` (não `47.960.950/0001-21`)
+
+---
+
+## �🚀 1. Preparação do Ambiente
 
 ### 1.1 Verificar Serviços Docker
 ```bash
@@ -46,27 +88,20 @@ docker logs aure-api --tail 20
 ```json
 POST /api/registration/admin-empresa
 {
-    "nome": "Gabriel Selim",
-    "email": "gabriel@aurecontroll.com",
-    "senha": "MinhaSenh@123",
-    "confirmarSenha": "MinhaSenh@123",
-    "telefoneCelular": "(11) 99999-9999",
-    "cpf": "123.456.789-09",
-    "empresa": {
-        "nome": "Magazine Luiza S.A.",
-        "cnpj": "47.960.950/0001-21",
-        "razaoSocial": "Magazine Luiza S.A.",
-        "rua": "Rua Sacadura Cabral, 102",
-        "cidade": "São Paulo",
-        "estado": "SP",
-        "pais": "Brasil",
-        "cep": "01007-907",
-        "telefone": "(11) 3003-4567",
-        "email": "contato@magazineluiza.com.br",
-        "website": "https://www.magazineluiza.com.br"
-    }
+    "companyName": "Magazine Luiza S.A.",
+    "companyCnpj": "47960950000121",
+    "companyType": "Client",
+    "businessModel": "MainCompany",
+    "name": "Gabriel Selim",
+    "email": "eng.gabrielsanz@hotmail.com",
+    "password": "MinhaSenh@123"
 }
 ```
+
+**💡 IMPORTANTE - Valores dos Enums:**
+- **companyType**: `Client` (empresa que contrata), `Provider` (prestador), `Both`
+- **businessModel**: `Standard`, `MainCompany` (empresa principal que contrata PJs), `ContractedPJ`, `Freelancer`
+- **CNPJ**: Apenas números, sem pontos ou traços (14 dígitos)
 
 **✅ Verificações esperadas:**
 - Primeiro usuário automaticamente vira **DonoEmpresaPai**
@@ -77,8 +112,8 @@ POST /api/registration/admin-empresa
 ```json
 POST /api/auth/entrar
 {
-    "email": "gabriel@aurecontroll.com",
-    "senha": "MinhaSenh@123"
+    "email": "eng.gabrielsanz@hotmail.com",
+    "password": "MinhaSenh@123"
 }
 ```
 **⚠️ IMPORTANTE**: Salvar o `tokenAcesso` retornado para usar nos próximos requests
@@ -88,10 +123,10 @@ POST /api/auth/entrar
 POST /api/registration/convidar-usuario
 Headers: Authorization: Bearer {token_do_dono}
 {
-    "nome": "Maria Financeira",
+    "name": "Maria Financeira",
     "email": "maria@aurecontroll.com",
-    "tipoUsuario": "Financeiro",
-    "telefoneCelular": "(11) 98888-8888"
+    "role": "Financeiro",
+    "inviteType": "Internal"
 }
 ```
 
@@ -109,24 +144,23 @@ Headers: Authorization: Bearer {token_do_dono}
 POST /api/registration/convidar-usuario
 Headers: Authorization: Bearer {token_do_dono}
 {
-    "nome": "João Desenvolvedor",
+    "name": "João Desenvolvedor",
     "email": "joao.dev@gmail.com",
-    "tipoUsuario": "PJ",
-    "telefoneCelular": "(11) 97777-7777",
-    "empresaPj": {
-        "nome": "Netflix Entretenimento Brasil Ltda.",
-        "cnpj": "13.590.585/0001-00",
-        "razaoSocial": "Netflix Entretenimento Brasil Ltda.",
-        "rua": "Avenida das Nações Unidas, 12901",
-        "cidade": "São Paulo", 
-        "estado": "SP",
-        "pais": "Brasil",
-        "cep": "04578-910",
-        "telefone": "(11) 3045-2000",
-        "email": "contato@netflix.com.br"
-    }
+    "role": "FuncionarioPJ",
+    "inviteType": "ContractedPJ",
+    "companyName": "Netflix Entretenimento Brasil Ltda.",
+    "cnpj": "13590585000100",
+    "companyType": "Provider",
+    "businessModel": "ContractedPJ"
 }
 ```
+
+**💡 IMPORTANTE - Para Funcionário PJ:**
+- **companyType**: Sempre `Provider` (empresa que presta serviço)
+- **businessModel**: Sempre `ContractedPJ` (PJ contratado)
+- **role**: `FuncionarioPJ`
+- **inviteType**: `ContractedPJ`
+- **cnpj**: Apenas números (14 dígitos)
 
 **✅ Verificações esperadas:**
 - Convite PJ criado com empresa separada
@@ -138,9 +172,7 @@ Headers: Authorization: Bearer {token_do_dono}
 ```json
 POST /api/registration/aceitar-convite/{token_do_convite}
 {
-    "senha": "MinhaSenh@123",
-    "confirmarSenha": "MinhaSenh@123",
-    "aceitaTermos": true
+    "password": "MinhaSenh@123"
 }
 ```
 
@@ -359,11 +391,13 @@ ORDER BY createdat DESC;
 ## 🌐 10. Dados Reais para Teste
 
 ### 10.1 CNPJs Válidos para Teste
-- **Magazine Luiza**: `47.960.950/0001-21`
-- **Netflix Brasil**: `13.590.585/0001-00`
-- **Nubank**: `18.236.120/0001-58`
-- **iFood**: `14.380.200/0001-21`
-- **Mercado Livre**: `10.573.521/0001-91`
+**⚠️ IMPORTANTE: Use apenas números, sem pontos ou traços!**
+
+- **Magazine Luiza**: `47960950000121` (com formatação: 47.960.950/0001-21)
+- **Netflix Brasil**: `13590585000100` (com formatação: 13.590.585/0001-00)
+- **Nubank**: `18236120000158` (com formatação: 18.236.120/0001-58)
+- **iFood**: `14380200000121` (com formatação: 14.380.200/0001-21)
+- **Mercado Livre**: `10573521000191` (com formatação: 10.573.521/0001-91)
 
 ### 10.2 Empresas e Dados
 **Magazine Luiza S.A.**

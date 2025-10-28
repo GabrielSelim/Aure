@@ -350,13 +350,24 @@ public class UserService : IUserService
                 request.Email, invite.Id);
         }
 
-        var response = new InviteResponse(
-            InviteId: invite.Id,
-            Message: message,
-            InviteToken: invite.Token,
-            ExpiresAt: invite.ExpiresAt,
-            InviteType: invite.InviteType
-        );
+        var response = new InviteResponse
+        {
+            Id = invite.Id,
+            InviterName = invite.InviterName,
+            InviteeEmail = invite.InviteeEmail,
+            InviteeName = invite.InviteeName,
+            Role = invite.Role,
+            CompanyId = invite.CompanyId,
+            InvitedByUserId = invite.InvitedByUserId,
+            Token = invite.Token,
+            ExpiresAt = invite.ExpiresAt,
+            IsAccepted = invite.IsAccepted,
+            InviteType = invite.InviteType,
+            BusinessModel = invite.BusinessModel,
+            CompanyName = invite.CompanyName,
+            Cnpj = invite.Cnpj,
+            CompanyType = invite.CompanyType
+        };
 
         _logger.LogInformation("Convite criado com sucesso com ID {InviteId} para o email {Email}", 
             invite.Id, request.Email);
@@ -474,6 +485,55 @@ public class UserService : IUserService
         {
             _logger.LogError(ex, "Erro ao aceitar convite {InviteId}", invite.Id);
             return Result.Failure<UserResponse>("Erro ao aceitar convite");
+        }
+    }
+
+    public async Task<Result<InviteResponse>> ResendInviteEmailAsync(Guid inviteId, Guid currentUserId)
+    {
+        var invite = await _unitOfWork.UserInvites.GetByIdAsync(inviteId);
+        if (invite == null)
+        {
+            _logger.LogWarning("Convite não encontrado com ID {InviteId}", inviteId);
+            return Result.Failure<InviteResponse>("Convite não encontrado");
+        }
+
+        if (invite.IsAccepted)
+        {
+            _logger.LogWarning("Não é possível reenviar convite já aceito: {InviteId}", inviteId);
+            return Result.Failure<InviteResponse>("Convite já aceito");
+        }
+
+        var currentUser = await _unitOfWork.Users.GetByIdAsync(currentUserId);
+        if (currentUser == null || currentUser.CompanyId != invite.CompanyId)
+        {
+            _logger.LogWarning("Usuário {UserId} não autorizado a reenviar convite {InviteId}", currentUserId, inviteId);
+            return Result.Failure<InviteResponse>("Não autorizado a reenviar este convite");
+        }
+
+        try
+        {
+            invite.RegenerateToken();
+            await _unitOfWork.UserInvites.UpdateAsync(invite);
+            await _unitOfWork.SaveChangesAsync();
+
+            var company = await _unitOfWork.Companies.GetByIdAsync(invite.CompanyId);
+            var inviteUrl = $"https://aure.com/aceitar-convite?token={invite.Token}";
+            await _emailService.SendInviteEmailAsync(
+                invite.InviteeEmail, 
+                invite.InviteeName, 
+                invite.Token, 
+                invite.InviterName, 
+                company?.Name ?? "Aure");
+
+            var response = _mapper.Map<InviteResponse>(invite);
+            
+            _logger.LogInformation("Convite {InviteId} reenviado com sucesso para {Email}", inviteId, invite.InviteeEmail);
+            return Result.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao reenviar convite {InviteId}", inviteId);
+            return Result.Failure<InviteResponse>("Erro ao reenviar convite");
         }
     }
 

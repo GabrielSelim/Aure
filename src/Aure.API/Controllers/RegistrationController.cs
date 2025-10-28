@@ -5,11 +5,13 @@ using Aure.Application.Interfaces;
 using Aure.Domain.Enums;
 using Aure.Domain.Interfaces;
 using System.Security.Claims;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Aure.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
 public class RegistrationController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -24,7 +26,17 @@ public class RegistrationController : ControllerBase
     }
 
     [HttpPost("admin-empresa")]
-    public async Task<IActionResult> RegistrarAdminEmpresa([FromBody] RegisterCompanyAdminRequest request)
+    [SwaggerOperation(
+        Summary = "Registrar primeiro usuário (Dono da Empresa Pai)",
+        Description = "Cria a primeira conta da empresa, que será automaticamente o Dono da Empresa Pai com todos os privilégios administrativos."
+    )]
+    [SwaggerResponse(200, "Empresa e usuário criados com sucesso", typeof(UserResponse))]
+    [SwaggerResponse(400, "Dados inválidos ou CNPJ já cadastrado")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RegistrarAdminEmpresa(
+        [FromBody]
+        [SwaggerRequestBody("Dados para registro da empresa e primeiro usuário", Required = true)]
+        RegisterCompanyAdminRequest request)
     {
         if (!ModelState.IsValid)
         {
@@ -44,7 +56,46 @@ public class RegistrationController : ControllerBase
 
     [HttpPost("convidar-usuario")]
     [Authorize(Roles = "DonoEmpresaPai")]
-    public async Task<IActionResult> ConvidarUsuario([FromBody] InviteUserRequest request)
+    [SwaggerOperation(
+        Summary = "Convidar usuário interno ou funcionário PJ",
+        Description = @"Permite ao Dono da Empresa Pai convidar:
+        
+**Usuários Internos (InviteType: Internal):**
+- Role: Financeiro ou Juridico
+- Não requer dados de empresa PJ
+        
+**Funcionários PJ (InviteType: ContractedPJ):**
+- Role: Automaticamente será FuncionarioPJ
+- Requer: companyName, cnpj, companyType (Provider), businessModel (ContractedPJ)
+- Criará uma empresa PJ vinculada à empresa pai"
+    )]
+    [SwaggerResponse(200, "Convite enviado com sucesso", typeof(UserResponse))]
+    [SwaggerResponse(400, "Dados inválidos ou usuário já cadastrado")]
+    [SwaggerResponse(401, "Não autenticado")]
+    [SwaggerResponse(403, "Apenas Dono da Empresa Pai pode convidar usuários")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ConvidarUsuario(
+        [FromBody]
+        [SwaggerRequestBody(@"Exemplo para Funcionário PJ:
+{
+  ""name"": ""João Silva"",
+  ""email"": ""joao.silva@empresa.com"",
+  ""role"": ""FuncionarioPJ"",
+  ""inviteType"": ""ContractedPJ"",
+  ""companyName"": ""João Silva Consultoria ME"",
+  ""cnpj"": ""12345678000190"",
+  ""companyType"": ""Provider"",
+  ""businessModel"": ""ContractedPJ""
+}
+
+Exemplo para Usuário Interno (Financeiro):
+{
+  ""name"": ""Maria Financeira"",
+  ""email"": ""maria@empresa.com"",
+  ""role"": ""Financeiro"",
+  ""inviteType"": ""Internal""
+}", Required = true)]
+        InviteUserRequest request)
     {
         if (!ModelState.IsValid)
         {
@@ -66,7 +117,22 @@ public class RegistrationController : ControllerBase
     }
 
     [HttpPost("aceitar-convite/{inviteToken}")]
-    public async Task<IActionResult> AceitarConvite(string inviteToken, [FromBody] AcceptInviteRequest request)
+    [SwaggerOperation(
+        Summary = "Aceitar convite e definir senha",
+        Description = "Permite que o usuário convidado aceite o convite e defina sua senha. O token é enviado por email."
+    )]
+    [SwaggerResponse(200, "Convite aceito e usuário ativado", typeof(UserResponse))]
+    [SwaggerResponse(400, "Token inválido ou expirado")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> AceitarConvite(
+        [SwaggerParameter("Token de convite recebido por email", Required = true)]
+        string inviteToken,
+        [FromBody]
+        [SwaggerRequestBody(@"Exemplo:
+{
+  ""password"": ""SenhaSegura@123""
+}", Required = true)]
+        AcceptInviteRequest request)
     {
         if (!ModelState.IsValid)
         {
@@ -86,6 +152,13 @@ public class RegistrationController : ControllerBase
 
     [HttpGet("convites")]
     [Authorize(Roles = "DonoEmpresaPai")]
+    [SwaggerOperation(
+        Summary = "Listar convites pendentes",
+        Description = "Retorna todos os convites pendentes enviados pela empresa. Apenas Dono da Empresa Pai tem acesso."
+    )]
+    [SwaggerResponse(200, "Lista de convites pendentes")]
+    [SwaggerResponse(401, "Não autenticado")]
+    [SwaggerResponse(403, "Acesso negado")]
     public async Task<IActionResult> ObterConvitesPendentes()
     {
         var currentUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
@@ -145,5 +218,38 @@ public class RegistrationController : ControllerBase
         await _unitOfWork.SaveChangesAsync();
 
         return Ok(new { mensagem = "Convite cancelado com sucesso" });
+    }
+
+    [HttpPost("reenviar-convite/{inviteId}")]
+    [Authorize(Roles = "DonoEmpresaPai,Financeiro,Juridico")]
+    [SwaggerOperation(
+        Summary = "Reenviar convite pendente",
+        Description = "Reenvia o email de convite para um convite pendente que ainda não foi aceito. Gera novo token e estende validade por 7 dias."
+    )]
+    [SwaggerResponse(200, "Convite reenviado com sucesso", typeof(InviteResponse))]
+    [SwaggerResponse(400, "Convite já aceito ou inválido")]
+    [SwaggerResponse(404, "Convite não encontrado")]
+    [SwaggerResponse(401, "Não autenticado")]
+    [SwaggerResponse(403, "Acesso negado")]
+    public async Task<IActionResult> ReenviarConvite(Guid inviteId)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(new { erro = "Usuário não autenticado" });
+        }
+
+        var result = await _userService.ResendInviteEmailAsync(inviteId, userId);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { erro = result.Error });
+        }
+
+        return Ok(new 
+        { 
+            mensagem = "Convite reenviado com sucesso",
+            convite = result.Data
+        });
     }
 }
