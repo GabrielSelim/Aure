@@ -110,6 +110,9 @@ public record InviteUserRequest(
     - ContractedPJ: Funcionário PJ que prestará serviços")]
     InviteType InviteType,
     
+    [Description("Cargo do usuário (ex: Desenvolvedor, Designer, Gerente)")]
+    string? Cargo = null,
+    
     [Description("Nome da empresa PJ (obrigatório para ContractedPJ)")]
     string? CompanyName = null,
     

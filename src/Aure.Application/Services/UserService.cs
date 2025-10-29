@@ -338,6 +338,19 @@ public class UserService : IUserService
         );
 
         await _unitOfWork.UserInvites.AddAsync(invite);
+        
+        var userInvitation = new UserInvitation(
+            name: request.Name,
+            email: request.Email,
+            role: userRole,
+            cargo: request.Cargo,
+            companyId: currentUser.CompanyId.Value,
+            invitedByUserId: currentUserId,
+            invitationToken: invite.Token,
+            expirationDays: 7
+        );
+
+        await _unitOfWork.UserInvitations.AddAsync(userInvitation);
         await _unitOfWork.SaveChangesAsync();
 
         // Enviar email de convite
@@ -474,9 +487,15 @@ public class UserService : IUserService
 
                 await _unitOfWork.Users.AddAsync(user);
                 
-                // Marcar convite como aceito
                 invite.MarkAsAccepted();
                 await _unitOfWork.UserInvites.UpdateAsync(invite);
+                
+                var userInvitation = await _unitOfWork.UserInvitations.GetByTokenAsync(inviteToken);
+                if (userInvitation != null)
+                {
+                    userInvitation.MarkAsAccepted(user.Id);
+                    await _unitOfWork.UserInvitations.UpdateAsync(userInvitation);
+                }
                 
                 await _unitOfWork.SaveChangesAsync();
 
