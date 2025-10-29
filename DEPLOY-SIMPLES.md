@@ -17,12 +17,13 @@ sudo systemctl enable docker
 git clone https://github.com/GabrielSelim/Aure.git
 cd Aure
 
-# Verificar portas em uso (importante!)
-chmod +x check-ports.sh
+# Dar permissões aos scripts (importante!)
+chmod +x *.sh
+
+# Verificar portas em uso
 ./check-ports.sh
 
 # Deploy seguro
-chmod +x deploy-simple.sh
 ./deploy-simple.sh
 ```
 
