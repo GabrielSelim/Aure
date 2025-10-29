@@ -165,17 +165,38 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddCorsServices(this IServiceCollection services)
+    public static IServiceCollection AddCorsServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddCors(options =>
         {
-            options.AddPolicy("AllowAll", builder =>
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            
+            if (environment == "Production")
             {
-                builder
-                    .AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader();
-            });
+                options.AddPolicy("AllowSpecificOrigins", builder =>
+                {
+                    builder
+                        .WithOrigins(
+                            "https://aure.gabrielsanztech.com.br",
+                            "https://app.gabrielsanztech.com.br",
+                            "https://admin.gabrielsanztech.com.br"
+                        )
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+            }
+            else
+            {
+                // Desenvolvimento - permite tudo
+                options.AddPolicy("AllowAll", builder =>
+                {
+                    builder
+                        .AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                });
+            }
         });
 
         return services;

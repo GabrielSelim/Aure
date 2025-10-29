@@ -1,6 +1,7 @@
 # 🚀 Docker Compose - Sistema Aure
-# Configuração completa para desenvolvimento e produção
-# Data: 20/10/2025
+# Deploy seguro para produção (não afeta outros containers)
+# Verificar portas: ./check-ports.sh
+# Deploy: docker-compose up -d
 
 version: '3.8'
 
@@ -8,22 +9,22 @@ services:
   # 🗄️ Banco de Dados PostgreSQL
   postgres:
     image: postgres:15-alpine
-    container_name: aure-postgres
+    container_name: aure-postgres-${COMPOSE_PROJECT_NAME:-aure}
     restart: unless-stopped
     environment:
-      POSTGRES_DB: aure_db
-      POSTGRES_USER: aure_user
-      POSTGRES_PASSWORD: aure_password
+      POSTGRES_DB: ${POSTGRES_DB:-aure_production}
+      POSTGRES_USER: ${POSTGRES_USER:-aure_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aure_secure_password_2024}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"  # Configurável via .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - aure-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aure_user -d aure_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aure_user} -d ${POSTGRES_DB:-aure_production}"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -32,17 +33,17 @@ services:
   # 🔧 Redis (Cache e Sessions)
   redis:
     image: redis:7-alpine
-    container_name: aure-redis
+    container_name: aure-redis-${COMPOSE_PROJECT_NAME:-aure}
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass aure_redis_password
+    command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"  # Configurável via .env
     volumes:
       - redis_data:/data
     networks:
       - aure-network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -52,7 +53,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: aure-api
+    container_name: aure-api-${COMPOSE_PROJECT_NAME:-aure}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -61,28 +62,34 @@ services:
         condition: service_healthy
     environment:
       # 🔗 Connection Strings
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=aure_db;Username=aure_user;Password=aure_password;Include Error Detail=true
-      - Redis__ConnectionString=redis:6379,password=aure_redis_password
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=${POSTGRES_DB:-aure_production};Username=${POSTGRES_USER:-aure_user};Password=${POSTGRES_PASSWORD:-aure_secure_password_2024};Include Error Detail=true;Pooling=true;MinPoolSize=10;MaxPoolSize=100;
       
       # 🔐 JWT Settings
-      - JwtSettings__SecretKey=aure-super-secret-key-for-jwt-token-generation-2025
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-aure-production-jwt-key-2024-fintech-system-very-secure-256-bits}
       - JwtSettings__Issuer=Aure.API
       - JwtSettings__Audience=Aure.WebApp
-      - JwtSettings__ExpirationMinutes=60
+      - JwtSettings__ExpirationMinutes=30
       
       # 📧 Email Settings (Gmail SMTP)
       - EmailSettings__SmtpHost=smtp.gmail.com
       - EmailSettings__SmtpPort=587
       - EmailSettings__UseSsl=false
-      - EmailSettings__Username=aurecontroll@gmail.com
-      - EmailSettings__Password=wotorcxxfepwxvvu
-      - EmailSettings__FromEmail=aurecontroll@gmail.com
+      - EmailSettings__Username=${EMAIL_USERNAME:-aurecontroll@gmail.com}
+      - EmailSettings__Password=${EMAIL_PASSWORD:-wotorcxxfepwxvvu}
+      - EmailSettings__FromEmail=${EMAIL_USERNAME:-aurecontroll@gmail.com}
       - EmailSettings__FromName=Sistema Aure
-      - EmailSettings__BaseUrl=http://localhost:5203
+      - EmailSettings__BaseUrl=${API_BASE_URL:-https://aureapi.gabrielsanztech.com.br}
       
-      # 🛠️ Environment
-      - ASPNETCORE_ENVIRONMENT=Docker
-      - ASPNETCORE_URLS=http://+:5203
+      # 🔒 Encryption
+      - Encryption__Key=${ENCRYPTION_KEY:-YXVyZS1lbmNyeXB0aW9uLWtleS0yMDI1LXNlY3VyZQ==}
+      - Encryption__IV=${ENCRYPTION_IV:-YXVyZS1pdi0yMDI1}
+      
+      # 🌐 Base URL
+      - BaseUrl=${API_BASE_URL:-https://aureapi.gabrielsanztech.com.br}
+      
+      # 🛠️ Environment (detecta automaticamente)
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_URLS=http://+:5000
       - TZ=America/Sao_Paulo
       
       # 📝 Logging
@@ -98,14 +105,14 @@ services:
       - Serilog__WriteTo__1__Args__rollingInterval=Day
       - Serilog__WriteTo__1__Args__retainedFileCountLimit=30
     ports:
-      - "5203:5203"
+      - "${API_PORT:-5000}:5000"  # Configurável via .env
     volumes:
       - ./logs:/app/logs
       - ./src/Aure.Infrastructure/Templates:/app/Templates:ro
     networks:
       - aure-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5203/swagger || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -114,17 +121,19 @@ services:
   # 📊 Adminer (Administração de Banco)
   adminer:
     image: adminer:latest
-    container_name: aure-adminer
+    container_name: aure-adminer-${COMPOSE_PROJECT_NAME:-aure}
     restart: unless-stopped
     depends_on:
       - postgres
     ports:
-      - "8080:8080"
+      - "127.0.0.1:${ADMINER_PORT:-8080}:8080"  # Configurável via .env
     environment:
       - ADMINER_DEFAULT_SERVER=postgres
       - ADMINER_DESIGN=dracula
     networks:
       - aure-network
+    profiles:
+      - dev  # Só ativa no profile dev: docker-compose --profile dev up -d
 
   # 🌐 Frontend React/Next.js (quando estiver pronto)
   # frontend:
@@ -162,16 +171,19 @@ services:
 # 📂 Volumes Persistentes
 volumes:
   postgres_data:
+    name: aure-postgres-data-${COMPOSE_PROJECT_NAME:-aure}
     driver: local
   
   redis_data:
+    name: aure-redis-data-${COMPOSE_PROJECT_NAME:-aure}
     driver: local
 
 # 🌐 Networks
 networks:
   aure-network:
+    name: aure-network-${COMPOSE_PROJECT_NAME:-aure}
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: 172.20.0.0/16
+        - subnet: ${NETWORK_SUBNET:-172.20.0.0/16}

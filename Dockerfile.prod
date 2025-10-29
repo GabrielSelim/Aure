@@ -2,37 +2,53 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 5000
 
-# Instalar curl para health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Instalar dependências do sistema necessárias
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    libgdiplus \
+    && rm -rf /var/lib/apt/lists/*
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+
+# Copiar arquivos de projeto para restore das dependências
 COPY ["src/Aure.API/Aure.API.csproj", "src/Aure.API/"]
 COPY ["src/Aure.Application/Aure.Application.csproj", "src/Aure.Application/"]
 COPY ["src/Aure.Domain/Aure.Domain.csproj", "src/Aure.Domain/"]
 COPY ["src/Aure.Infrastructure/Aure.Infrastructure.csproj", "src/Aure.Infrastructure/"]
+
+# Restaurar dependências
 RUN dotnet restore "src/Aure.API/Aure.API.csproj"
+
+# Copiar todo o código fonte
 COPY . .
 WORKDIR "/src/src/Aure.API"
-RUN dotnet build "Aure.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# Build da aplicação
+RUN dotnet build "Aure.API.csproj" -c Release -o /app/build
 
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "Aure.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Aure.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 
 # Criar diretórios necessários
-RUN mkdir -p /app/logs /app/uploads /app/certificates
+RUN mkdir -p /app/logs /app/certificates /app/uploads /app/Templates
 
-# Copiar aplicação
+# Copiar aplicação publicada
 COPY --from=publish /app/publish .
 
-# Configurar variáveis de ambiente
-ENV ASPNETCORE_URLS=http://+:5000
+# Configurar variáveis de ambiente para produção
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_URLS=http://+:5000
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
+# Configurar usuário não-root por segurança
+RUN groupadd -r aure && useradd -r -g aure aure
+RUN chown -R aure:aure /app
+USER aure
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \

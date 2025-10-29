@@ -12,7 +12,7 @@ builder.Host.UseSerilog();
 
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
-builder.Services.AddCorsServices();
+builder.Services.AddCorsServices(builder.Configuration);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -92,7 +92,9 @@ app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+// CORS baseado no ambiente
+var corsPolicy = app.Environment.IsProduction() ? "AllowSpecificOrigins" : "AllowAll";
+app.UseCors(corsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
