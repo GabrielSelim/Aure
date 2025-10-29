@@ -40,6 +40,12 @@ public class Company : BaseEntity
         UpdateTimestamp();
     }
 
+    public void UpdateCnpj(string cnpj)
+    {
+        Cnpj = cnpj;
+        UpdateTimestamp();
+    }
+
     public void UpdateKycStatus(KycStatus status)
     {
         KycStatus = status;

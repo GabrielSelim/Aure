@@ -26,4 +26,17 @@ public interface IUserService
     Task<Result<IEnumerable<UserResponse>>> GetAllByCompanyAsync(Guid companyId);
     Task<Result<UserResponse>> GetByIdAndCompanyAsync(Guid id, Guid companyId);
     Task<Result<UserResponse>> GetByEmailAndCompanyAsync(string email, Guid companyId);
+    
+    // Employee listing
+    Task<PagedResult<EmployeeListItemResponse>> GetEmployeesAsync(Guid requestingUserId, EmployeeListRequest request);
+    
+    // LGPD
+    Task<UserDataExportResponse> ExportUserDataAsync(Guid userId);
+    Task<AccountDeletionResponse> RequestAccountDeletionAsync(Guid userId);
+    
+    // Invitation Management
+    Task<Result<IEnumerable<UserInvitationListResponse>>> GetInvitationsAsync(Guid requestingUserId);
+    Task<Result<UserInvitationListResponse>> GetInvitationByIdAsync(Guid invitationId, Guid requestingUserId);
+    Task<Result<UpdateInvitationResponse>> UpdateInvitationAsync(Guid invitationId, UpdateInvitationRequest request, Guid requestingUserId);
+    Task<Result<CancelInvitationResponse>> CancelInvitationAsync(Guid invitationId, Guid requestingUserId);
 }

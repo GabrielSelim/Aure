@@ -11,6 +11,7 @@ public class AureDbContext : DbContext
     public DbSet<Company> Companies { get; set; }
     public DbSet<CompanyRelationship> CompanyRelationships { get; set; }
     public DbSet<UserInvite> UserInvites { get; set; }
+    public DbSet<UserInvitation> UserInvitations { get; set; }
     public DbSet<Contract> Contracts { get; set; }
     public DbSet<Payment> Payments { get; set; }
     public DbSet<Session> Sessions { get; set; }
@@ -25,6 +26,7 @@ public class AureDbContext : DbContext
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<InvoiceItem> InvoiceItems { get; set; }
     public DbSet<TaxCalculation> TaxCalculations { get; set; }
+    public DbSet<NotificationPreferences> NotificationPreferences { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

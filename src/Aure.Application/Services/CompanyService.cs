@@ -12,12 +12,24 @@ namespace Aure.Application.Services;
 public class CompanyService : ICompanyService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserRepository _userRepository;
+    private readonly IContractRepository _contractRepository;
+    private readonly ICnpjValidationService _cnpjValidationService;
     private readonly IMapper _mapper;
     private readonly ILogger<CompanyService> _logger;
 
-    public CompanyService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<CompanyService> logger)
+    public CompanyService(
+        IUnitOfWork unitOfWork, 
+        IUserRepository userRepository,
+        IContractRepository contractRepository,
+        ICnpjValidationService cnpjValidationService,
+        IMapper mapper, 
+        ILogger<CompanyService> logger)
     {
         _unitOfWork = unitOfWork;
+        _userRepository = userRepository;
+        _contractRepository = contractRepository;
+        _cnpjValidationService = cnpjValidationService;
         _mapper = mapper;
         _logger = logger;
     }
@@ -165,5 +177,196 @@ public class CompanyService : ICompanyService
         
         _logger.LogInformation("Company soft deleted with ID {CompanyId}", company.Id);
         return Result.Success();
+    }
+
+    public async Task<CompanyInfoResponse> GetCompanyParentInfoAsync(Guid userId)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+
+        if (user == null)
+            throw new ArgumentException("Usuário não encontrado");
+
+        if (!user.CompanyId.HasValue)
+            throw new ArgumentException("Usuário não possui empresa vinculada");
+
+        var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+
+        if (company == null)
+            throw new ArgumentException("Empresa não encontrada");
+
+        var allUsers = await _userRepository.GetAllAsync();
+        var companyUsers = allUsers.Where(u => u.CompanyId == company.Id).ToList();
+
+        var allContracts = await _contractRepository.GetAllAsync();
+        var activeContracts = allContracts.Count(c => 
+            c.ClientId == company.Id && 
+            c.Status == ContractStatus.Active);
+
+        var enderecoCompleto = string.IsNullOrEmpty(user.EnderecoRua) 
+            ? null 
+            : $"{user.EnderecoRua}, {user.EnderecoNumero} - {user.EnderecoBairro}, {user.EnderecoCidade}/{user.EnderecoEstado}";
+
+        return new CompanyInfoResponse
+        {
+            Id = company.Id,
+            RazaoSocial = company.Name,
+            Cnpj = company.Cnpj,
+            CompanyType = company.Type,
+            BusinessModel = company.BusinessModel,
+            EnderecoCompleto = enderecoCompleto,
+            TotalFuncionarios = companyUsers.Count,
+            ContratosAtivos = activeContracts,
+            DataCadastro = company.CreatedAt
+        };
+    }
+
+    public async Task<UpdateCompanyParentResponse> UpdateCompanyParentAsync(Guid userId, UpdateCompanyParentRequest request)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+
+        if (user == null)
+            throw new ArgumentException("Usuário não encontrado");
+
+        if (user.Role != UserRole.DonoEmpresaPai)
+            throw new InvalidOperationException("Apenas DonoEmpresaPai pode atualizar empresa pai");
+
+        if (!user.CompanyId.HasValue)
+            throw new ArgumentException("Usuário não possui empresa vinculada");
+
+        var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+
+        if (company == null)
+            throw new ArgumentException("Empresa não encontrada");
+
+        if (!string.IsNullOrEmpty(request.Cnpj))
+        {
+            var cnpjLimpo = new string(request.Cnpj.Where(char.IsDigit).ToArray());
+
+            if (cnpjLimpo.Length != 14)
+                throw new ArgumentException("CNPJ inválido. Deve conter 14 dígitos.");
+
+            if (cnpjLimpo != company.Cnpj)
+            {
+                var cnpjExiste = await _unitOfWork.Companies.CnpjExistsAsync(cnpjLimpo, company.Id);
+                if (cnpjExiste)
+                    throw new ArgumentException("CNPJ já cadastrado para outra empresa");
+
+                var cnpjValidationResult = await _cnpjValidationService.ValidateAsync(cnpjLimpo);
+
+                if (!cnpjValidationResult.IsValid)
+                    throw new ArgumentException($"CNPJ inválido na Receita Federal: {cnpjValidationResult.ErrorMessage}");
+
+                var razaoSocialReceita = cnpjValidationResult.RazaoSocial ?? "";
+                var razaoSocialAtual = request.RazaoSocial ?? company.Name;
+
+                var similarity = CalculateSimilarity(razaoSocialReceita, razaoSocialAtual);
+
+                if (similarity < 0.85 && !request.ConfirmarDivergenciaRazaoSocial)
+                {
+                    _logger.LogWarning(
+                        "Divergência de Razão Social detectada. Receita: {RazaoSocialReceita}, Informada: {RazaoSocialInformada}, Similaridade: {Similarity}%",
+                        razaoSocialReceita, razaoSocialAtual, similarity * 100);
+
+                    return new UpdateCompanyParentResponse
+                    {
+                        Sucesso = false,
+                        DivergenciaRazaoSocial = true,
+                        RazaoSocialReceita = razaoSocialReceita,
+                        RazaoSocialInformada = razaoSocialAtual,
+                        RequerConfirmacao = true,
+                        Mensagem = $"A Razão Social informada ({razaoSocialAtual}) difere da registrada na Receita Federal ({razaoSocialReceita}). Confirme para prosseguir."
+                    };
+                }
+
+                company.UpdateCnpj(cnpjLimpo);
+                _logger.LogInformation("CNPJ da empresa pai {CompanyId} alterado para {Cnpj}", company.Id, cnpjLimpo);
+            }
+        }
+
+        if (!string.IsNullOrEmpty(request.RazaoSocial))
+        {
+            company.UpdateCompanyInfo(request.RazaoSocial, company.Type, company.BusinessModel);
+            _logger.LogInformation("Razão Social da empresa pai {CompanyId} alterada para {RazaoSocial}", company.Id, request.RazaoSocial);
+        }
+
+        if (!string.IsNullOrEmpty(request.EnderecoRua))
+        {
+            user.UpdateAddress(
+                request.EnderecoRua,
+                request.EnderecoNumero,
+                request.EnderecoComplemento,
+                request.EnderecoBairro,
+                request.EnderecoCidade,
+                request.EnderecoEstado,
+                request.EnderecoPais,
+                request.EnderecoCep);
+
+            await _userRepository.UpdateAsync(user);
+            _logger.LogInformation("Endereço da empresa pai {CompanyId} atualizado (sync bidirecional)", company.Id);
+        }
+
+        await _unitOfWork.Companies.UpdateAsync(company);
+        await _unitOfWork.SaveChangesAsync();
+
+        _logger.LogInformation("Empresa pai {CompanyId} atualizada com sucesso pelo usuário {UserId}", company.Id, userId);
+
+        var empresaInfo = await GetCompanyParentInfoAsync(userId);
+
+        return new UpdateCompanyParentResponse
+        {
+            Sucesso = true,
+            Mensagem = "Empresa atualizada com sucesso",
+            Empresa = empresaInfo
+        };
+    }
+
+    private static double CalculateSimilarity(string source, string target)
+    {
+        if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(target))
+            return 0;
+
+        source = source.ToUpperInvariant().Trim();
+        target = target.ToUpperInvariant().Trim();
+
+        if (source == target)
+            return 1.0;
+
+        var distance = LevenshteinDistance(source, target);
+        var maxLength = Math.Max(source.Length, target.Length);
+
+        return 1.0 - (double)distance / maxLength;
+    }
+
+    private static int LevenshteinDistance(string source, string target)
+    {
+        if (string.IsNullOrEmpty(source))
+            return target?.Length ?? 0;
+
+        if (string.IsNullOrEmpty(target))
+            return source.Length;
+
+        var sourceLength = source.Length;
+        var targetLength = target.Length;
+        var matrix = new int[sourceLength + 1, targetLength + 1];
+
+        for (var i = 0; i <= sourceLength; i++)
+            matrix[i, 0] = i;
+
+        for (var j = 0; j <= targetLength; j++)
+            matrix[0, j] = j;
+
+        for (var i = 1; i <= sourceLength; i++)
+        {
+            for (var j = 1; j <= targetLength; j++)
+            {
+                var cost = target[j - 1] == source[i - 1] ? 0 : 1;
+
+                matrix[i, j] = Math.Min(
+                    Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
+                    matrix[i - 1, j - 1] + cost);
+            }
+        }
+
+        return matrix[sourceLength, targetLength];
     }
 }

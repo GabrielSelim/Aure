@@ -15,4 +15,6 @@ public interface ICompanyService
     Task<Result<CompanyResponse>> UpdateAsync(Guid id, UpdateCompanyRequest request);
     Task<Result> UpdateKycStatusAsync(Guid id, KycStatus status);
     Task<Result> DeleteAsync(Guid id);
+    Task<CompanyInfoResponse> GetCompanyParentInfoAsync(Guid userId);
+    Task<UpdateCompanyParentResponse> UpdateCompanyParentAsync(Guid userId, UpdateCompanyParentRequest request);
 }

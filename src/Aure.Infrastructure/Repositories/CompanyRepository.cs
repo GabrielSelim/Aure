@@ -41,6 +41,14 @@ public class CompanyRepository : BaseRepository<Company>, ICompanyRepository
             .ConfigureAwait(false);
     }
 
+    public async Task<bool> CnpjExistsAsync(string cnpj, Guid excludeCompanyId)
+    {
+        var cleanCnpj = cnpj.Replace(".", "").Replace("-", "").Replace("/", "");
+        return await _dbSet
+            .AnyAsync(x => x.Cnpj == cleanCnpj && x.Id != excludeCompanyId)
+            .ConfigureAwait(false);
+    }
+
     public override async Task<IEnumerable<Company>> GetAllAsync()
     {
         return await _dbSet

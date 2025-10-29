@@ -15,6 +15,7 @@ using Aure.Application.Services;
 using Aure.Application.Mappings;
 using Aure.Infrastructure.Services;
 using Aure.Infrastructure.Configuration;
+using AvatarSvc = Aure.API.Services;
 
 namespace Aure.API.Extensions;
 
@@ -54,6 +55,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<INotificationTemplateService, NotificationTemplateService>();
+        services.AddScoped<IEncryptionService, EncryptionService>();
+        services.AddScoped<IUserProfileService, UserProfileService>();
+        services.AddScoped<AvatarSvc.IAvatarService, AvatarSvc.AvatarService>();
 
         // Configurações
         services.Configure<SefazSettings>(configuration.GetSection("SefazSettings"));

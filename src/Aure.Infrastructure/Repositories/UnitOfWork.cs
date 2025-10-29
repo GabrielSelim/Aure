@@ -17,6 +17,7 @@ public class UnitOfWork : IUnitOfWork
         Companies = new CompanyRepository(_context);
         CompanyRelationships = new CompanyRelationshipRepository(_context);
         UserInvites = new UserInviteRepository(_context);
+        UserInvitations = new UserInvitationRepository(_context);
         Contracts = new ContractRepository(_context);
         Payments = new PaymentRepository(_context);
         Signatures = new SignatureRepository(_context);
@@ -35,6 +36,7 @@ public class UnitOfWork : IUnitOfWork
     public ICompanyRepository Companies { get; }
     public ICompanyRelationshipRepository CompanyRelationships { get; }
     public IUserInviteRepository UserInvites { get; }
+    public IUserInvitationRepository UserInvitations { get; }
     public IContractRepository Contracts { get; }
     public IPaymentRepository Payments { get; }
     public ISignatureRepository Signatures { get; }

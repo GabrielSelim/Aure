@@ -6,6 +6,7 @@ public interface IUnitOfWork : IDisposable
     ICompanyRepository Companies { get; }
     ICompanyRelationshipRepository CompanyRelationships { get; }
     IUserInviteRepository UserInvites { get; }
+    IUserInvitationRepository UserInvitations { get; }
     IContractRepository Contracts { get; }
     IPaymentRepository Payments { get; }
     ISignatureRepository Signatures { get; }

@@ -17,13 +17,22 @@ public class UserService : IUserService
     private readonly ILogger<UserService> _logger;
     private readonly ICnpjValidationService _cnpjValidationService;
     private readonly IEmailService _emailService;
+    private readonly IEncryptionService _encryptionService;
 
-    public UserService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<UserService> logger, ICnpjValidationService cnpjValidationService, IEmailService emailService)
+    public UserService(
+        IUnitOfWork unitOfWork, 
+        IMapper mapper, 
+        ILogger<UserService> logger, 
+        ICnpjValidationService cnpjValidationService, 
+        IEmailService emailService,
+        IEncryptionService encryptionService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _logger = logger;
         _cnpjValidationService = cnpjValidationService;
+        _emailService = emailService;
+        _encryptionService = encryptionService;
         _emailService = emailService;
     }
 
@@ -572,5 +581,416 @@ public class UserService : IUserService
 
         var response = _mapper.Map<UserResponse>(user);
         return Result.Success(response);
+    }
+
+    public async Task<PagedResult<EmployeeListItemResponse>> GetEmployeesAsync(Guid requestingUserId, EmployeeListRequest request)
+    {
+        var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
+        
+        if (requestingUser == null)
+            throw new ArgumentException("Usuário solicitante não encontrado");
+
+        if (!requestingUser.CompanyId.HasValue)
+            throw new ArgumentException("Usuário não possui empresa vinculada");
+
+        var allUsers = await _unitOfWork.Users.GetAllAsync();
+        var query = allUsers
+            .Where(u => u.CompanyId == requestingUser.CompanyId.Value)
+            .AsQueryable();
+
+        if (requestingUser.Role == UserRole.Financeiro || requestingUser.Role == UserRole.Juridico)
+        {
+            query = query.Where(u => 
+                u.Role == UserRole.FuncionarioCLT || 
+                u.Role == UserRole.FuncionarioPJ);
+        }
+
+        if (request.Role.HasValue)
+        {
+            query = query.Where(u => u.Role == request.Role.Value);
+        }
+
+        if (!string.IsNullOrEmpty(request.Cargo))
+        {
+            query = query.Where(u => u.Cargo != null && u.Cargo.Contains(request.Cargo, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrEmpty(request.Busca))
+        {
+            var busca = request.Busca.ToLower();
+            query = query.Where(u => 
+                u.Name.ToLower().Contains(busca) || 
+                u.Email.ToLower().Contains(busca));
+        }
+
+        if (!string.IsNullOrEmpty(request.Status))
+        {
+            var status = request.Status.ToLower();
+            if (status == "ativo")
+            {
+                query = query.Where(u => !u.IsDeleted);
+            }
+            else if (status == "inativo")
+            {
+                query = query.Where(u => u.IsDeleted);
+            }
+        }
+        else
+        {
+            query = query.Where(u => !u.IsDeleted);
+        }
+
+        var totalCount = query.Count();
+
+        var items = query
+            .OrderBy(u => u.Name)
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        var allCompanies = await _unitOfWork.Companies.GetAllAsync();
+
+        var response = items.Select(u => new EmployeeListItemResponse
+        {
+            Id = u.Id,
+            Nome = u.Name,
+            Email = u.Email,
+            Role = u.Role.ToString(),
+            Cargo = u.Cargo,
+            Status = u.IsDeleted ? "Inativo" : "Ativo",
+            DataEntrada = u.CreatedAt,
+            TelefoneCelular = u.TelefoneCelular,
+            EmpresaPJ = u.Role == UserRole.FuncionarioPJ && u.CompanyId.HasValue
+                ? allCompanies.FirstOrDefault(c => c.Id == u.CompanyId.Value)?.Name
+                : null
+        }).ToList();
+
+        return new PagedResult<EmployeeListItemResponse>
+        {
+            Items = response,
+            TotalCount = totalCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize
+        };
+    }
+
+    public async Task<UserDataExportResponse> ExportUserDataAsync(Guid userId)
+    {
+        var user = await _unitOfWork.Users.GetByIdAsync(userId);
+        
+        if (user == null)
+            throw new ArgumentException("Usuário não encontrado");
+
+        var allContracts = await _unitOfWork.Contracts.GetAllAsync();
+        var userContracts = allContracts.Where(c => 
+            c.ProviderId == user.CompanyId || 
+            c.ClientId == user.CompanyId).ToList();
+
+        var allPayments = await _unitOfWork.Payments.GetAllAsync();
+        var userPayments = allPayments.Where(p => 
+            userContracts.Any(c => c.Id == p.ContractId)).ToList();
+
+        Company? userCompany = null;
+        if (user.CompanyId.HasValue)
+        {
+            userCompany = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+        }
+
+        var response = new UserDataExportResponse
+        {
+            DadosPessoais = new DadosPessoais
+            {
+                Id = user.Id,
+                Nome = user.Name,
+                Email = user.Email,
+                Role = user.Role.ToString(),
+                TelefoneCelular = user.TelefoneCelular,
+                TelefoneFixo = user.TelefoneFixo,
+                CPF = !string.IsNullOrEmpty(user.CPFEncrypted) 
+                    ? _encryptionService.Decrypt(user.CPFEncrypted) 
+                    : null,
+                RG = !string.IsNullOrEmpty(user.RGEncrypted) 
+                    ? _encryptionService.Decrypt(user.RGEncrypted) 
+                    : null,
+                DataNascimento = user.DataNascimento,
+                Cargo = user.Cargo,
+                Endereco = new EnderecoInfo
+                {
+                    Rua = user.EnderecoRua,
+                    Numero = user.EnderecoNumero,
+                    Complemento = user.EnderecoComplemento,
+                    Bairro = user.EnderecoBairro,
+                    Cidade = user.EnderecoCidade,
+                    Estado = user.EnderecoEstado,
+                    Pais = user.EnderecoPais,
+                    Cep = user.EnderecoCep
+                },
+                AvatarUrl = user.AvatarUrl,
+                DataCriacao = user.CreatedAt,
+                AceitouTermosUso = user.AceitouTermosUso,
+                DataAceiteTermosUso = user.DataAceiteTermosUso,
+                AceitouPoliticaPrivacidade = user.AceitouPoliticaPrivacidade,
+                DataAceitePoliticaPrivacidade = user.DataAceitePoliticaPrivacidade
+            },
+            DadosEmpresa = userCompany != null ? new DadosEmpresa
+            {
+                Id = userCompany.Id,
+                RazaoSocial = userCompany.Name,
+                CNPJ = userCompany.Cnpj,
+                Tipo = userCompany.Type.ToString()
+            } : null,
+            Contratos = userContracts.Select(c => new ContratoInfo
+            {
+                Id = c.Id,
+                Titulo = c.Title,
+                ValorTotal = c.ValueTotal,
+                ValorMensal = c.MonthlyValue,
+                DataInicio = c.StartDate,
+                DataExpiracao = c.ExpirationDate,
+                DataAssinatura = c.SignedDate,
+                Status = c.Status.ToString()
+            }).ToList(),
+            Pagamentos = userPayments.Select(p => new PagamentoInfo
+            {
+                Id = p.Id,
+                Valor = p.Amount,
+                DataPagamento = p.PaymentDate ?? p.CreatedAt,
+                Status = p.Status.ToString()
+            }).ToList(),
+            PreferenciasNotificacao = new NotificationPreferencesDTO(),
+            DataExportacao = DateTime.UtcNow
+        };
+
+        _logger.LogInformation("Dados exportados para o usuário {UserId} conforme LGPD", userId);
+        return response;
+    }
+
+    public async Task<AccountDeletionResponse> RequestAccountDeletionAsync(Guid userId)
+    {
+        var user = await _unitOfWork.Users.GetByIdAsync(userId);
+        
+        if (user == null)
+            throw new ArgumentException("Usuário não encontrado");
+
+        if (user.IsDeleted)
+        {
+            return new AccountDeletionResponse
+            {
+                Sucesso = false,
+                Mensagem = "Conta já foi solicitada para exclusão anteriormente"
+            };
+        }
+
+        var allContracts = await _unitOfWork.Contracts.GetAllAsync();
+        var activeContracts = allContracts.Where(c => 
+            (c.ProviderId == user.CompanyId || c.ClientId == user.CompanyId) && 
+            c.Status == ContractStatus.Active).ToList();
+
+        if (activeContracts.Any())
+        {
+            return new AccountDeletionResponse
+            {
+                Sucesso = false,
+                Mensagem = "Não é possível excluir conta com contratos ativos. Encerre ou transfira os contratos primeiro."
+            };
+        }
+
+        var anonymizedName = $"Usuário Removido {user.Id.ToString().Substring(0, 8)}";
+        var anonymizedEmail = $"removed_{user.Id.ToString().Substring(0, 8)}@aure.deleted";
+
+        user.AnonymizeForDeletion(anonymizedName, anonymizedEmail);
+        
+        await _unitOfWork.Users.UpdateAsync(user);
+        await _unitOfWork.SaveChangesAsync();
+
+        _logger.LogWarning("Conta do usuário {UserId} anonimizada conforme LGPD. Nome: {Name}, Email: {Email}", 
+            userId, anonymizedName, anonymizedEmail);
+
+        return new AccountDeletionResponse
+        {
+            Sucesso = true,
+            Mensagem = "Sua conta foi anonimizada com sucesso. Seus dados pessoais foram removidos do sistema.",
+            Aviso = "Documentos fiscais (contratos, notas fiscais, pagamentos) foram mantidos por 5 anos conforme legislação brasileira (Lei 8.934/94 e Código Civil). CPF e RG criptografados foram mantidos apenas para fins de auditoria fiscal."
+        };
+    }
+
+    public async Task<Result<IEnumerable<UserInvitationListResponse>>> GetInvitationsAsync(Guid requestingUserId)
+    {
+        var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
+
+        if (requestingUser == null)
+            return Result.Failure<IEnumerable<UserInvitationListResponse>>("Usuário não encontrado");
+
+        if (requestingUser.Role != UserRole.DonoEmpresaPai && 
+            requestingUser.Role != UserRole.Financeiro && 
+            requestingUser.Role != UserRole.Juridico)
+            return Result.Failure<IEnumerable<UserInvitationListResponse>>("Sem permissão para visualizar convites");
+
+        if (!requestingUser.CompanyId.HasValue)
+            return Result.Failure<IEnumerable<UserInvitationListResponse>>("Usuário não vinculado a empresa");
+
+        var invitations = await _unitOfWork.UserInvitations.GetByCompanyIdAsync(requestingUser.CompanyId.Value);
+
+        var response = invitations.Select(inv => new UserInvitationListResponse
+        {
+            Id = inv.Id,
+            Name = inv.Name,
+            Email = inv.Email,
+            Role = inv.Role,
+            Cargo = inv.Cargo,
+            Status = inv.Status,
+            CreatedAt = inv.CreatedAt,
+            ExpiresAt = inv.ExpiresAt,
+            AcceptedAt = inv.AcceptedAt,
+            InvitedByName = inv.InvitedByUser?.Name ?? "Sistema",
+            AcceptedByName = inv.AcceptedByUser?.Name,
+            IsExpired = inv.IsExpired(),
+            CanBeEdited = inv.CanBeEdited()
+        });
+
+        return Result.Success(response);
+    }
+
+    public async Task<Result<UserInvitationListResponse>> GetInvitationByIdAsync(Guid invitationId, Guid requestingUserId)
+    {
+        var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
+
+        if (requestingUser == null)
+            return Result.Failure<UserInvitationListResponse>("Usuário não encontrado");
+
+        if (!requestingUser.CompanyId.HasValue)
+            return Result.Failure<UserInvitationListResponse>("Usuário não vinculado a empresa");
+
+        var invitation = await _unitOfWork.UserInvitations.GetByIdAsync(invitationId);
+
+        if (invitation == null)
+            return Result.Failure<UserInvitationListResponse>("Convite não encontrado");
+
+        if (invitation.CompanyId != requestingUser.CompanyId.Value)
+            return Result.Failure<UserInvitationListResponse>("Convite não pertence à sua empresa");
+
+        var response = new UserInvitationListResponse
+        {
+            Id = invitation.Id,
+            Name = invitation.Name,
+            Email = invitation.Email,
+            Role = invitation.Role,
+            Cargo = invitation.Cargo,
+            Status = invitation.Status,
+            CreatedAt = invitation.CreatedAt,
+            ExpiresAt = invitation.ExpiresAt,
+            AcceptedAt = invitation.AcceptedAt,
+            InvitedByName = invitation.InvitedByUser?.Name ?? "Sistema",
+            AcceptedByName = invitation.AcceptedByUser?.Name,
+            IsExpired = invitation.IsExpired(),
+            CanBeEdited = invitation.CanBeEdited()
+        };
+
+        return Result.Success(response);
+    }
+
+    public async Task<Result<UpdateInvitationResponse>> UpdateInvitationAsync(Guid invitationId, UpdateInvitationRequest request, Guid requestingUserId)
+    {
+        var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
+
+        if (requestingUser == null)
+            return Result.Failure<UpdateInvitationResponse>("Usuário não encontrado");
+
+        if (requestingUser.Role != UserRole.DonoEmpresaPai && 
+            requestingUser.Role != UserRole.Financeiro)
+            return Result.Failure<UpdateInvitationResponse>("Apenas DonoEmpresaPai e Financeiro podem editar convites");
+
+        if (!requestingUser.CompanyId.HasValue)
+            return Result.Failure<UpdateInvitationResponse>("Usuário não vinculado a empresa");
+
+        var invitation = await _unitOfWork.UserInvitations.GetByIdAsync(invitationId);
+
+        if (invitation == null)
+            return Result.Failure<UpdateInvitationResponse>("Convite não encontrado");
+
+        if (invitation.CompanyId != requestingUser.CompanyId.Value)
+            return Result.Failure<UpdateInvitationResponse>("Convite não pertence à sua empresa");
+
+        if (!invitation.CanBeEdited())
+            return Result.Failure<UpdateInvitationResponse>($"Convite não pode ser editado. Status: {invitation.Status}");
+
+        var emailExistente = await _unitOfWork.Users.GetByEmailAsync(request.Email);
+        if (emailExistente != null)
+            return Result.Failure<UpdateInvitationResponse>("Email já cadastrado no sistema");
+
+        if (request.Email != invitation.Email)
+        {
+            var emailTemConvitePendente = await _unitOfWork.UserInvitations.EmailHasPendingInvitationAsync(request.Email, requestingUser.CompanyId.Value);
+            if (emailTemConvitePendente)
+                return Result.Failure<UpdateInvitationResponse>("Já existe convite pendente para este email");
+        }
+
+        invitation.UpdateInvitationInfo(request.Name, request.Email, request.Role, request.Cargo);
+        await _unitOfWork.UserInvitations.UpdateAsync(invitation);
+        await _unitOfWork.SaveChangesAsync();
+
+        _logger.LogInformation("Convite {InvitationId} atualizado por {UserId}. Novo email: {Email}", invitationId, requestingUserId, request.Email);
+
+        var response = new UpdateInvitationResponse
+        {
+            Success = true,
+            Message = "Convite atualizado com sucesso",
+            Invitation = new UserInvitationListResponse
+            {
+                Id = invitation.Id,
+                Name = invitation.Name,
+                Email = invitation.Email,
+                Role = invitation.Role,
+                Cargo = invitation.Cargo,
+                Status = invitation.Status,
+                CreatedAt = invitation.CreatedAt,
+                ExpiresAt = invitation.ExpiresAt,
+                AcceptedAt = invitation.AcceptedAt,
+                InvitedByName = invitation.InvitedByUser?.Name ?? "Sistema",
+                AcceptedByName = invitation.AcceptedByUser?.Name,
+                IsExpired = invitation.IsExpired(),
+                CanBeEdited = invitation.CanBeEdited()
+            }
+        };
+
+        return Result.Success(response);
+    }
+
+    public async Task<Result<CancelInvitationResponse>> CancelInvitationAsync(Guid invitationId, Guid requestingUserId)
+    {
+        var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
+
+        if (requestingUser == null)
+            return Result.Failure<CancelInvitationResponse>("Usuário não encontrado");
+
+        if (requestingUser.Role != UserRole.DonoEmpresaPai && 
+            requestingUser.Role != UserRole.Financeiro)
+            return Result.Failure<CancelInvitationResponse>("Apenas DonoEmpresaPai e Financeiro podem cancelar convites");
+
+        if (!requestingUser.CompanyId.HasValue)
+            return Result.Failure<CancelInvitationResponse>("Usuário não vinculado a empresa");
+
+        var invitation = await _unitOfWork.UserInvitations.GetByIdAsync(invitationId);
+
+        if (invitation == null)
+            return Result.Failure<CancelInvitationResponse>("Convite não encontrado");
+
+        if (invitation.CompanyId != requestingUser.CompanyId.Value)
+            return Result.Failure<CancelInvitationResponse>("Convite não pertence à sua empresa");
+
+        if (invitation.Status != InvitationStatus.Pending)
+            return Result.Failure<CancelInvitationResponse>($"Apenas convites pendentes podem ser cancelados. Status atual: {invitation.Status}");
+
+        invitation.MarkAsCancelled();
+        await _unitOfWork.UserInvitations.UpdateAsync(invitation);
+        await _unitOfWork.SaveChangesAsync();
+
+        _logger.LogInformation("Convite {InvitationId} cancelado por {UserId}", invitationId, requestingUserId);
+
+        return Result.Success(new CancelInvitationResponse
+        {
+            Success = true,
+            Message = "Convite cancelado com sucesso"
+        });
     }
 }

@@ -15,4 +15,5 @@ public interface ICompanyRepository
     Task DeleteAsync(Guid id);
     Task<bool> ExistsAsync(Guid id);
     Task<bool> CnpjExistsAsync(string cnpj);
+    Task<bool> CnpjExistsAsync(string cnpj, Guid excludeCompanyId);
 }

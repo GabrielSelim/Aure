@@ -63,6 +63,9 @@ builder.Services.AddSwaggerGen(c =>
     
     // Configuração para exemplo customizado do InviteUserRequest
     c.SchemaFilter<InviteUserRequestSchemaFilter>();
+    
+    // Configuração para suportar upload de arquivos (IFormFile)
+    c.OperationFilter<FileUploadOperationFilter>();
 });
 
 builder.Services.AddHealthChecks()
