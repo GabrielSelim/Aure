@@ -91,6 +91,43 @@ public class AuthController : ControllerBase
     {
         return Task.FromResult<IActionResult>(Ok(new { Mensagem = "Endpoint de renovação de token - Implementação JWT necessária" }));
     }
+
+    [HttpPost("solicitar-recuperacao-senha")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SolicitarRecuperacaoSenha([FromBody] Aure.Application.DTOs.Auth.RequestPasswordResetRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _userService.RequestPasswordResetAsync(request.Email);
+        
+        if (result.IsFailure)
+            return BadRequest(new { erro = result.Error });
+        
+        return Ok(new { mensagem = "Se o email existir no sistema, você receberá instruções para recuperação de senha" });
+    }
+
+    [HttpPost("redefinir-senha")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(Aure.Application.DTOs.Auth.PasswordResetResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RedefinirSenha([FromBody] Aure.Application.DTOs.Auth.ResetPasswordRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _userService.ResetPasswordAsync(request);
+        
+        if (result.IsFailure)
+            return BadRequest(new { erro = result.Error });
+        
+        if (!result.Data!.Sucesso)
+            return BadRequest(result.Data);
+        
+        return Ok(result.Data);
+    }
 }
 
 public record LogoutRequest(Guid UserId);

@@ -16,6 +16,12 @@ public class UserRepository : BaseRepository<User>, IUserRepository
             .FirstOrDefaultAsync(x => x.Email.ToLower() == email.ToLower());
     }
 
+    public async Task<User?> GetByPasswordResetTokenAsync(string token)
+    {
+        return await _dbSet
+            .FirstOrDefaultAsync(x => x.PasswordResetToken == token);
+    }
+
     public async Task<IEnumerable<User>> GetByRoleAsync(UserRole role)
     {
         return await _dbSet

@@ -6,6 +6,7 @@ public interface IUserRepository
 {
     Task<User?> GetByIdAsync(Guid id);
     Task<User?> GetByEmailAsync(string email);
+    Task<User?> GetByPasswordResetTokenAsync(string token);
     Task<IEnumerable<User>> GetAllAsync();
     Task<IEnumerable<User>> GetByRoleAsync(Enums.UserRole role);
     Task<IEnumerable<User>> GetByCompanyIdAsync(Guid companyId);

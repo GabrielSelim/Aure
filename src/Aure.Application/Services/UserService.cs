@@ -253,21 +253,41 @@ public class UserService : IUserService
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
         var user = new User(request.Name, request.Email, passwordHash, UserRole.DonoEmpresaPai, company.Id);
 
+        // Criptografar CPF e RG
+        var cpfEncrypted = _encryptionService.Encrypt(request.Cpf);
+        user.SetCpf(cpfEncrypted);
+        
+        if (!string.IsNullOrWhiteSpace(request.Rg))
+        {
+            var rgEncrypted = _encryptionService.Encrypt(request.Rg);
+            user.SetRg(rgEncrypted);
+        }
+
+        // Definir data de nascimento e cargo
+        user.SetBirthDate(request.DataNascimento);
+        user.SetPosition("Proprietário");
+
+        // Atualizar perfil com telefones
         user.UpdateProfile(
             telefoneCelular: request.TelefoneCelular,
             telefoneFixo: request.TelefoneFixo
         );
 
+        // Atualizar endereço completo
         user.UpdateAddress(
             rua: request.Rua,
-            numero: null,
-            complemento: null,
-            bairro: null,
+            numero: request.Numero,
+            complemento: request.Complemento,
+            bairro: request.Bairro,
             cidade: request.Cidade,
             estado: request.Estado,
             pais: request.Pais,
             cep: request.Cep
         );
+
+        // Aceitar termos de uso e política de privacidade
+        user.AcceptTermsOfUse(request.VersaoTermosUsoAceita);
+        user.AcceptPrivacyPolicy(request.VersaoPoliticaPrivacidadeAceita);
 
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
@@ -500,21 +520,40 @@ public class UserService : IUserService
                     companyId: companyId
                 );
 
+                // Criptografar CPF e RG
+                var cpfEncrypted = _encryptionService.Encrypt(request.Cpf);
+                user.SetCpf(cpfEncrypted);
+                
+                if (!string.IsNullOrWhiteSpace(request.Rg))
+                {
+                    var rgEncrypted = _encryptionService.Encrypt(request.Rg);
+                    user.SetRg(rgEncrypted);
+                }
+
+                // Definir data de nascimento
+                user.SetBirthDate(request.DataNascimento);
+
+                // Atualizar perfil com telefones
                 user.UpdateProfile(
                     telefoneCelular: request.TelefoneCelular,
                     telefoneFixo: request.TelefoneFixo
                 );
 
+                // Atualizar endereço completo
                 user.UpdateAddress(
                     rua: request.Rua,
-                    numero: null,
-                    complemento: null,
-                    bairro: null,
+                    numero: request.Numero,
+                    complemento: request.Complemento,
+                    bairro: request.Bairro,
                     cidade: request.Cidade,
                     estado: request.Estado,
                     pais: request.Pais,
                     cep: request.Cep
                 );
+
+                // Aceitar termos de uso e política de privacidade
+                user.AcceptTermsOfUse(request.VersaoTermosUsoAceita);
+                user.AcceptPrivacyPolicy(request.VersaoPoliticaPrivacidadeAceita);
 
                 // Se for PJ contratado, criar relacionamento entre empresas
                 if (invite.InviteType == InviteType.ContractedPJ && pjCompany != null)
@@ -1055,5 +1094,112 @@ public class UserService : IUserService
             Success = true,
             Message = "Convite cancelado com sucesso"
         });
+    }
+
+    public async Task<Result<bool>> RequestPasswordResetAsync(string email)
+    {
+        try
+        {
+            var user = await _unitOfWork.Users.GetByEmailAsync(email);
+            
+            if (user == null)
+            {
+                _logger.LogWarning("Tentativa de recuperação de senha para email não encontrado: {Email}", email);
+                return Result.Success(true);
+            }
+
+            user.GeneratePasswordResetToken();
+            await _unitOfWork.Users.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            await Task.Run(async () =>
+            {
+                var resetLink = $"https://aure.gabrielsanztech.com.br/recuperar-senha?token={Uri.EscapeDataString(user.PasswordResetToken!)}";
+                await _emailService.SendPasswordResetEmailAsync(user.Email, user.Name, resetLink);
+            });
+
+            _logger.LogInformation("Token de recuperação de senha gerado para {Email}", email);
+            return Result.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao solicitar recuperação de senha para {Email}", email);
+            return Result.Failure<bool>("Erro ao processar solicitação de recuperação de senha");
+        }
+    }
+
+    public async Task<Result<PasswordResetResponse>> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        try
+        {
+            var user = await _unitOfWork.Users.GetByPasswordResetTokenAsync(request.Token);
+            
+            if (user == null || !user.IsPasswordResetTokenValid())
+            {
+                _logger.LogWarning("Tentativa de redefinição de senha com token inválido ou expirado");
+                return Result.Success(new PasswordResetResponse
+                {
+                    Sucesso = false,
+                    Mensagem = "Token inválido ou expirado"
+                });
+            }
+
+            user.SetPassword(BCrypt.Net.BCrypt.HashPassword(request.NovaSenha));
+            user.ClearPasswordResetToken();
+            await _unitOfWork.Users.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Senha redefinida com sucesso para usuário {UserId}", user.Id);
+            return Result.Success(new PasswordResetResponse
+            {
+                Sucesso = true,
+                Mensagem = "Senha alterada com sucesso"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao redefinir senha");
+            return Result.Failure<PasswordResetResponse>("Erro ao redefinir senha");
+        }
+    }
+
+    public async Task<Result<UserResponse>> UpdateEmployeePositionAsync(Guid employeeId, string newPosition, Guid requestingUserId)
+    {
+        try
+        {
+            var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
+            
+            if (requestingUser == null)
+                return Result.Failure<UserResponse>("Usuário solicitante não encontrado");
+
+            if (requestingUser.Role != UserRole.DonoEmpresaPai)
+                return Result.Failure<UserResponse>("Apenas o dono da empresa pode alterar cargos");
+
+            var employee = await _unitOfWork.Users.GetByIdAsync(employeeId);
+            
+            if (employee == null)
+                return Result.Failure<UserResponse>("Funcionário não encontrado");
+
+            if (employee.CompanyId != requestingUser.CompanyId)
+                return Result.Failure<UserResponse>("Você só pode alterar cargos de funcionários da sua empresa");
+
+            if (employee.Role == UserRole.DonoEmpresaPai)
+                return Result.Failure<UserResponse>("Não é possível alterar o cargo do proprietário");
+
+            employee.SetPosition(newPosition);
+            await _unitOfWork.Users.UpdateAsync(employee);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Cargo do funcionário {EmployeeId} alterado para {NewPosition} por {UserId}", 
+                employeeId, newPosition, requestingUserId);
+
+            var response = _mapper.Map<UserResponse>(employee);
+            return Result.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao atualizar cargo do funcionário {EmployeeId}", employeeId);
+            return Result.Failure<UserResponse>("Erro ao atualizar cargo do funcionário");
+        }
     }
 }

@@ -39,4 +39,11 @@ public interface IUserService
     Task<Result<UserInvitationListResponse>> GetInvitationByIdAsync(Guid invitationId, Guid requestingUserId);
     Task<Result<UpdateInvitationResponse>> UpdateInvitationAsync(Guid invitationId, UpdateInvitationRequest request, Guid requestingUserId);
     Task<Result<CancelInvitationResponse>> CancelInvitationAsync(Guid invitationId, Guid requestingUserId);
+    
+    // Password Recovery
+    Task<Result<bool>> RequestPasswordResetAsync(string email);
+    Task<Result<PasswordResetResponse>> ResetPasswordAsync(ResetPasswordRequest request);
+    
+    // Position Management
+    Task<Result<UserResponse>> UpdateEmployeePositionAsync(Guid employeeId, string newPosition, Guid requestingUserId);
 }

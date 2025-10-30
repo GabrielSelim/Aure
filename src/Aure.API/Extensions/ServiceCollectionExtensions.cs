@@ -177,6 +177,8 @@ public static class ServiceCollectionExtensions
                 {
                     builder
                         .WithOrigins(
+                            "http://localhost:3000",
+                            "https://localhost:3000",
                             "https://aure.gabrielsanztech.com.br",
                             "https://app.gabrielsanztech.com.br",
                             "https://admin.gabrielsanztech.com.br"
@@ -188,13 +190,16 @@ public static class ServiceCollectionExtensions
             }
             else
             {
-                // Desenvolvimento - permite tudo
                 options.AddPolicy("AllowAll", builder =>
                 {
                     builder
-                        .AllowAnyOrigin()
+                        .WithOrigins(
+                            "http://localhost:3000",
+                            "https://localhost:3000"
+                        )
                         .AllowAnyMethod()
-                        .AllowAnyHeader();
+                        .AllowAnyHeader()
+                        .AllowCredentials();
                 });
             }
         });

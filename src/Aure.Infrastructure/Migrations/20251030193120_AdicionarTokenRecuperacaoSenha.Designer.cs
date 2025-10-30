@@ -3,6 +3,7 @@ using System;
 using Aure.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Aure.Infrastructure.Migrations
 {
     [DbContext(typeof(AureDbContext))]
-    partial class AureDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251030193120_AdicionarTokenRecuperacaoSenha")]
+    partial class AdicionarTokenRecuperacaoSenha
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -88,38 +91,6 @@ namespace Aure.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("uuid_generate_v4()");
 
-                    b.Property<string>("AddressCity")
-                        .HasColumnType("text")
-                        .HasColumnName("address_city");
-
-                    b.Property<string>("AddressComplement")
-                        .HasColumnType("text")
-                        .HasColumnName("address_complement");
-
-                    b.Property<string>("AddressCountry")
-                        .HasColumnType("text")
-                        .HasColumnName("address_country");
-
-                    b.Property<string>("AddressNeighborhood")
-                        .HasColumnType("text")
-                        .HasColumnName("address_neighborhood");
-
-                    b.Property<string>("AddressNumber")
-                        .HasColumnType("text")
-                        .HasColumnName("address_number");
-
-                    b.Property<string>("AddressState")
-                        .HasColumnType("text")
-                        .HasColumnName("address_state");
-
-                    b.Property<string>("AddressStreet")
-                        .HasColumnType("text")
-                        .HasColumnName("address_street");
-
-                    b.Property<string>("AddressZipCode")
-                        .HasColumnType("text")
-                        .HasColumnName("address_zip_code");
-
                     b.Property<int>("BusinessModel")
                         .HasColumnType("integer")
                         .HasColumnName("business_model");
@@ -149,14 +120,6 @@ namespace Aure.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
-
-                    b.Property<string>("PhoneLandline")
-                        .HasColumnType("text")
-                        .HasColumnName("phone_landline");
-
-                    b.Property<string>("PhoneMobile")
-                        .HasColumnType("text")
-                        .HasColumnName("phone_mobile");
 
                     b.Property<int>("Type")
                         .HasColumnType("integer")

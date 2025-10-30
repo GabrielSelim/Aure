@@ -396,4 +396,127 @@ Este é um email automático do Sistema Aure.
 © 2025 Aure - Todos os direitos reservados.
         ";
     }
+
+    public async Task<bool> SendPasswordResetEmailAsync(string recipientEmail, string recipientName, string resetLink)
+    {
+        try
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_emailSettings.FromName, _emailSettings.FromEmail));
+            message.To.Add(new MailboxAddress(recipientName, recipientEmail));
+            message.Subject = "🔐 Recuperação de Senha - Aure";
+
+            var htmlBody = GetPasswordResetEmailTemplate(recipientName, resetLink);
+            
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = htmlBody,
+                TextBody = GetPasswordResetEmailTextBody(recipientName, resetLink)
+            };
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using var client = new SmtpClient();
+            var secureSocketOptions = _emailSettings.SmtpPort == 587 
+                ? MailKit.Security.SecureSocketOptions.StartTls 
+                : (_emailSettings.UseSsl ? MailKit.Security.SecureSocketOptions.SslOnConnect : MailKit.Security.SecureSocketOptions.None);
+            
+            await client.ConnectAsync(_emailSettings.SmtpHost, _emailSettings.SmtpPort, secureSocketOptions);
+            
+            if (!string.IsNullOrEmpty(_emailSettings.Username) && !string.IsNullOrEmpty(_emailSettings.Password))
+            {
+                await client.AuthenticateAsync(_emailSettings.Username, _emailSettings.Password);
+            }
+
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            _logger.LogInformation("Email de recuperação de senha enviado com sucesso para {Email}", recipientEmail);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao enviar email de recuperação de senha para {Email}", recipientEmail);
+            return false;
+        }
+    }
+
+    private string GetPasswordResetEmailTemplate(string recipientName, string resetLink)
+    {
+        return $@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                    .button {{ display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }}
+                    .warning {{ background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0; }}
+                    .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>🔐 Recuperação de Senha</h1>
+                    </div>
+                    <div class='content'>
+                        <p>Olá, <strong>{recipientName}</strong>!</p>
+                        
+                        <p>Recebemos uma solicitação para redefinir a senha da sua conta na plataforma Aure.</p>
+                        
+                        <p>Clique no botão abaixo para criar uma nova senha:</p>
+                        
+                        <div style='text-align: center;'>
+                            <a href='{resetLink}' class='button'>Redefinir Senha</a>
+                        </div>
+                        
+                        <div class='warning'>
+                            <strong>⚠️ Atenção:</strong>
+                            <ul>
+                                <li>Este link expira em 2 horas</li>
+                                <li>Se você não solicitou esta recuperação, ignore este email</li>
+                                <li>Nunca compartilhe este link com outras pessoas</li>
+                            </ul>
+                        </div>
+                        
+                        <p>Se o botão não funcionar, copie e cole este link no navegador:</p>
+                        <p style='word-break: break-all; color: #667eea;'>{resetLink}</p>
+                        
+                        <p>Atenciosamente,<br><strong>Equipe Aure</strong></p>
+                    </div>
+                    <div class='footer'>
+                        <p>Este é um email automático. Por favor, não responda.</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
+    }
+
+    private string GetPasswordResetEmailTextBody(string recipientName, string resetLink)
+    {
+        return $@"
+🔐 Recuperação de Senha - Aure
+
+Olá, {recipientName}!
+
+Recebemos uma solicitação para redefinir a senha da sua conta na plataforma Aure.
+
+Acesse o link abaixo para criar uma nova senha:
+{resetLink}
+
+⚠️ Atenção:
+- Este link expira em 2 horas
+- Se você não solicitou esta recuperação, ignore este email
+- Nunca compartilhe este link com outras pessoas
+
+Atenciosamente,
+Equipe Aure
+
+---
+Este é um email automático. Por favor, não responda.
+        ";
+    }
 }

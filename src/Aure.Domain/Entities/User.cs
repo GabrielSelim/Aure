@@ -45,6 +45,10 @@ public class User : BaseEntity
     public DateTime? DataAceitePoliticaPrivacidade { get; private set; }
     public string? VersaoPoliticaPrivacidadeAceita { get; private set; }
 
+    // Recuperação de Senha
+    public string? PasswordResetToken { get; private set; }
+    public DateTime? PasswordResetTokenExpiry { get; private set; }
+
     // Preferências de Notificação
     public NotificationPreferences? NotificationPreferences { get; private set; }
 
@@ -231,6 +235,76 @@ public class User : BaseEntity
         AvatarUrl = null;
         Cargo = null;
         MarkAsDeleted();
+        UpdateTimestamp();
+    }
+
+    public bool IsPasswordResetTokenValid()
+    {
+        return !string.IsNullOrEmpty(PasswordResetToken) 
+            && PasswordResetTokenExpiry.HasValue 
+            && PasswordResetTokenExpiry.Value > DateTime.UtcNow;
+    }
+
+    public void GeneratePasswordResetToken()
+    {
+        PasswordResetToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray()) 
+            + Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(2);
+        UpdateTimestamp();
+    }
+
+    public void ClearPasswordResetToken()
+    {
+        PasswordResetToken = null;
+        PasswordResetTokenExpiry = null;
+        UpdateTimestamp();
+    }
+
+    public void SetPassword(string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash))
+            throw new ArgumentException("Password hash não pode ser vazio", nameof(passwordHash));
+        
+        PasswordHash = passwordHash;
+        UpdateTimestamp();
+    }
+
+    public void SetCpf(string cpfEncrypted)
+    {
+        if (string.IsNullOrWhiteSpace(cpfEncrypted))
+            throw new ArgumentException("CPF criptografado não pode ser vazio", nameof(cpfEncrypted));
+        
+        CPFEncrypted = cpfEncrypted;
+        UpdateTimestamp();
+    }
+
+    public void SetRg(string rgEncrypted)
+    {
+        if (string.IsNullOrWhiteSpace(rgEncrypted))
+            throw new ArgumentException("RG criptografado não pode ser vazio", nameof(rgEncrypted));
+        
+        RGEncrypted = rgEncrypted;
+        UpdateTimestamp();
+    }
+
+    public void SetBirthDate(DateTime birthDate)
+    {
+        if (birthDate >= DateTime.UtcNow)
+            throw new ArgumentException("Data de nascimento deve ser no passado", nameof(birthDate));
+        
+        if (birthDate < DateTime.UtcNow.AddYears(-120))
+            throw new ArgumentException("Data de nascimento inválida", nameof(birthDate));
+        
+        DataNascimento = birthDate;
+        UpdateTimestamp();
+    }
+
+    public void SetPosition(string position)
+    {
+        if (string.IsNullOrWhiteSpace(position))
+            throw new ArgumentException("Cargo não pode ser vazio", nameof(position));
+        
+        Cargo = position;
         UpdateTimestamp();
     }
 }

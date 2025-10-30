@@ -299,4 +299,49 @@ Esta ação não pode ser desfeita. Após anonimização, você não poderá mai
             return StatusCode(500, new { message = "Erro ao processar exclusão" });
         }
     }
+
+    [HttpPut("{employeeId}/cargo")]
+    [Authorize(Roles = "DonoEmpresaPai")]
+    [SwaggerOperation(
+        Summary = "Atualizar cargo de funcionário",
+        Description = @"Permite que o dono da empresa altere o cargo de um funcionário.
+
+**Permissões:**
+- Apenas DonoEmpresaPai pode alterar cargos
+- Não é possível alterar o cargo do proprietário
+- Funcionário deve pertencer à mesma empresa
+
+**Validações:**
+- Cargo não pode ser vazio
+- Cargo deve ter no máximo 100 caracteres"
+    )]
+    [SwaggerResponse(200, "Cargo atualizado com sucesso", typeof(UserResponse))]
+    [SwaggerResponse(400, "Requisição inválida")]
+    [SwaggerResponse(401, "Não autenticado ou sem permissão")]
+    [SwaggerResponse(404, "Funcionário não encontrado")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AtualizarCargoFuncionario(Guid employeeId, [FromBody] UpdateEmployeePositionRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        try
+        {
+            var userId = GetCurrentUserId();
+            var result = await _userService.UpdateEmployeePositionAsync(employeeId, request.Cargo, userId);
+            
+            if (result.IsFailure)
+                return BadRequest(new { erro = result.Error });
+            
+            return Ok(result.Data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao atualizar cargo do funcionário {EmployeeId}", employeeId);
+            return StatusCode(500, new { message = "Erro ao atualizar cargo do funcionário" });
+        }
+    }
 }

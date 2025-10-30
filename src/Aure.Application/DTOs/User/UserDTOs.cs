@@ -113,7 +113,47 @@ public record RegisterCompanyAdminRequest(
     
     [RegularExpression(@"^\d{10}$", ErrorMessage = "Telefone fixo deve conter 10 dígitos")]
     [Description("Telefone fixo (apenas números, com DDD) - opcional")]
-    string? TelefoneFixo = null
+    string? TelefoneFixo,
+    
+    [Required(ErrorMessage = "CPF é obrigatório")]
+    [RegularExpression(@"^\d{11}$", ErrorMessage = "CPF deve conter 11 dígitos")]
+    [Description("CPF (apenas números)")]
+    string Cpf,
+    
+    [RegularExpression(@"^\d{6,15}$", ErrorMessage = "RG deve conter entre 6 e 15 dígitos")]
+    [Description("RG (apenas números) - opcional")]
+    string? Rg,
+    
+    [Required(ErrorMessage = "Data de nascimento é obrigatória")]
+    [Description("Data de nascimento")]
+    DateTime DataNascimento,
+    
+    [Required(ErrorMessage = "Número do endereço é obrigatório")]
+    [Description("Número do endereço")]
+    string Numero,
+    
+    [Description("Complemento do endereço - opcional")]
+    string? Complemento,
+    
+    [Required(ErrorMessage = "Bairro é obrigatório")]
+    [Description("Bairro")]
+    string Bairro,
+    
+    [Required(ErrorMessage = "É necessário aceitar os termos de uso")]
+    [Description("Aceite dos termos de uso")]
+    bool AceitouTermosUso,
+    
+    [Required(ErrorMessage = "Versão dos termos de uso é obrigatória")]
+    [Description("Versão dos termos de uso aceita")]
+    string VersaoTermosUsoAceita,
+    
+    [Required(ErrorMessage = "É necessário aceitar a política de privacidade")]
+    [Description("Aceite da política de privacidade")]
+    bool AceitouPoliticaPrivacidade,
+    
+    [Required(ErrorMessage = "Versão da política de privacidade é obrigatória")]
+    [Description("Versão da política de privacidade aceita")]
+    string VersaoPoliticaPrivacidadeAceita
 );
 
 /// <summary>
@@ -193,7 +233,47 @@ public record AcceptInviteRequest(
     
     [RegularExpression(@"^\d{10}$", ErrorMessage = "Telefone fixo deve conter 10 dígitos")]
     [Description("Telefone fixo (apenas números, com DDD) - opcional")]
-    string? TelefoneFixo = null
+    string? TelefoneFixo,
+    
+    [Required(ErrorMessage = "CPF é obrigatório")]
+    [RegularExpression(@"^\d{11}$", ErrorMessage = "CPF deve conter 11 dígitos")]
+    [Description("CPF (apenas números)")]
+    string Cpf,
+    
+    [RegularExpression(@"^\d{6,15}$", ErrorMessage = "RG deve conter entre 6 e 15 dígitos")]
+    [Description("RG (apenas números) - opcional")]
+    string? Rg,
+    
+    [Required(ErrorMessage = "Data de nascimento é obrigatória")]
+    [Description("Data de nascimento")]
+    DateTime DataNascimento,
+    
+    [Required(ErrorMessage = "Número do endereço é obrigatório")]
+    [Description("Número do endereço")]
+    string Numero,
+    
+    [Description("Complemento do endereço - opcional")]
+    string? Complemento,
+    
+    [Required(ErrorMessage = "Bairro é obrigatório")]
+    [Description("Bairro")]
+    string Bairro,
+    
+    [Required(ErrorMessage = "É necessário aceitar os termos de uso")]
+    [Description("Aceite dos termos de uso")]
+    bool AceitouTermosUso,
+    
+    [Required(ErrorMessage = "Versão dos termos de uso é obrigatória")]
+    [Description("Versão dos termos de uso aceita")]
+    string VersaoTermosUsoAceita,
+    
+    [Required(ErrorMessage = "É necessário aceitar a política de privacidade")]
+    [Description("Aceite da política de privacidade")]
+    bool AceitouPoliticaPrivacidade,
+    
+    [Required(ErrorMessage = "Versão da política de privacidade é obrigatória")]
+    [Description("Versão da política de privacidade aceita")]
+    string VersaoPoliticaPrivacidadeAceita
 );
 
 public class InviteResponse
@@ -230,4 +310,11 @@ public record UserInviteResponse(
     DateTime ExpiresAt,
     DateTime CreatedAt,
     bool IsExpired
+);
+
+public record UpdateEmployeePositionRequest(
+    [Required(ErrorMessage = "Cargo é obrigatório")]
+    [StringLength(100, ErrorMessage = "Cargo deve ter no máximo 100 caracteres")]
+    [Description("Novo cargo do funcionário")]
+    string Cargo
 );

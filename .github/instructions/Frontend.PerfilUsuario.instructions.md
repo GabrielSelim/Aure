@@ -1017,6 +1017,7 @@ const TermsAcceptanceModal = ({
 ### Configuração da API
 
 **URL Base da API**: `https://aureapi.gabrielsanztech.com.br`
+**URL Base do Frontend**: `https://aure.gabrielsanztech.com.br`
 
 #### Configuração no Frontend
 
@@ -1024,6 +1025,7 @@ const TermsAcceptanceModal = ({
 // config/api.ts
 export const API_CONFIG = {
   baseURL: 'https://aureapi.gabrielsanztech.com.br',
+  frontendURL: 'https://aure.gabrielsanztech.com.br',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -1063,9 +1065,11 @@ api.interceptors.response.use(
 ```bash
 # .env.local (para desenvolvimento)
 NEXT_PUBLIC_API_URL=https://aureapi.gabrielsanztech.com.br
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # .env.production (para produção)
 NEXT_PUBLIC_API_URL=https://aureapi.gabrielsanztech.com.br
+NEXT_PUBLIC_APP_URL=https://aure.gabrielsanztech.com.br
 ```
 
 #### Importante: CORS e HTTPS
@@ -1075,15 +1079,72 @@ NEXT_PUBLIC_API_URL=https://aureapi.gabrielsanztech.com.br
 - ✅ CORS configurado para origens específicas em produção
 - ✅ AllowedHosts configurado para aceitar requisições do domínio
 - ✅ Swagger disponível diretamente na raiz da API
+- ✅ Emails com links apontam para o frontend (não para API)
 
 **Domínios permitidos no CORS (produção):**
-- `https://aure.gabrielsanztech.com.br`
-- `https://app.gabrielsanztech.com.br`
-- `https://admin.gabrielsanztech.com.br`
+- `https://aure.gabrielsanztech.com.br` (Frontend principal)
+- `https://app.gabrielsanztech.com.br` (Alternativo)
+- `https://admin.gabrielsanztech.com.br` (Painel admin)
+
+**Configurações de Email:**
+- ✅ Links de convite: `https://aure.gabrielsanztech.com.br/aceitar-convite?token={token}`
+- ✅ Links de login: `https://aure.gabrielsanztech.com.br/login`
+- ✅ Email de boas-vindas: Enviado automaticamente ao criar conta de Dono da Empresa
 
 📝 **Para desenvolvimento local**, certifique-se de que seu frontend esteja rodando em `http://localhost:3000` ou configure o CORS no backend se necessário.
 
 ### Endpoints Disponíveis
+
+#### 0. Autenticação e Registro
+
+```typescript
+// Registrar primeiro usuário (Dono da Empresa Pai)
+POST /api/registration/admin-empresa
+Body: {
+  companyName: string;
+  companyCnpj: string; // 14 dígitos, apenas números
+  companyType: "Client" | "Provider" | "Both";
+  businessModel: "MainCompany" | "Standard" | "ContractedPJ" | "Freelancer";
+  name: string;
+  email: string;
+  password: string;
+  telefoneCelular: string; // 10-11 dígitos
+  rua: string;
+  cidade: string;
+  estado: string; // 2 letras (ex: SP)
+  pais: string;
+  cep: string; // 8 dígitos
+  telefoneFixo?: string; // Opcional, 10 dígitos
+}
+Response: UserResponse
+// ✅ Email de boas-vindas enviado automaticamente
+
+// Login
+POST /api/auth/login
+Body: { email: string; password: string }
+Response: LoginResponse
+
+// Convidar usuário (Financeiro, Jurídico ou PJ)
+POST /api/registration/convidar-usuario
+Headers: { Authorization: "Bearer {token}" }
+Body: InviteUserRequest
+Response: UserResponse
+// ✅ Email de convite enviado automaticamente para: https://aure.gabrielsanztech.com.br/aceitar-convite?token={token}
+
+// Aceitar convite
+POST /api/registration/aceitar-convite/{inviteToken}
+Body: {
+  password: string;
+  telefoneCelular: string;
+  rua: string;
+  cidade: string;
+  estado: string;
+  pais: string;
+  cep: string;
+  telefoneFixo?: string;
+}
+Response: UserResponse
+```
 
 #### 1. Perfil Completo
 ```typescript
