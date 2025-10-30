@@ -73,15 +73,20 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+// Swagger sempre ativo (inclusive em produção)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Aure API V1");
+    c.RoutePrefix = string.Empty; // Swagger na raiz do site
+    c.DocumentTitle = "Aure API - Sistema Fintech";
+    c.OAuthClientId("swagger-ui");
+    c.OAuthAppName("Aure API");
+});
+
+// Hangfire apenas em desenvolvimento e Docker
 if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docker")
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Aure API V1");
-        c.RoutePrefix = string.Empty;
-    });
-    
     app.UseHangfireDashboard("/hangfire", new DashboardOptions
     {
         Authorization = new[] { new HangfireAuthorizationFilter() }

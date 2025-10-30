@@ -91,6 +91,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
       - ASPNETCORE_URLS=http://+:5000
       - TZ=America/Sao_Paulo
+      - ASPNETCORE_HOSTFILTERING__ALLOWEDHOSTS__0=*
       
       # 📝 Logging
       - Logging__LogLevel__Default=Information
