@@ -253,6 +253,22 @@ public class UserService : IUserService
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
         var user = new User(request.Name, request.Email, passwordHash, UserRole.DonoEmpresaPai, company.Id);
 
+        user.UpdateProfile(
+            telefoneCelular: request.TelefoneCelular,
+            telefoneFixo: request.TelefoneFixo
+        );
+
+        user.UpdateAddress(
+            rua: request.Rua,
+            numero: null,
+            complemento: null,
+            bairro: null,
+            cidade: request.Cidade,
+            estado: request.Estado,
+            pais: request.Pais,
+            cep: request.Cep
+        );
+
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 

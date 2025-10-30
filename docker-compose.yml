@@ -81,8 +81,8 @@ services:
       - EmailSettings__BaseUrl=${API_BASE_URL:-https://aureapi.gabrielsanztech.com.br}
       
       # 🔒 Encryption
-      - Encryption__Key=${ENCRYPTION_KEY:-YXVyZS1lbmNyeXB0aW9uLWtleS0yMDI1LXNlY3VyZQ==}
-      - Encryption__IV=${ENCRYPTION_IV:-YXVyZS1pdi0yMDI1}
+      - Encryption__Key=f48FY/bCB30hhqFSNJqA0aqon4J6DCuuFsC45DACo9Y=
+      - Encryption__IV=JaVlaN8G35TVrboxruaZyA==
       
       # 🌐 Base URL
       - BaseUrl=${API_BASE_URL:-https://aureapi.gabrielsanztech.com.br}
