@@ -307,4 +307,10 @@ public class User : BaseEntity
         Cargo = position;
         UpdateTimestamp();
     }
+
+    public void UpdateCompanyId(Guid companyId)
+    {
+        CompanyId = companyId;
+        UpdateTimestamp();
+    }
 }

@@ -331,16 +331,44 @@ public class CompanyService : ICompanyService
                 return Result.Failure<UserCompanyInfoResponse>("Usuário não encontrado");
             }
 
-            if (!user.CompanyId.HasValue)
+            Company? company = null;
+
+            if (user.CompanyId.HasValue)
             {
-                _logger.LogWarning("User {UserId} does not have a company associated", userId);
-                return Result.Failure<UserCompanyInfoResponse>("Usuário não possui empresa associada");
+                company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+            }
+            else if (user.Role == UserRole.DonoEmpresaPai)
+            {
+                var allUsers = await _userRepository.GetAllAsync();
+                var ownerUsers = allUsers.Where(u => u.Role == UserRole.DonoEmpresaPai && u.Id == userId).ToList();
+                
+                if (ownerUsers.Any())
+                {
+                    var companies = await _unitOfWork.Companies.GetAllAsync();
+                    var companyIds = companies.Select(c => c.Id).ToList();
+                    
+                    foreach (var companyId in companyIds)
+                    {
+                        var usersInCompany = allUsers.Where(u => u.CompanyId == companyId).ToList();
+                        if (usersInCompany.Any(u => u.Id == userId && u.Role == UserRole.DonoEmpresaPai))
+                        {
+                            company = companies.FirstOrDefault(c => c.Id == companyId);
+                            break;
+                        }
+                    }
+                }
+                
+                if (company != null)
+                {
+                    _logger.LogInformation("Found company {CompanyId} for owner {UserId}, updating user.CompanyId", company.Id, userId);
+                    user.UpdateCompanyId(company.Id);
+                    await _userRepository.UpdateAsync(user);
+                }
             }
 
-            var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
             if (company == null)
             {
-                _logger.LogWarning("Company not found with ID {CompanyId} for user {UserId}", user.CompanyId, userId);
+                _logger.LogWarning("Company not found for user {UserId}", userId);
                 return Result.Failure<UserCompanyInfoResponse>("Empresa não encontrada");
             }
 
@@ -388,16 +416,39 @@ public class CompanyService : ICompanyService
                 return Result.Failure<UserCompanyInfoResponse>("Apenas o dono da empresa pode alterar os dados da empresa");
             }
 
-            if (!user.CompanyId.HasValue)
+            Company? company = null;
+
+            if (user.CompanyId.HasValue)
             {
-                _logger.LogWarning("User {UserId} does not have a company associated", userId);
-                return Result.Failure<UserCompanyInfoResponse>("Usuário não possui empresa associada");
+                company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+            }
+            else if (user.Role == UserRole.DonoEmpresaPai)
+            {
+                var allUsers = await _userRepository.GetAllAsync();
+                var companies = await _unitOfWork.Companies.GetAllAsync();
+                var companyIds = companies.Select(c => c.Id).ToList();
+                
+                foreach (var companyId in companyIds)
+                {
+                    var usersInCompany = allUsers.Where(u => u.CompanyId == companyId).ToList();
+                    if (usersInCompany.Any(u => u.Id == userId && u.Role == UserRole.DonoEmpresaPai))
+                    {
+                        company = companies.FirstOrDefault(c => c.Id == companyId);
+                        break;
+                    }
+                }
+                
+                if (company != null)
+                {
+                    _logger.LogInformation("Found company {CompanyId} for owner {UserId}, updating user.CompanyId", company.Id, userId);
+                    user.UpdateCompanyId(company.Id);
+                    await _userRepository.UpdateAsync(user);
+                }
             }
 
-            var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
             if (company == null)
             {
-                _logger.LogWarning("Company not found with ID {CompanyId} for user {UserId}", user.CompanyId, userId);
+                _logger.LogWarning("Company not found for user {UserId}", userId);
                 return Result.Failure<UserCompanyInfoResponse>("Empresa não encontrada");
             }
 
