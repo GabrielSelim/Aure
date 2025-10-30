@@ -5,7 +5,8 @@
 Este documento contém todas as instruções para implementar no **frontend** o sistema completo de perfil de usuário, configurações pessoais, informações empresariais e preferências de notificação no sistema Aure.
 
 **Status do Backend**: ✅ Totalmente implementado e funcional
-**Swagger**: Disponível em `http://localhost:5203/swagger`
+**API Base URL**: `https://aureapi.gabrielsanztech.com.br`
+**Swagger**: Disponível em `https://aureapi.gabrielsanztech.com.br`
 
 ---
 
@@ -1012,6 +1013,75 @@ const TermsAcceptanceModal = ({
 ---
 
 ## 🌐 Integração com API
+
+### Configuração da API
+
+**URL Base da API**: `https://aureapi.gabrielsanztech.com.br`
+
+#### Configuração no Frontend
+
+```typescript
+// config/api.ts
+export const API_CONFIG = {
+  baseURL: 'https://aureapi.gabrielsanztech.com.br',
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  }
+};
+
+// Configuração do Axios
+import axios from 'axios';
+
+export const api = axios.create(API_CONFIG);
+
+// Interceptor para adicionar token de autenticação
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Interceptor para tratamento de erros
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expirado, redirecionar para login
+      localStorage.removeItem('authToken');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+#### Variáveis de Ambiente
+
+```bash
+# .env.local (para desenvolvimento)
+NEXT_PUBLIC_API_URL=https://aureapi.gabrielsanztech.com.br
+
+# .env.production (para produção)
+NEXT_PUBLIC_API_URL=https://aureapi.gabrielsanztech.com.br
+```
+
+#### Importante: CORS e HTTPS
+
+🔒 **A API está configurada com HTTPS e CORS apropriado para produção:**
+- ✅ SSL/TLS habilitado
+- ✅ CORS configurado para origens específicas em produção
+- ✅ AllowedHosts configurado para aceitar requisições do domínio
+- ✅ Swagger disponível diretamente na raiz da API
+
+**Domínios permitidos no CORS (produção):**
+- `https://aure.gabrielsanztech.com.br`
+- `https://app.gabrielsanztech.com.br`
+- `https://admin.gabrielsanztech.com.br`
+
+📝 **Para desenvolvimento local**, certifique-se de que seu frontend esteja rodando em `http://localhost:3000` ou configure o CORS no backend se necessário.
 
 ### Endpoints Disponíveis
 
