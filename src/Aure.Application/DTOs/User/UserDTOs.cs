@@ -162,7 +162,38 @@ public record AcceptInviteRequest(
     [Required(ErrorMessage = "Senha é obrigatória")]
     [MinLength(6, ErrorMessage = "Senha deve ter no mínimo 6 caracteres")]
     [Description("Senha para acesso ao sistema")]
-    string Password
+    string Password,
+    
+    [Required(ErrorMessage = "Telefone celular é obrigatório")]
+    [RegularExpression(@"^\d{10,11}$", ErrorMessage = "Telefone celular deve conter 10 ou 11 dígitos")]
+    [Description("Telefone celular (apenas números, com DDD)")]
+    string TelefoneCelular,
+    
+    [Required(ErrorMessage = "Rua é obrigatória")]
+    [Description("Endereço - Rua, Avenida, etc")]
+    string Rua,
+    
+    [Required(ErrorMessage = "Cidade é obrigatória")]
+    [Description("Cidade")]
+    string Cidade,
+    
+    [Required(ErrorMessage = "Estado é obrigatório")]
+    [StringLength(2, MinimumLength = 2, ErrorMessage = "Estado deve ter 2 caracteres (ex: SP)")]
+    [Description("Estado (sigla com 2 letras, ex: SP, RJ)")]
+    string Estado,
+    
+    [Required(ErrorMessage = "País é obrigatório")]
+    [Description("País")]
+    string Pais,
+    
+    [Required(ErrorMessage = "CEP é obrigatório")]
+    [RegularExpression(@"^\d{8}$", ErrorMessage = "CEP deve conter 8 dígitos")]
+    [Description("CEP (apenas números)")]
+    string Cep,
+    
+    [RegularExpression(@"^\d{10}$", ErrorMessage = "Telefone fixo deve conter 10 dígitos")]
+    [Description("Telefone fixo (apenas números, com DDD) - opcional")]
+    string? TelefoneFixo = null
 );
 
 public class InviteResponse

@@ -488,6 +488,22 @@ public class UserService : IUserService
                     companyId: companyId
                 );
 
+                user.UpdateProfile(
+                    telefoneCelular: request.TelefoneCelular,
+                    telefoneFixo: request.TelefoneFixo
+                );
+
+                user.UpdateAddress(
+                    rua: request.Rua,
+                    numero: null,
+                    complemento: null,
+                    bairro: null,
+                    cidade: request.Cidade,
+                    estado: request.Estado,
+                    pais: request.Pais,
+                    cep: request.Cep
+                );
+
                 // Se for PJ contratado, criar relacionamento entre empresas
                 if (invite.InviteType == InviteType.ContractedPJ && pjCompany != null)
                 {
