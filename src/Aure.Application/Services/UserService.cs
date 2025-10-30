@@ -272,6 +272,18 @@ public class UserService : IUserService
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _emailService.SendWelcomeEmailAsync(user.Email, user.Name, company.Name);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao enviar email de boas-vindas para {Email}", user.Email);
+            }
+        });
+
         var response = _mapper.Map<UserResponse>(user);
         _logger.LogInformation("Usuário admin da empresa registrado com sucesso com ID {UserId}", user.Id);
         return Result.Success(response);

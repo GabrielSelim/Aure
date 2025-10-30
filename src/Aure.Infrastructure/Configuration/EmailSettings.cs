@@ -10,4 +10,5 @@ public class EmailSettings
     public string FromEmail { get; set; } = string.Empty;
     public string FromName { get; set; } = string.Empty;
     public string BaseUrl { get; set; } = string.Empty;
+    public string FrontendUrl { get; set; } = string.Empty;
 }
