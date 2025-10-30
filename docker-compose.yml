@@ -184,7 +184,3 @@ networks:
   aure-network:
     name: aure-network-${COMPOSE_PROJECT_NAME:-aure}
     driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: ${NETWORK_SUBNET:-192.168.100.0/24}
