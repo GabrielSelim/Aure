@@ -320,6 +320,114 @@ public class CompanyService : ICompanyService
         };
     }
 
+    public async Task<Result<UserCompanyInfoResponse>> GetCompanyInfoByUserIdAsync(Guid userId)
+    {
+        try
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogWarning("User not found with ID {UserId}", userId);
+                return Result.Failure<UserCompanyInfoResponse>("Usuário não encontrado");
+            }
+
+            if (!user.CompanyId.HasValue)
+            {
+                _logger.LogWarning("User {UserId} does not have a company associated", userId);
+                return Result.Failure<UserCompanyInfoResponse>("Usuário não possui empresa associada");
+            }
+
+            var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+            if (company == null)
+            {
+                _logger.LogWarning("Company not found with ID {CompanyId} for user {UserId}", user.CompanyId, userId);
+                return Result.Failure<UserCompanyInfoResponse>("Empresa não encontrada");
+            }
+
+            var response = new UserCompanyInfoResponse
+            {
+                Id = company.Id,
+                Nome = company.Name,
+                Cnpj = company.Cnpj,
+                CnpjFormatado = company.GetFormattedCnpj(),
+                Tipo = company.Type.ToString(),
+                ModeloNegocio = company.BusinessModel.ToString(),
+                TelefoneCelular = company.PhoneMobile,
+                TelefoneFixo = company.PhoneLandline,
+                Endereco = string.IsNullOrWhiteSpace(company.AddressStreet) ? null : new EnderecoEmpresaDto
+                {
+                    Rua = company.AddressStreet,
+                    Numero = company.AddressNumber!,
+                    Complemento = company.AddressComplement,
+                    Bairro = company.AddressNeighborhood!,
+                    Cidade = company.AddressCity!,
+                    Estado = company.AddressState!,
+                    Pais = company.AddressCountry!,
+                    Cep = company.AddressZipCode!,
+                    EnderecoCompleto = company.GetFullAddress()
+                }
+            };
+
+            return Result.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting company info for user {UserId}", userId);
+            return Result.Failure<UserCompanyInfoResponse>("Erro ao buscar dados da empresa");
+        }
+    }
+
+    public async Task<Result<UserCompanyInfoResponse>> UpdateCompanyInfoAsync(Guid userId, UpdateUserCompanyInfoRequest request)
+    {
+        try
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null || user.Role != UserRole.DonoEmpresaPai)
+            {
+                _logger.LogWarning("Unauthorized attempt to update company info by user {UserId}", userId);
+                return Result.Failure<UserCompanyInfoResponse>("Apenas o dono da empresa pode alterar os dados da empresa");
+            }
+
+            if (!user.CompanyId.HasValue)
+            {
+                _logger.LogWarning("User {UserId} does not have a company associated", userId);
+                return Result.Failure<UserCompanyInfoResponse>("Usuário não possui empresa associada");
+            }
+
+            var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+            if (company == null)
+            {
+                _logger.LogWarning("Company not found with ID {CompanyId} for user {UserId}", user.CompanyId, userId);
+                return Result.Failure<UserCompanyInfoResponse>("Empresa não encontrada");
+            }
+
+            company.UpdateName(request.Nome);
+            company.UpdateContactInfo(request.TelefoneCelular, request.TelefoneFixo);
+            company.UpdateAddress(
+                request.Rua,
+                request.Numero,
+                request.Complemento,
+                request.Bairro,
+                request.Cidade,
+                request.Estado,
+                request.Pais,
+                request.Cep
+            );
+
+            await _unitOfWork.Companies.UpdateAsync(company);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Company {CompanyId} info updated by user {UserId}", company.Id, userId);
+
+            return await GetCompanyInfoByUserIdAsync(userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating company info for user {UserId}", userId);
+            return Result.Failure<UserCompanyInfoResponse>("Erro ao atualizar dados da empresa");
+        }
+    }
+
     private static double CalculateSimilarity(string source, string target)
     {
         if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(target))

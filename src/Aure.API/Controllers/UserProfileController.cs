@@ -370,6 +370,111 @@ public class UserProfileController : ControllerBase
         }
     }
 
+    [HttpGet("empresa")]
+    [Authorize]
+    [SwaggerOperation(
+        Summary = "Obter dados da empresa do usuário autenticado",
+        Description = @"Retorna os dados da empresa em que o usuário trabalha.
+
+**Disponível para todos os usuários autenticados:**
+- DonoEmpresaPai: Visualiza dados da empresa pai
+- Financeiro: Visualiza dados da empresa pai
+- Jurídico: Visualiza dados da empresa pai
+- FuncionarioCLT: Visualiza dados da empresa pai
+- FuncionarioPJ: Visualiza dados da empresa pai (não confundir com empresa PJ do funcionário)
+
+**Dados Retornados:**
+- Nome da empresa
+- CNPJ (normal e formatado)
+- Tipo de empresa
+- Modelo de negócio
+- Telefones (celular e fixo)
+- Endereço completo"
+    )]
+    [SwaggerResponse(200, "Dados da empresa retornados com sucesso", typeof(UserCompanyInfoResponse))]
+    [SwaggerResponse(401, "Não autenticado")]
+    [SwaggerResponse(404, "Empresa não encontrada")]
+    [ProducesResponseType(typeof(UserCompanyInfoResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetEmpresa()
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var companyService = HttpContext.RequestServices.GetRequiredService<ICompanyService>();
+            var result = await companyService.GetCompanyInfoByUserIdAsync(userId);
+            
+            if (!result.IsSuccess)
+                return NotFound(new { message = result.Error });
+            
+            return Ok(result.Data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar dados da empresa");
+            return StatusCode(500, new { message = "Erro ao buscar dados da empresa" });
+        }
+    }
+
+    [HttpPut("empresa")]
+    [Authorize(Roles = "DonoEmpresaPai")]
+    [SwaggerOperation(
+        Summary = "Atualizar dados da empresa (SOMENTE DonoEmpresaPai)",
+        Description = @"Permite que o dono da empresa atualize os dados cadastrais da empresa pai.
+
+**Restrição de Acesso:**
+- Apenas usuários com role DonoEmpresaPai (role 1)
+- Só pode atualizar a própria empresa (validação via JWT)
+
+**Campos Editáveis:**
+- Nome da empresa (razão social)
+- Telefone celular (obrigatório - 10 ou 11 dígitos)
+- Telefone fixo (opcional - 10 dígitos)
+- Endereço completo (rua, número, complemento, bairro, cidade, estado, país, CEP)
+
+**Campos NÃO Editáveis:**
+- CNPJ (imutável)
+- Tipo de empresa (imutável)
+- Modelo de negócio (imutável)
+
+**Validações:**
+- Estado: Deve ter exatamente 2 caracteres (sigla)
+- CEP: Deve ter exatamente 8 dígitos
+- Telefones: Apenas números, sem formatação"
+    )]
+    [SwaggerResponse(200, "Empresa atualizada com sucesso", typeof(UserCompanyInfoResponse))]
+    [SwaggerResponse(400, "Dados inválidos")]
+    [SwaggerResponse(401, "Não autenticado")]
+    [SwaggerResponse(403, "Apenas DonoEmpresaPai pode atualizar a empresa")]
+    [SwaggerResponse(404, "Empresa não encontrada")]
+    [ProducesResponseType(typeof(UserCompanyInfoResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateEmpresa([FromBody] UpdateUserCompanyInfoRequest request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = GetCurrentUserId();
+            var companyService = HttpContext.RequestServices.GetRequiredService<ICompanyService>();
+            var result = await companyService.UpdateCompanyInfoAsync(userId, request);
+            
+            if (!result.IsSuccess)
+            {
+                if (result.Error.Contains("Apenas o dono"))
+                    return StatusCode(403, new { message = result.Error });
+                    
+                return BadRequest(new { message = result.Error });
+            }
+            
+            return Ok(result.Data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao atualizar dados da empresa");
+            return StatusCode(500, new { message = "Erro ao atualizar dados da empresa" });
+        }
+    }
+
     [HttpPut("empresa-pj")]
     [Authorize(Roles = "FuncionarioPJ")]
     [SwaggerOperation(

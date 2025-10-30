@@ -17,4 +17,6 @@ public interface ICompanyService
     Task<Result> DeleteAsync(Guid id);
     Task<CompanyInfoResponse> GetCompanyParentInfoAsync(Guid userId);
     Task<UpdateCompanyParentResponse> UpdateCompanyParentAsync(Guid userId, UpdateCompanyParentRequest request);
+    Task<Result<UserCompanyInfoResponse>> GetCompanyInfoByUserIdAsync(Guid userId);
+    Task<Result<UserCompanyInfoResponse>> UpdateCompanyInfoAsync(Guid userId, UpdateUserCompanyInfoRequest request);
 }
