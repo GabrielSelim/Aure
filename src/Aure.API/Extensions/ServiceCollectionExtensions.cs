@@ -49,6 +49,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificationRepository, NotificationRepository>();
 
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<ICnpjValidationService, CnpjValidationService>();
         services.AddScoped<ISefazService, SefazService>();
