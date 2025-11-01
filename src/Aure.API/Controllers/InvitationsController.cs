@@ -193,4 +193,51 @@ public class InvitationsController : ControllerBase
             return StatusCode(500, new { message = "Erro ao cancelar convite" });
         }
     }
+
+    [HttpPost("{id}/reenviar")]
+    [Authorize(Roles = "DonoEmpresaPai,Financeiro")]
+    [SwaggerOperation(
+        Summary = "Reenviar email de convite pendente",
+        Description = @"Reenvia o email de convite para um convite que ainda está pendente.
+
+**Permissões:**
+- Apenas DonoEmpresaPai e Financeiro podem reenviar
+
+**Regras:**
+- Apenas convites com status 'Pending' podem ser reenviados
+- Gera um novo token de convite válido
+- Email é enviado novamente para o convidado
+- Mantém todas as informações originais do convite
+
+**Caso de Uso:**
+Útil quando:
+- A pessoa não recebeu o email
+- O token expirou
+- O email foi para spam
+- A pessoa perdeu o link do convite"
+    )]
+    [SwaggerResponse(200, "Email reenviado com sucesso", typeof(ResendInvitationResponse))]
+    [SwaggerResponse(400, "Convite não pode ser reenviado")]
+    [SwaggerResponse(401, "Não autenticado")]
+    [SwaggerResponse(403, "Sem permissão para reenviar convites")]
+    [SwaggerResponse(404, "Convite não encontrado")]
+    [ProducesResponseType(typeof(ResendInvitationResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ResendInvitation(Guid id)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var result = await _userService.ResendInvitationAsync(id, userId);
+
+            if (!result.IsSuccess)
+                return BadRequest(new { message = result.Error });
+
+            return Ok(result.Data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao reenviar convite {InvitationId}", id);
+            return StatusCode(500, new { message = "Erro ao reenviar convite" });
+        }
+    }
 }

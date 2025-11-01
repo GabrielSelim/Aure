@@ -87,6 +87,17 @@ public class UserInvitation : BaseEntity
         UpdateTimestamp();
     }
 
+    public void RegenerateToken(int expirationDays = 7)
+    {
+        if (Status != InvitationStatus.Pending)
+            throw new InvalidOperationException("Apenas convites pendentes podem ter o token regenerado");
+
+        InvitationToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray()) + 
+                         Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        ExpiresAt = DateTime.UtcNow.AddDays(expirationDays);
+        UpdateTimestamp();
+    }
+
     public bool IsExpired() => DateTime.UtcNow > ExpiresAt && Status == InvitationStatus.Pending;
 
     public bool CanBeEdited() => Status == InvitationStatus.Pending && !IsExpired();

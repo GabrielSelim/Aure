@@ -39,6 +39,7 @@ public interface IUserService
     Task<Result<UserInvitationListResponse>> GetInvitationByIdAsync(Guid invitationId, Guid requestingUserId);
     Task<Result<UpdateInvitationResponse>> UpdateInvitationAsync(Guid invitationId, UpdateInvitationRequest request, Guid requestingUserId);
     Task<Result<CancelInvitationResponse>> CancelInvitationAsync(Guid invitationId, Guid requestingUserId);
+    Task<Result<ResendInvitationResponse>> ResendInvitationAsync(Guid invitationId, Guid requestingUserId);
     
     // Password Recovery
     Task<Result<bool>> RequestPasswordResetAsync(string email);

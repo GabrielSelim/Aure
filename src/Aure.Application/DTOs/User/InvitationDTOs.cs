@@ -39,3 +39,10 @@ public class CancelInvitationResponse
     public bool Success { get; set; }
     public string? Message { get; set; }
 }
+
+public class ResendInvitationResponse
+{
+    public bool Success { get; set; }
+    public string? Message { get; set; }
+    public DateTime? NewExpirationDate { get; set; }
+}

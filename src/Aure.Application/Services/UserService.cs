@@ -1099,6 +1099,63 @@ public class UserService : IUserService
         });
     }
 
+    public async Task<Result<ResendInvitationResponse>> ResendInvitationAsync(Guid invitationId, Guid requestingUserId)
+    {
+        var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
+
+        if (requestingUser == null)
+            return Result.Failure<ResendInvitationResponse>("Usuário não encontrado");
+
+        if (requestingUser.Role != UserRole.DonoEmpresaPai && 
+            requestingUser.Role != UserRole.Financeiro)
+            return Result.Failure<ResendInvitationResponse>("Apenas DonoEmpresaPai e Financeiro podem reenviar convites");
+
+        if (!requestingUser.CompanyId.HasValue)
+            return Result.Failure<ResendInvitationResponse>("Usuário não vinculado a empresa");
+
+        var invitation = await _unitOfWork.UserInvitations.GetByIdAsync(invitationId);
+
+        if (invitation == null)
+            return Result.Failure<ResendInvitationResponse>("Convite não encontrado");
+
+        if (invitation.CompanyId != requestingUser.CompanyId.Value)
+            return Result.Failure<ResendInvitationResponse>("Convite não pertence à sua empresa");
+
+        if (invitation.Status == InvitationStatus.Accepted)
+            return Result.Failure<ResendInvitationResponse>("Não é possível reenviar convite já aceito");
+
+        if (invitation.Status == InvitationStatus.Cancelled)
+            return Result.Failure<ResendInvitationResponse>("Não é possível reenviar convite cancelado");
+
+        invitation.RegenerateToken();
+        await _unitOfWork.UserInvitations.UpdateAsync(invitation);
+        await _unitOfWork.SaveChangesAsync();
+
+        var company = await _unitOfWork.Companies.GetByIdAsync(requestingUser.CompanyId.Value);
+        if (company == null)
+            return Result.Failure<ResendInvitationResponse>("Empresa não encontrada");
+
+        await Task.Run(async () =>
+        {
+            await _emailService.SendInviteEmailAsync(
+                recipientEmail: invitation.Email,
+                recipientName: invitation.Name,
+                inviteToken: invitation.InvitationToken,
+                inviterName: requestingUser.Name,
+                companyName: company.Name
+            );
+        });
+
+        _logger.LogInformation("Convite {InvitationId} reenviado por {UserId}", invitationId, requestingUserId);
+
+        return Result.Success(new ResendInvitationResponse
+        {
+            Success = true,
+            Message = "Email de convite reenviado com sucesso",
+            NewExpirationDate = invitation.ExpiresAt
+        });
+    }
+
     public async Task<Result<bool>> RequestPasswordResetAsync(string email)
     {
         try

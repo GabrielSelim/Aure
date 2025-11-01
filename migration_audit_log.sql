@@ -1,0 +1,9 @@
+ALTER TABLE auditlogs ADD COLUMN IF NOT EXISTS performedbyemail text NULL;
+ALTER TABLE auditlogs ADD COLUMN IF NOT EXISTS useragent text NULL;
+ALTER TABLE auditlogs ADD COLUMN IF NOT EXISTS httpmethod text NULL;
+ALTER TABLE auditlogs ADD COLUMN IF NOT EXISTS path text NULL;
+ALTER TABLE auditlogs ADD COLUMN IF NOT EXISTS statuscode integer NOT NULL DEFAULT 0;
+ALTER TABLE auditlogs ADD COLUMN IF NOT EXISTS duration double precision NOT NULL DEFAULT 0;
+ALTER TABLE auditlogs ADD COLUMN IF NOT EXISTS success boolean NOT NULL DEFAULT false;
+ALTER TABLE auditlogs ALTER COLUMN entityid DROP NOT NULL;
+ALTER TABLE auditlogs ALTER COLUMN performedby DROP NOT NULL;
