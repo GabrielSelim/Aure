@@ -11,6 +11,7 @@ public class AvatarService : IAvatarService
 {
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<AvatarService> _logger;
+    private readonly string _uploadsPath;
     private const string AvatarsFolder = "uploads/avatars";
     private const int OriginalSize = 400;
     private const int ThumbnailSize = 80;
@@ -22,6 +23,16 @@ public class AvatarService : IAvatarService
     {
         _environment = environment;
         _logger = logger;
+
+        var contentRoot = environment.ContentRootPath;
+        var wwwrootPath = Path.Combine(contentRoot, "wwwroot");
+        _uploadsPath = Path.Combine(wwwrootPath, AvatarsFolder);
+
+        if (!Directory.Exists(_uploadsPath))
+        {
+            Directory.CreateDirectory(_uploadsPath);
+            _logger.LogInformation("Diretório de avatares criado em: {Path}", _uploadsPath);
+        }
     }
 
     public async Task<string> UploadAvatarAsync(IFormFile file, Guid userId)
@@ -38,15 +49,12 @@ public class AvatarService : IAvatarService
         if (!allowedExtensions.Contains(extension))
             throw new InvalidOperationException("Formato de arquivo não permitido. Use JPG ou PNG");
 
-        var uploadsPath = Path.Combine(_environment.WebRootPath, AvatarsFolder);
-        Directory.CreateDirectory(uploadsPath);
-
         await DeleteAvatarAsync(userId);
 
         var originalFileName = $"{userId}.jpg";
         var thumbnailFileName = $"{userId}_thumb.jpg";
-        var originalPath = Path.Combine(uploadsPath, originalFileName);
-        var thumbnailPath = Path.Combine(uploadsPath, thumbnailFileName);
+        var originalPath = Path.Combine(_uploadsPath, originalFileName);
+        var thumbnailPath = Path.Combine(_uploadsPath, thumbnailFileName);
 
         try
         {
@@ -89,16 +97,14 @@ public class AvatarService : IAvatarService
     {
         try
         {
-            var uploadsPath = Path.Combine(_environment.WebRootPath, AvatarsFolder);
-            
-            var originalPath = Path.Combine(uploadsPath, $"{userId}.jpg");
+            var originalPath = Path.Combine(_uploadsPath, $"{userId}.jpg");
             if (File.Exists(originalPath))
             {
                 File.Delete(originalPath);
                 _logger.LogInformation("Avatar original do usuário {UserId} deletado", userId);
             }
 
-            var thumbnailPath = Path.Combine(uploadsPath, $"{userId}_thumb.jpg");
+            var thumbnailPath = Path.Combine(_uploadsPath, $"{userId}_thumb.jpg");
             if (File.Exists(thumbnailPath))
             {
                 File.Delete(thumbnailPath);
@@ -115,8 +121,7 @@ public class AvatarService : IAvatarService
 
     public string GetAvatarUrl(Guid userId)
     {
-        var uploadsPath = Path.Combine(_environment.WebRootPath, AvatarsFolder);
-        var avatarPath = Path.Combine(uploadsPath, $"{userId}.jpg");
+        var avatarPath = Path.Combine(_uploadsPath, $"{userId}.jpg");
 
         if (File.Exists(avatarPath))
         {

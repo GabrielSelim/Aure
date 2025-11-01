@@ -311,14 +311,17 @@ public class UserService : IUserService
 
     public async Task<Result<InviteResponse>> InviteUserAsync(InviteUserRequest request, Guid currentUserId, string currentUserRole)
     {
-        // Verificar se email já existe como usuário
+        if (request.InviteType == InviteType.Internal && request.Role == null)
+        {
+            return Result.Failure<InviteResponse>("Role é obrigatório para convites de usuários internos (Financeiro ou Jurídico)");
+        }
+
         if (await _unitOfWork.Users.EmailExistsAsync(request.Email))
         {
             _logger.LogWarning("Tentativa de convidar usuário com email existente {Email}", request.Email);
             return Result.Failure<InviteResponse>("Email já existe como usuário registrado");
         }
 
-        // Verificar se email já tem convite pendente
         if (await _unitOfWork.UserInvites.EmailHasPendingInviteAsync(request.Email))
         {
             _logger.LogWarning("Email {Email} já tem um convite pendente", request.Email);

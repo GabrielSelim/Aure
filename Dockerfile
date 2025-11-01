@@ -25,7 +25,9 @@ FROM base AS final
 WORKDIR /app
 
 # Criar diretórios necessários
-RUN mkdir -p /app/logs /app/uploads /app/certificates
+RUN mkdir -p /app/logs /app/uploads /app/certificates /app/wwwroot/uploads/avatars && \
+    chmod -R 755 /app/wwwroot && \
+    chmod -R 755 /app/uploads
 
 # Copiar aplicação
 COPY --from=publish /app/publish .

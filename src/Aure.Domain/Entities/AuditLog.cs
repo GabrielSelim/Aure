@@ -5,27 +5,26 @@ namespace Aure.Domain.Entities;
 
 public class AuditLog : BaseEntity
 {
-    public string EntityName { get; private set; } = string.Empty;
-    public Guid EntityId { get; private set; }
-    public AuditAction Action { get; private set; }
-    public Guid PerformedBy { get; private set; }
-    public string IpAddress { get; private set; } = string.Empty;
-    public DateTime Timestamp { get; private set; }
-    public string HashChain { get; private set; } = string.Empty;
+    public string EntityName { get; set; } = string.Empty;
+    public Guid? EntityId { get; set; }
+    public AuditAction Action { get; set; }
+    public Guid? PerformedBy { get; set; }
+    public string? PerformedByEmail { get; set; }
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
+    public DateTime Timestamp { get; set; }
+    public string? HttpMethod { get; set; }
+    public string? Path { get; set; }
+    public int StatusCode { get; set; }
+    public double Duration { get; set; }
+    public bool Success { get; set; }
+    public string HashChain { get; set; } = string.Empty;
 
-    public User User { get; private set; } = null!;
+    public User? User { get; set; }
 
-    private AuditLog() { }
-
-    public AuditLog(string entityName, Guid entityId, AuditAction action, Guid performedBy, string ipAddress, string hashChain)
+    public AuditLog()
     {
-        EntityName = entityName;
-        EntityId = entityId;
-        Action = action;
-        PerformedBy = performedBy;
-        IpAddress = ipAddress;
         Timestamp = DateTime.UtcNow;
-        HashChain = hashChain;
     }
 
     public static string GenerateHashChain(string previousHash, string currentData)

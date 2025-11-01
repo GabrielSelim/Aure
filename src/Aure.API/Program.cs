@@ -1,5 +1,6 @@
 using Aure.API.Extensions;
 using Aure.API.Filters;
+using Aure.API.Middleware;
 using Aure.Application.Interfaces;
 using Aure.Infrastructure.Data;
 using Hangfire;
@@ -97,12 +98,23 @@ app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 
+var wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+if (!Directory.Exists(wwwrootPath))
+{
+    Directory.CreateDirectory(wwwrootPath);
+    Log.Information("Diretório wwwroot criado em: {Path}", wwwrootPath);
+}
+
+app.UseStaticFiles();
+
 // CORS baseado no ambiente
 var corsPolicy = app.Environment.IsProduction() ? "AllowSpecificOrigins" : "AllowAll";
 app.UseCors(corsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseAuditMiddleware();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
