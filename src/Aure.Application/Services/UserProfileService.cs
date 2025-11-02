@@ -12,6 +12,7 @@ public class UserProfileService : IUserProfileService
 {
     private readonly IUserRepository _userRepository;
     private readonly ICompanyRepository _companyRepository;
+    private readonly INotificationPreferencesRepository _notificationPreferencesRepository;
     private readonly ICnpjValidationService _cnpjValidationService;
     private readonly IEncryptionService _encryptionService;
     private readonly IUnitOfWork _unitOfWork;
@@ -20,6 +21,7 @@ public class UserProfileService : IUserProfileService
     public UserProfileService(
         IUserRepository userRepository,
         ICompanyRepository companyRepository,
+        INotificationPreferencesRepository notificationPreferencesRepository,
         ICnpjValidationService cnpjValidationService,
         IEncryptionService encryptionService,
         IUnitOfWork unitOfWork,
@@ -27,6 +29,7 @@ public class UserProfileService : IUserProfileService
     {
         _userRepository = userRepository;
         _companyRepository = companyRepository;
+        _notificationPreferencesRepository = notificationPreferencesRepository;
         _cnpjValidationService = cnpjValidationService;
         _encryptionService = encryptionService;
         _unitOfWork = unitOfWork;
@@ -158,77 +161,74 @@ public class UserProfileService : IUserProfileService
     public async Task<NotificationPreferencesDTO> GetNotificationPreferencesAsync(Guid userId)
     {
         var user = await _userRepository.GetByIdAsync(userId);
-
         if (user == null)
             throw new KeyNotFoundException("Usuário não encontrado");
 
-        _logger.LogInformation("Usuario {UserId} carregado. NotificationPreferences is null? {IsNull}", userId, user.NotificationPreferences == null);
+        var preferences = await _notificationPreferencesRepository.GetByUserIdAsync(userId);
 
-        if (user.NotificationPreferences == null)
+        if (preferences == null)
         {
-            _logger.LogWarning("Criando preferencias de notificacao para usuario {UserId}", userId);
-            var newPreferences = new Domain.Entities.NotificationPreferences(userId);
-            user.SetNotificationPreferences(newPreferences);
-            await _userRepository.UpdateAsync(user);
-            
-            try
-            {
-                await _unitOfWork.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao criar preferências de notificação para usuário {UserId}", userId);
-                throw;
-            }
+            preferences = new Domain.Entities.NotificationPreferences(userId);
+            await _notificationPreferencesRepository.AddAsync(preferences);
+            _logger.LogInformation("Preferências de notificação criadas para usuário {UserId}", userId);
         }
 
         return new NotificationPreferencesDTO
         {
-            ReceberEmailNovoContrato = user.NotificationPreferences?.ReceberEmailNovoContrato ?? true,
-            ReceberEmailContratoAssinado = user.NotificationPreferences?.ReceberEmailContratoAssinado ?? true,
-            ReceberEmailContratoVencendo = user.NotificationPreferences?.ReceberEmailContratoVencendo ?? true,
-            ReceberEmailPagamentoProcessado = user.NotificationPreferences?.ReceberEmailPagamentoProcessado ?? true,
-            ReceberEmailPagamentoRecebido = user.NotificationPreferences?.ReceberEmailPagamentoRecebido ?? true,
-            ReceberEmailNovoFuncionario = user.NotificationPreferences?.ReceberEmailNovoFuncionario ?? true,
-            ReceberEmailAlertasFinanceiros = user.NotificationPreferences?.ReceberEmailAlertasFinanceiros ?? true,
-            ReceberEmailAtualizacoesSistema = user.NotificationPreferences?.ReceberEmailAtualizacoesSistema ?? true
+            ReceberEmailNovoContrato = preferences.ReceberEmailNovoContrato,
+            ReceberEmailContratoAssinado = preferences.ReceberEmailContratoAssinado,
+            ReceberEmailContratoVencendo = preferences.ReceberEmailContratoVencendo,
+            ReceberEmailPagamentoProcessado = preferences.ReceberEmailPagamentoProcessado,
+            ReceberEmailPagamentoRecebido = preferences.ReceberEmailPagamentoRecebido,
+            ReceberEmailNovoFuncionario = preferences.ReceberEmailNovoFuncionario,
+            ReceberEmailAlertasFinanceiros = preferences.ReceberEmailAlertasFinanceiros,
+            ReceberEmailAtualizacoesSistema = preferences.ReceberEmailAtualizacoesSistema
         };
     }
 
     public async Task<NotificationPreferencesDTO> UpdateNotificationPreferencesAsync(
         Guid userId, 
-        NotificationPreferencesDTO preferences)
+        NotificationPreferencesDTO preferencesDto)
     {
         var user = await _userRepository.GetByIdAsync(userId);
-
         if (user == null)
             throw new KeyNotFoundException("Usuário não encontrado");
 
-        if (user.NotificationPreferences == null)
-        {
-            user.SetNotificationPreferences(new Domain.Entities.NotificationPreferences(userId));
-        }
+        var preferences = await _notificationPreferencesRepository.GetByUserIdAsync(userId);
 
-        if (user.NotificationPreferences != null)
+        if (preferences == null)
         {
-            user.NotificationPreferences.UpdatePreferences(
-                preferences.ReceberEmailNovoContrato,
-                preferences.ReceberEmailContratoAssinado,
-                preferences.ReceberEmailContratoVencendo,
-                preferences.ReceberEmailPagamentoProcessado,
-                preferences.ReceberEmailPagamentoRecebido,
-                preferences.ReceberEmailNovoFuncionario,
-                preferences.ReceberEmailAlertasFinanceiros,
-                preferences.ReceberEmailAtualizacoesSistema
+            preferences = new Domain.Entities.NotificationPreferences(userId);
+            preferences.UpdatePreferences(
+                preferencesDto.ReceberEmailNovoContrato,
+                preferencesDto.ReceberEmailContratoAssinado,
+                preferencesDto.ReceberEmailContratoVencendo,
+                preferencesDto.ReceberEmailPagamentoProcessado,
+                preferencesDto.ReceberEmailPagamentoRecebido,
+                preferencesDto.ReceberEmailNovoFuncionario,
+                preferencesDto.ReceberEmailAlertasFinanceiros,
+                preferencesDto.ReceberEmailAtualizacoesSistema
             );
+            await _notificationPreferencesRepository.AddAsync(preferences);
         }
-
-        await _userRepository.UpdateAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        else
+        {
+            preferences.UpdatePreferences(
+                preferencesDto.ReceberEmailNovoContrato,
+                preferencesDto.ReceberEmailContratoAssinado,
+                preferencesDto.ReceberEmailContratoVencendo,
+                preferencesDto.ReceberEmailPagamentoProcessado,
+                preferencesDto.ReceberEmailPagamentoRecebido,
+                preferencesDto.ReceberEmailNovoFuncionario,
+                preferencesDto.ReceberEmailAlertasFinanceiros,
+                preferencesDto.ReceberEmailAtualizacoesSistema
+            );
+            await _notificationPreferencesRepository.UpdateAsync(preferences);
+        }
 
         _logger.LogInformation("Preferências de notificação do usuário {UserId} atualizadas", userId);
 
-        return preferences;
+        return preferencesDto;
     }
 
     public async Task AcceptTermsAsync(Guid userId, AcceptTermsRequest request)

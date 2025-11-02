@@ -10,17 +10,9 @@ public class UserRepository : BaseRepository<User>, IUserRepository
 {
     public UserRepository(AureDbContext context) : base(context) { }
 
-    public override async Task<User?> GetByIdAsync(Guid id)
-    {
-        return await _dbSet
-            .Include(u => u.NotificationPreferences)
-            .FirstOrDefaultAsync(u => u.Id == id);
-    }
-
     public async Task<User?> GetByEmailAsync(string email)
     {
         return await _dbSet
-            .Include(u => u.NotificationPreferences)
             .FirstOrDefaultAsync(x => x.Email.ToLower() == email.ToLower());
     }
 
