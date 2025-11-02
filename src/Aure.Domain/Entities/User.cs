@@ -289,13 +289,17 @@ public class User : BaseEntity
 
     public void SetBirthDate(DateTime birthDate)
     {
-        if (birthDate >= DateTime.UtcNow)
+        var birthDateUtc = birthDate.Kind == DateTimeKind.Unspecified 
+            ? DateTime.SpecifyKind(birthDate, DateTimeKind.Utc) 
+            : birthDate.ToUniversalTime();
+
+        if (birthDateUtc >= DateTime.UtcNow)
             throw new ArgumentException("Data de nascimento deve ser no passado", nameof(birthDate));
         
-        if (birthDate < DateTime.UtcNow.AddYears(-120))
+        if (birthDateUtc < DateTime.UtcNow.AddYears(-120))
             throw new ArgumentException("Data de nascimento inválida", nameof(birthDate));
         
-        DataNascimento = birthDate;
+        DataNascimento = birthDateUtc;
         UpdateTimestamp();
     }
 
