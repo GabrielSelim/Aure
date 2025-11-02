@@ -55,7 +55,7 @@ public class AuditMiddleware
 
     private bool ShouldAudit(string method, string path, int statusCode)
     {
-        if (method == "GET" && statusCode == 200)
+        if (method == "GET")
             return false;
 
         if (path.StartsWith("/health") || path.StartsWith("/swagger"))
