@@ -87,11 +87,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasForeignKey(u => u.CompanyId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(u => u.NotificationPreferences)
-            .WithOne()
-            .HasForeignKey<NotificationPreferences>(np => np.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         builder.HasIndex(u => u.CompanyId);
         builder.HasIndex(u => u.IsDeleted);
         builder.HasIndex(u => u.DataNascimento);

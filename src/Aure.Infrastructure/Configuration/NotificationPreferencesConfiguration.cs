@@ -45,11 +45,6 @@ public class NotificationPreferencesConfiguration : IEntityTypeConfiguration<Not
             .IsRequired()
             .HasDefaultValue(true);
 
-        builder.HasOne(np => np.User)
-            .WithOne(u => u.NotificationPreferences)
-            .HasForeignKey<NotificationPreferences>(np => np.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         builder.HasIndex(np => np.UserId)
             .IsUnique()
             .HasFilter("is_deleted = false");

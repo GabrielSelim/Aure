@@ -5,7 +5,6 @@ namespace Aure.Domain.Entities;
 public class NotificationPreferences : BaseEntity
 {
     public Guid UserId { get; private set; }
-    public User User { get; private set; } = null!;
 
     // Notificações de Contrato
     public bool ReceberEmailNovoContrato { get; private set; } = true;

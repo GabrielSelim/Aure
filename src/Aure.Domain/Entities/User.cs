@@ -49,9 +49,6 @@ public class User : BaseEntity
     public string? PasswordResetToken { get; private set; }
     public DateTime? PasswordResetTokenExpiry { get; private set; }
 
-    // Preferências de Notificação
-    public NotificationPreferences? NotificationPreferences { get; private set; }
-
     private readonly List<Session> _sessions = new();
     private readonly List<Signature> _signatures = new();
     private readonly List<AuditLog> _auditLogs = new();
@@ -180,11 +177,6 @@ public class User : BaseEntity
         DataAceitePoliticaPrivacidade = DateTime.UtcNow;
         VersaoPoliticaPrivacidadeAceita = version;
         UpdateTimestamp();
-    }
-
-    public void SetNotificationPreferences(NotificationPreferences preferences)
-    {
-        NotificationPreferences = preferences;
     }
 
     public string GetEnderecoCompleto()
