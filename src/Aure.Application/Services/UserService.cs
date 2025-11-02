@@ -7,6 +7,8 @@ using Aure.Domain.Common;
 using Aure.Domain.Entities;
 using Aure.Domain.Interfaces;
 using Aure.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Aure.Application.Services;
 
@@ -290,7 +292,40 @@ public class UserService : IUserService
         user.AcceptPrivacyPolicy(request.VersaoPoliticaPrivacidadeAceita);
 
         await _unitOfWork.Users.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+
+        try
+        {
+            await _unitOfWork.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx)
+        {
+            _logger.LogError(ex, "Erro ao salvar empresa/usuário no banco de dados - PostgreSQL Code: {SqlState}, Constraint: {Constraint}", 
+                pgEx.SqlState, pgEx.ConstraintName);
+
+            if (pgEx.SqlState == "23505")
+            {
+                if (pgEx.ConstraintName?.Contains("cnpj") == true)
+                {
+                    return Result.Failure<UserResponse>("CNPJ já está cadastrado no sistema");
+                }
+                if (pgEx.ConstraintName?.Contains("cpf") == true || pgEx.ConstraintName?.Contains("c_p_f") == true)
+                {
+                    return Result.Failure<UserResponse>("CPF já está cadastrado no sistema");
+                }
+                if (pgEx.ConstraintName?.Contains("email") == true)
+                {
+                    return Result.Failure<UserResponse>("Email já está cadastrado no sistema");
+                }
+                return Result.Failure<UserResponse>("Dados duplicados. Verifique CNPJ, CPF ou Email");
+            }
+
+            return Result.Failure<UserResponse>("Erro ao salvar dados no banco. Tente novamente");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro inesperado ao registrar admin da empresa");
+            return Result.Failure<UserResponse>("Erro ao processar registro. Tente novamente mais tarde");
+        }
 
         _ = Task.Run(async () =>
         {
@@ -595,10 +630,34 @@ public class UserService : IUserService
             
             return Result.Success(response);
         }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx)
+        {
+            _logger.LogError(ex, "Erro ao salvar dados ao aceitar convite {InviteId} - PostgreSQL Code: {SqlState}, Constraint: {Constraint}", 
+                invite.Id, pgEx.SqlState, pgEx.ConstraintName);
+
+            if (pgEx.SqlState == "23505")
+            {
+                if (pgEx.ConstraintName?.Contains("cnpj") == true)
+                {
+                    return Result.Failure<UserResponse>("CNPJ já está cadastrado no sistema");
+                }
+                if (pgEx.ConstraintName?.Contains("cpf") == true || pgEx.ConstraintName?.Contains("c_p_f") == true)
+                {
+                    return Result.Failure<UserResponse>("CPF já está cadastrado no sistema");
+                }
+                if (pgEx.ConstraintName?.Contains("email") == true)
+                {
+                    return Result.Failure<UserResponse>("Email já está cadastrado no sistema");
+                }
+                return Result.Failure<UserResponse>("Dados duplicados. Verifique CNPJ, CPF ou Email");
+            }
+
+            return Result.Failure<UserResponse>("Erro ao salvar dados. Tente novamente");
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao aceitar convite {InviteId}", invite.Id);
-            return Result.Failure<UserResponse>("Erro ao aceitar convite");
+            _logger.LogError(ex, "Erro inesperado ao aceitar convite {InviteId}", invite.Id);
+            return Result.Failure<UserResponse>("Erro ao processar convite. Tente novamente mais tarde");
         }
     }
 
