@@ -162,8 +162,11 @@ public class UserProfileService : IUserProfileService
         if (user == null)
             throw new KeyNotFoundException("Usuário não encontrado");
 
+        _logger.LogInformation("Usuario {UserId} carregado. NotificationPreferences is null? {IsNull}", userId, user.NotificationPreferences == null);
+
         if (user.NotificationPreferences == null)
         {
+            _logger.LogWarning("Criando preferencias de notificacao para usuario {UserId}", userId);
             var newPreferences = new Domain.Entities.NotificationPreferences(userId);
             user.SetNotificationPreferences(newPreferences);
             await _userRepository.UpdateAsync(user);
