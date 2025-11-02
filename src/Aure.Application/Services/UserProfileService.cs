@@ -164,9 +164,19 @@ public class UserProfileService : IUserProfileService
 
         if (user.NotificationPreferences == null)
         {
-            user.SetNotificationPreferences(new Domain.Entities.NotificationPreferences(userId));
+            var newPreferences = new Domain.Entities.NotificationPreferences(userId);
+            user.SetNotificationPreferences(newPreferences);
             await _userRepository.UpdateAsync(user);
-            await _unitOfWork.SaveChangesAsync();
+            
+            try
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao criar preferências de notificação para usuário {UserId}", userId);
+                throw;
+            }
         }
 
         return new NotificationPreferencesDTO

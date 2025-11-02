@@ -47,7 +47,8 @@ public class NotificationPreferencesConfiguration : IEntityTypeConfiguration<Not
 
         builder.HasOne(np => np.User)
             .WithOne(u => u.NotificationPreferences)
-            .HasForeignKey<NotificationPreferences>(np => np.UserId)
+            .HasForeignKey<NotificationPreferences>("UserId")
+            .HasPrincipalKey<User>(u => u.Id)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(np => np.UserId)
