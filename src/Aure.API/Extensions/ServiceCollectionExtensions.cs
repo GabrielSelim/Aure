@@ -48,8 +48,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IKycRecordRepository, KycRecordRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<INotificationPreferencesRepository, NotificationPreferencesRepository>();
+        services.AddScoped<IContractTemplateRepository, ContractTemplateRepository>();
+        services.AddScoped<IContractDocumentRepository, ContractDocumentRepository>();
 
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IContractTemplateService, ContractTemplateService>();
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<ICnpjValidationService, CnpjValidationService>();

@@ -27,6 +27,8 @@ public class AureDbContext : DbContext
     public DbSet<InvoiceItem> InvoiceItems { get; set; }
     public DbSet<TaxCalculation> TaxCalculations { get; set; }
     public DbSet<NotificationPreferences> NotificationPreferences { get; set; }
+    public DbSet<ContractTemplate> ContractTemplates { get; set; }
+    public DbSet<ContractDocument> ContractDocuments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
