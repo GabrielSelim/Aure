@@ -11,6 +11,7 @@ public class ContractTemplate : BaseEntity
     public string? ConteudoDocx { get; private set; }
     public bool EhPadrao { get; private set; }
     public bool Ativo { get; private set; }
+    public bool EhSistema { get; private set; }
     public Guid CompanyId { get; private set; }
     public Company Company { get; private set; }
     public List<string> VariaveisDisponiveis { get; private set; }
@@ -38,10 +39,14 @@ public class ContractTemplate : BaseEntity
         VariaveisDisponiveis = variaveisDisponiveis ?? new List<string>();
         Ativo = true;
         EhPadrao = false;
+        EhSistema = false;
     }
 
     public void AtualizarConteudo(string conteudoHtml, List<string> variaveisDisponiveis)
     {
+        if (EhSistema)
+            throw new InvalidOperationException("Templates do sistema não podem ser editados");
+        
         ConteudoHtml = conteudoHtml ?? throw new ArgumentNullException(nameof(conteudoHtml));
         VariaveisDisponiveis = variaveisDisponiveis ?? new List<string>();
     }
@@ -70,6 +75,9 @@ public class ContractTemplate : BaseEntity
 
     public void Desativar(string motivo)
     {
+        if (EhSistema)
+            throw new InvalidOperationException("Templates do sistema não podem ser desativados");
+        
         Ativo = false;
         DataDesativacao = DateTime.UtcNow;
         MotivoDesativacao = motivo;
@@ -77,9 +85,20 @@ public class ContractTemplate : BaseEntity
 
     public void AtualizarInformacoes(string nome, string descricao)
     {
+        if (EhSistema)
+            throw new InvalidOperationException("Templates do sistema não podem ser editados");
+        
         Nome = nome ?? throw new ArgumentNullException(nameof(nome));
         Descricao = descricao ?? throw new ArgumentNullException(nameof(descricao));
     }
+
+    public void MarcarComoSistema()
+    {
+        EhSistema = true;
+    }
+
+    public bool PodeSerEditado() => !EhSistema;
+    public bool PodeSerDeletado() => !EhSistema;
 }
 
 public enum ContractTemplateType

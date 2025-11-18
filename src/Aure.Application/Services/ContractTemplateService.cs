@@ -98,6 +98,11 @@ public class ContractTemplateService : IContractTemplateService
             throw new NotFoundException("Template não encontrado");
         }
 
+        if (!template.PodeSerEditado())
+        {
+            throw new BusinessException("Este template é do sistema e não pode ser editado. Você pode criar uma cópia personalizada.");
+        }
+
         if (template.CompanyId != user.CompanyId)
         {
             throw new UnauthorizedException("Template não pertence à sua empresa");
@@ -123,9 +128,14 @@ public class ContractTemplateService : IContractTemplateService
     public async Task<ContractTemplateResponse> GetTemplateByIdAsync(Guid templateId, Guid companyId)
     {
         var template = await _templateRepository.GetByIdAsync(templateId);
-        if (template == null || template.CompanyId != companyId)
+        if (template == null)
         {
             throw new NotFoundException("Template não encontrado");
+        }
+
+        if (!template.EhSistema && template.CompanyId != companyId)
+        {
+            throw new UnauthorizedException("Você não tem permissão para acessar este template");
         }
 
         return MapToResponse(template);
@@ -133,15 +143,19 @@ public class ContractTemplateService : IContractTemplateService
 
     public async Task<List<ContractTemplateListResponse>> GetAllTemplatesAsync(Guid companyId, bool apenasAtivos = true)
     {
-        var templates = await _templateRepository.GetAllByCompanyIdAsync(companyId, apenasAtivos);
+        var templatesEmpresa = await _templateRepository.GetAllByCompanyIdAsync(companyId, apenasAtivos);
+        var templatesSistema = await _templateRepository.GetTemplatesSistemaAsync(apenasAtivos);
 
-        return templates.Select(t => new ContractTemplateListResponse
+        var todosTemplates = templatesEmpresa.Concat(templatesSistema).Distinct();
+
+        return todosTemplates.Select(t => new ContractTemplateListResponse
         {
             Id = t.Id,
             Nome = t.Nome,
             Descricao = t.Descricao,
             Tipo = t.Tipo.ToString(),
             EhPadrao = t.EhPadrao,
+            EhSistema = t.EhSistema,
             Ativo = t.Ativo,
             QuantidadeVariaveis = t.VariaveisDisponiveis.Count,
             CreatedAt = t.CreatedAt
@@ -443,6 +457,9 @@ public class ContractTemplateService : IContractTemplateService
             TemDocx = !string.IsNullOrEmpty(template.ConteudoDocx),
             EhPadrao = template.EhPadrao,
             Ativo = template.Ativo,
+            EhSistema = template.EhSistema,
+            PodeEditar = template.PodeSerEditado(),
+            PodeDeletar = template.PodeSerDeletado(),
             VariaveisDisponiveis = template.VariaveisDisponiveis,
             CreatedAt = template.CreatedAt,
             DataDesativacao = template.DataDesativacao,

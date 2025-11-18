@@ -15,7 +15,7 @@ $loginBody = @{
     password = $PASSWORD
 } | ConvertTo-Json
 
-$loginResponse = Invoke-RestMethod -Uri "$API_URL/api/auth/login" -Method Post -Body $loginBody -ContentType "application/json"
+$loginResponse = Invoke-RestMethod -Uri "$API_URL/api/Auth/entrar" -Method Post -Body $loginBody -ContentType "application/json"
 $token = $loginResponse.token
 
 Write-Host "Login bem-sucedido! Token obtido." -ForegroundColor Green

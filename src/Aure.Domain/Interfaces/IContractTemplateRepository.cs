@@ -6,6 +6,7 @@ public interface IContractTemplateRepository
 {
     Task<ContractTemplate?> GetByIdAsync(Guid id);
     Task<List<ContractTemplate>> GetAllByCompanyIdAsync(Guid companyId, bool apenasAtivos = true);
+    Task<List<ContractTemplate>> GetTemplatesSistemaAsync(bool apenasAtivos = true);
     Task<ContractTemplate?> GetTemplatePadraoAsync(Guid companyId, ContractTemplateType tipo);
     Task<List<ContractTemplate>> GetByTipoAsync(Guid companyId, ContractTemplateType tipo);
     Task AddAsync(ContractTemplate template);

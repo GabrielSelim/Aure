@@ -37,6 +37,21 @@ public class ContractTemplateRepository : IContractTemplateRepository
             .ToListAsync();
     }
 
+    public async Task<List<ContractTemplate>> GetTemplatesSistemaAsync(bool apenasAtivos = true)
+    {
+        var query = _context.ContractTemplates
+            .Where(ct => ct.EhSistema && !ct.IsDeleted);
+
+        if (apenasAtivos)
+        {
+            query = query.Where(ct => ct.Ativo);
+        }
+
+        return await query
+            .OrderBy(ct => ct.Nome)
+            .ToListAsync();
+    }
+
     public async Task<ContractTemplate?> GetTemplatePadraoAsync(Guid companyId, ContractTemplateType tipo)
     {
         return await _context.ContractTemplates

@@ -54,6 +54,9 @@ public class ContractTemplateResponse
     public bool TemDocx { get; set; }
     public bool EhPadrao { get; set; }
     public bool Ativo { get; set; }
+    public bool EhSistema { get; set; }
+    public bool PodeEditar { get; set; }
+    public bool PodeDeletar { get; set; }
     public List<string> VariaveisDisponiveis { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? DataDesativacao { get; set; }
@@ -68,6 +71,7 @@ public class ContractTemplateListResponse
     public string Tipo { get; set; }
     public bool EhPadrao { get; set; }
     public bool Ativo { get; set; }
+    public bool EhSistema { get; set; }
     public int QuantidadeVariaveis { get; set; }
     public DateTime CreatedAt { get; set; }
 }
