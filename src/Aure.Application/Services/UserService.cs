@@ -825,6 +825,9 @@ public class UserService : IUserService
                   (!string.IsNullOrWhiteSpace(u.EnderecoComplemento) ? $", {u.EnderecoComplemento}" : "") +
                   $" - {u.EnderecoBairro}, {u.EnderecoCidade}/{u.EnderecoEstado}, {u.EnderecoPais} - CEP: {u.EnderecoCep}";
 
+            var cpfDescriptografado = u.CPFEncrypted != null ? _encryptionService.Decrypt(u.CPFEncrypted) : null;
+            var rgDescriptografado = u.RGEncrypted != null ? _encryptionService.Decrypt(u.RGEncrypted) : null;
+
             return new EmployeeListItemResponse
             {
                 Id = u.Id,
@@ -836,10 +839,12 @@ public class UserService : IUserService
                 DataEntrada = u.CreatedAt,
                 TelefoneCelular = u.TelefoneCelular,
                 TelefoneFixo = u.TelefoneFixo,
-                Cpf = u.Cpf != null ? _encryptionService.Decrypt(u.Cpf) : null,
-                CpfMascarado = u.GetMaskedCpf(),
-                Rg = u.Rg != null ? _encryptionService.Decrypt(u.Rg) : null,
-                DataNascimento = u.BirthDate,
+                Cpf = cpfDescriptografado,
+                CpfMascarado = !string.IsNullOrEmpty(cpfDescriptografado) && cpfDescriptografado.Length == 11 
+                    ? $"***.{cpfDescriptografado.Substring(3, 3)}.{cpfDescriptografado.Substring(6, 3)}-**" 
+                    : null,
+                Rg = rgDescriptografado,
+                DataNascimento = u.DataNascimento,
                 Rua = u.EnderecoRua,
                 Numero = u.EnderecoNumero,
                 Complemento = u.EnderecoComplemento,
