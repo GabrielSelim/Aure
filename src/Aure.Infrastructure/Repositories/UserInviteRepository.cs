@@ -32,6 +32,15 @@ public class UserInviteRepository : BaseRepository<UserInvite>, IUserInviteRepos
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<UserInvite>> GetByCompanyIdAsync(Guid companyId)
+    {
+        return await _context.UserInvites
+            .Include(ui => ui.InvitedByUser)
+            .Where(ui => ui.CompanyId == companyId && !ui.IsDeleted)
+            .OrderByDescending(ui => ui.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task<bool> EmailHasPendingInviteAsync(string email)
     {
         var now = DateTime.UtcNow;

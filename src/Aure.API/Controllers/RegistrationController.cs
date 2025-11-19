@@ -153,13 +153,16 @@ Exemplo para Usuário Interno (Financeiro):
     [HttpGet("convites")]
     [Authorize(Roles = "DonoEmpresaPai")]
     [SwaggerOperation(
-        Summary = "Listar convites pendentes",
-        Description = "Retorna todos os convites pendentes enviados pela empresa. Apenas Dono da Empresa Pai tem acesso."
+        Summary = "Listar convites",
+        Description = @"Retorna todos os convites enviados pela empresa.
+        
+**Query Parameters:**
+- apenasPendentes (bool, opcional): Se true, retorna apenas convites pendentes (não aceitos e não expirados). Default: false"
     )]
-    [SwaggerResponse(200, "Lista de convites pendentes")]
+    [SwaggerResponse(200, "Lista de convites")]
     [SwaggerResponse(401, "Não autenticado")]
     [SwaggerResponse(403, "Acesso negado")]
-    public async Task<IActionResult> ObterConvitesPendentes()
+    public async Task<IActionResult> ObterConvitesPendentes([FromQuery] bool apenasPendentes = false)
     {
         var currentUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
         var currentUser = await _userService.GetByIdAsync(currentUserId);
@@ -169,7 +172,9 @@ Exemplo para Usuário Interno (Financeiro):
             return BadRequest(new { erro = "Usuário não associado a uma empresa" });
         }
 
-        var invites = await _unitOfWork.UserInvites.GetPendingByCompanyAsync(currentUser.Data.CompanyId.Value);
+        var invites = apenasPendentes 
+            ? await _unitOfWork.UserInvites.GetPendingByCompanyAsync(currentUser.Data.CompanyId.Value)
+            : await _unitOfWork.UserInvites.GetByCompanyIdAsync(currentUser.Data.CompanyId.Value);
         var respostasConvites = invites.Select(invite => new
         {
             Id = invite.Id,
