@@ -202,18 +202,30 @@ public class CompanyService : ICompanyService
             c.ClientId == company.Id && 
             c.Status == ContractStatus.Active);
 
-        var enderecoCompleto = string.IsNullOrEmpty(user.EnderecoRua) 
+        var enderecoCompleto = string.IsNullOrWhiteSpace(company.AddressStreet) 
             ? null 
-            : $"{user.EnderecoRua}, {user.EnderecoNumero} - {user.EnderecoBairro}, {user.EnderecoCidade}/{user.EnderecoEstado}";
+            : $"{company.AddressStreet}, {company.AddressNumber}" +
+              (!string.IsNullOrWhiteSpace(company.AddressComplement) ? $", {company.AddressComplement}" : "") +
+              $" - {company.AddressNeighborhood}, {company.AddressCity}/{company.AddressState}, {company.AddressCountry} - CEP: {company.AddressZipCode}";
 
         return new CompanyInfoResponse
         {
             Id = company.Id,
             RazaoSocial = company.Name,
-            Cnpj = company.Cnpj,
+            Cnpj = company.GetFormattedCnpj(),
             CompanyType = company.Type,
             BusinessModel = company.BusinessModel,
+            Rua = company.AddressStreet,
+            Numero = company.AddressNumber,
+            Complemento = company.AddressComplement,
+            Bairro = company.AddressNeighborhood,
+            Cidade = company.AddressCity,
+            Estado = company.AddressState,
+            Pais = company.AddressCountry,
+            Cep = company.AddressZipCode,
             EnderecoCompleto = enderecoCompleto,
+            TelefoneCelular = company.PhoneMobile,
+            TelefoneFixo = company.PhoneLandline,
             TotalFuncionarios = companyUsers.Count,
             ContratosAtivos = activeContracts,
             DataCadastro = company.CreatedAt

@@ -9,7 +9,17 @@ public class CompanyInfoResponse
     public string Cnpj { get; set; } = string.Empty;
     public CompanyType CompanyType { get; set; }
     public BusinessModel BusinessModel { get; set; }
+    public string? Rua { get; set; }
+    public string? Numero { get; set; }
+    public string? Complemento { get; set; }
+    public string? Bairro { get; set; }
+    public string? Cidade { get; set; }
+    public string? Estado { get; set; }
+    public string? Pais { get; set; }
+    public string? Cep { get; set; }
     public string? EnderecoCompleto { get; set; }
+    public string? TelefoneCelular { get; set; }
+    public string? TelefoneFixo { get; set; }
     public int TotalFuncionarios { get; set; }
     public int ContratosAtivos { get; set; }
     public DateTime DataCadastro { get; set; }
