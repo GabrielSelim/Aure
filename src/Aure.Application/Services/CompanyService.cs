@@ -382,6 +382,15 @@ public class CompanyService : ICompanyService
                 ModeloNegocio = company.BusinessModel.ToString(),
                 TelefoneCelular = company.PhoneMobile,
                 TelefoneFixo = company.PhoneLandline,
+                Rua = company.AddressStreet,
+                Numero = company.AddressNumber,
+                Complemento = company.AddressComplement,
+                Bairro = company.AddressNeighborhood,
+                Cidade = company.AddressCity,
+                Estado = company.AddressState,
+                Pais = company.AddressCountry,
+                Cep = company.AddressZipCode,
+                EnderecoCompleto = company.GetFullAddress(),
                 Endereco = string.IsNullOrWhiteSpace(company.AddressStreet) ? null : new EnderecoEmpresaDto
                 {
                     Rua = company.AddressStreet,

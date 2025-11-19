@@ -814,19 +814,46 @@ public class UserService : IUserService
 
         var allCompanies = await _unitOfWork.Companies.GetAllAsync();
 
-        var response = items.Select(u => new EmployeeListItemResponse
-        {
-            Id = u.Id,
-            Nome = u.Name,
-            Email = u.Email,
-            Role = u.Role.ToString(),
-            Cargo = u.Cargo,
-            Status = u.IsDeleted ? "Inativo" : "Ativo",
-            DataEntrada = u.CreatedAt,
-            TelefoneCelular = u.TelefoneCelular,
-            EmpresaPJ = u.Role == UserRole.FuncionarioPJ && u.CompanyId.HasValue
-                ? allCompanies.FirstOrDefault(c => c.Id == u.CompanyId.Value)?.Name
-                : null
+        var response = items.Select(u => {
+            var empresaPJ = u.Role == UserRole.FuncionarioPJ && u.CompanyId.HasValue
+                ? allCompanies.FirstOrDefault(c => c.Id == u.CompanyId.Value)
+                : null;
+
+            var enderecoCompleto = string.IsNullOrWhiteSpace(u.EnderecoRua) 
+                ? null 
+                : $"{u.EnderecoRua}, {u.EnderecoNumero}" +
+                  (!string.IsNullOrWhiteSpace(u.EnderecoComplemento) ? $", {u.EnderecoComplemento}" : "") +
+                  $" - {u.EnderecoBairro}, {u.EnderecoCidade}/{u.EnderecoEstado}, {u.EnderecoPais} - CEP: {u.EnderecoCep}";
+
+            return new EmployeeListItemResponse
+            {
+                Id = u.Id,
+                Nome = u.Name,
+                Email = u.Email,
+                Role = u.Role.ToString(),
+                Cargo = u.Cargo,
+                Status = u.IsDeleted ? "Inativo" : "Ativo",
+                DataEntrada = u.CreatedAt,
+                TelefoneCelular = u.TelefoneCelular,
+                TelefoneFixo = u.TelefoneFixo,
+                Cpf = u.Cpf != null ? _encryptionService.Decrypt(u.Cpf) : null,
+                CpfMascarado = u.GetMaskedCpf(),
+                Rg = u.Rg != null ? _encryptionService.Decrypt(u.Rg) : null,
+                DataNascimento = u.BirthDate,
+                Rua = u.EnderecoRua,
+                Numero = u.EnderecoNumero,
+                Complemento = u.EnderecoComplemento,
+                Bairro = u.EnderecoBairro,
+                Cidade = u.EnderecoCidade,
+                Estado = u.EnderecoEstado,
+                Pais = u.EnderecoPais,
+                Cep = u.EnderecoCep,
+                EnderecoCompleto = enderecoCompleto,
+                EmpresaPJ = empresaPJ?.Name,
+                CnpjPJ = empresaPJ?.Cnpj,
+                CnpjPJFormatado = empresaPJ?.GetFormattedCnpj(),
+                RazaoSocialPJ = empresaPJ?.Name
+            };
         }).ToList();
 
         return new PagedResult<EmployeeListItemResponse>
