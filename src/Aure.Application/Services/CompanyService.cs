@@ -186,13 +186,11 @@ public class CompanyService : ICompanyService
         if (user == null)
             throw new ArgumentException("Usuário não encontrado");
 
-        if (!user.CompanyId.HasValue)
-            throw new ArgumentException("Usuário não possui empresa vinculada");
-
-        var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+        var allCompanies = await _unitOfWork.Companies.GetAllAsync();
+        var company = allCompanies.FirstOrDefault(c => c.BusinessModel == BusinessModel.MainCompany);
 
         if (company == null)
-            throw new ArgumentException("Empresa não encontrada");
+            throw new ArgumentException("Empresa pai não encontrada");
 
         var allUsers = await _userRepository.GetAllAsync();
         var companyUsers = allUsers.Where(u => u.CompanyId == company.Id).ToList();
