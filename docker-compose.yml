@@ -110,6 +110,7 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./src/Aure.Infrastructure/Templates:/app/Templates:ro
+      - ./wwwroot:/app/wwwroot
     networks:
       - aure-network
     healthcheck:

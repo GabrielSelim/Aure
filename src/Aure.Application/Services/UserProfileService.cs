@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Aure.Application.DTOs.User;
 using Aure.Application.DTOs.Company;
 using Aure.Application.Interfaces;
@@ -16,6 +17,7 @@ public class UserProfileService : IUserProfileService
     private readonly ICnpjValidationService _cnpjValidationService;
     private readonly IEncryptionService _encryptionService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<UserProfileService> _logger;
 
     public UserProfileService(
@@ -25,6 +27,7 @@ public class UserProfileService : IUserProfileService
         ICnpjValidationService cnpjValidationService,
         IEncryptionService encryptionService,
         IUnitOfWork unitOfWork,
+        IConfiguration configuration,
         ILogger<UserProfileService> logger)
     {
         _userRepository = userRepository;
@@ -33,6 +36,7 @@ public class UserProfileService : IUserProfileService
         _cnpjValidationService = cnpjValidationService;
         _encryptionService = encryptionService;
         _unitOfWork = unitOfWork;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -47,6 +51,11 @@ public class UserProfileService : IUserProfileService
 
         var isOwnProfile = requestingUserId == userId;
 
+        var baseUrl = _configuration["BaseUrl"] ?? "http://localhost:5203";
+        var avatarUrl = !string.IsNullOrEmpty(user.AvatarUrl) 
+            ? $"{baseUrl}{user.AvatarUrl}" 
+            : null;
+
         return new UserProfileResponse
         {
             Id = user.Id,
@@ -54,7 +63,7 @@ public class UserProfileService : IUserProfileService
             Email = user.Email,
             Role = (int)user.Role,
             RoleDescricao = user.Role.ToString(),
-            AvatarUrl = user.AvatarUrl,
+            AvatarUrl = avatarUrl,
             DataNascimento = user.DataNascimento,
             CPFMascarado = !string.IsNullOrEmpty(user.CPFEncrypted) 
                 ? _encryptionService.MaskCPF(_encryptionService.Decrypt(user.CPFEncrypted))
