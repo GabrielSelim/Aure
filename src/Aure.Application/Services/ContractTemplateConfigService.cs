@@ -298,17 +298,34 @@ namespace Aure.Application.Services
                 if (!user.CompanyId.HasValue)
                     return Result.Failure<string>("Usuário não pertence a uma empresa");
 
-                var funcionarioPJ = await _unitOfWork.Users.GetByIdAsync(request.FuncionarioPJId);
-                if (funcionarioPJ == null)
-                    return Result.Failure<string>("Funcionário PJ não encontrado");
+                if (!request.FuncionarioPJId.HasValue && request.DadosContratadoManual == null)
+                    return Result.Failure<string>("Informe o funcionário PJ ou os dados manuais do contratado");
+
+                if (request.FuncionarioPJId.HasValue && request.DadosContratadoManual != null)
+                    return Result.Failure<string>("Informe apenas o funcionário PJ OU os dados manuais, não ambos");
 
                 var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
                 if (company == null)
                     return Result.Failure<string>("Empresa não encontrada");
 
-                var empresaPJ = funcionarioPJ.CompanyId.HasValue 
-                    ? await _unitOfWork.Companies.GetByIdAsync(funcionarioPJ.CompanyId.Value)
-                    : null;
+                User? funcionarioPJ = null;
+                Company? empresaPJ = null;
+                DadosContratadoManualRequest? dadosManual = null;
+
+                if (request.FuncionarioPJId.HasValue)
+                {
+                    funcionarioPJ = await _unitOfWork.Users.GetByIdAsync(request.FuncionarioPJId.Value);
+                    if (funcionarioPJ == null)
+                        return Result.Failure<string>("Funcionário PJ não encontrado");
+
+                    empresaPJ = funcionarioPJ.CompanyId.HasValue 
+                        ? await _unitOfWork.Companies.GetByIdAsync(funcionarioPJ.CompanyId.Value)
+                        : null;
+                }
+                else
+                {
+                    dadosManual = request.DadosContratadoManual;
+                }
 
                 var templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", "ContratoPrestacaoServicosGenerico.html");
                 if (!File.Exists(templatePath))
@@ -351,12 +368,6 @@ namespace Aure.Application.Services
                 obrigacoesContratanteHtml += "</ol>";
                 html = html.Replace("{{OBRIGACOES_CONTRATANTE}}", obrigacoesContratanteHtml);
 
-                var cpfContratado = string.Empty;
-                if (!string.IsNullOrEmpty(funcionarioPJ.CPFEncrypted))
-                {
-                    cpfContratado = _encryptionService.Decrypt(funcionarioPJ.CPFEncrypted);
-                }
-
                 var dataAtual = DateTime.UtcNow;
                 var cultura = new CultureInfo("pt-BR");
 
@@ -386,26 +397,58 @@ namespace Aure.Application.Services
                 html = html.Replace("{{UF_RESIDENCIAL_REPRESENTANTE}}", user.EnderecoEstado ?? "");
                 html = html.Replace("{{CEP_RESIDENCIAL_REPRESENTANTE}}", FormatCep(user.EnderecoCep ?? ""));
 
-                html = html.Replace("{{RAZAO_SOCIAL_CONTRATADO}}", empresaPJ?.Name ?? funcionarioPJ.Name);
-                html = html.Replace("{{CNPJ_CONTRATADO}}", empresaPJ != null ? FormatCnpj(empresaPJ.Cnpj) : "");
-                html = html.Replace("{{ENDERECO_CONTRATADO}}", empresaPJ?.AddressStreet ?? funcionarioPJ.EnderecoRua ?? "");
-                html = html.Replace("{{NUMERO_CONTRATADO}}", empresaPJ?.AddressNumber ?? funcionarioPJ.EnderecoNumero ?? "");
-                html = html.Replace("{{BAIRRO_CONTRATADO}}", empresaPJ?.AddressNeighborhood ?? funcionarioPJ.EnderecoBairro ?? "");
-                html = html.Replace("{{CIDADE_CONTRATADO}}", empresaPJ?.AddressCity ?? funcionarioPJ.EnderecoCidade ?? "");
-                html = html.Replace("{{ESTADO_CONTRATADO}}", empresaPJ?.AddressState ?? funcionarioPJ.EnderecoEstado ?? "");
+                if (funcionarioPJ != null)
+                {
+                    var cpfContratado = string.Empty;
+                    if (!string.IsNullOrEmpty(funcionarioPJ.CPFEncrypted))
+                    {
+                        cpfContratado = _encryptionService.Decrypt(funcionarioPJ.CPFEncrypted);
+                    }
 
-                html = html.Replace("{{NOME_CONTRATADO}}", funcionarioPJ.Name);
-                html = html.Replace("{{NACIONALIDADE_CONTRATADO}}", "Brasileiro(a)");
-                html = html.Replace("{{ESTADO_CIVIL_CONTRATADO}}", "");
-                html = html.Replace("{{DATA_NASCIMENTO_CONTRATADO}}", funcionarioPJ.DataNascimento?.ToString("dd/MM/yyyy") ?? "");
-                html = html.Replace("{{PROFISSAO_CONTRATADO}}", funcionarioPJ.Cargo ?? "Prestador de Serviços");
-                html = html.Replace("{{CPF_CONTRATADO}}", FormatCpf(cpfContratado));
-                html = html.Replace("{{ENDERECO_RESIDENCIAL_CONTRATADO}}", funcionarioPJ.EnderecoRua ?? "");
-                html = html.Replace("{{NUMERO_RESIDENCIAL_CONTRATADO}}", funcionarioPJ.EnderecoNumero ?? "");
-                html = html.Replace("{{BAIRRO_RESIDENCIAL_CONTRATADO}}", funcionarioPJ.EnderecoBairro ?? "");
-                html = html.Replace("{{CIDADE_RESIDENCIAL_CONTRATADO}}", funcionarioPJ.EnderecoCidade ?? "");
-                html = html.Replace("{{ESTADO_RESIDENCIAL_CONTRATADO}}", funcionarioPJ.EnderecoEstado ?? "");
-                html = html.Replace("{{CEP_RESIDENCIAL_CONTRATADO}}", FormatCep(funcionarioPJ.EnderecoCep ?? ""));
+                    html = html.Replace("{{RAZAO_SOCIAL_CONTRATADO}}", empresaPJ?.Name ?? funcionarioPJ.Name);
+                    html = html.Replace("{{CNPJ_CONTRATADO}}", empresaPJ != null ? FormatCnpj(empresaPJ.Cnpj) : "");
+                    html = html.Replace("{{ENDERECO_CONTRATADO}}", empresaPJ?.AddressStreet ?? funcionarioPJ.EnderecoRua ?? "");
+                    html = html.Replace("{{NUMERO_CONTRATADO}}", empresaPJ?.AddressNumber ?? funcionarioPJ.EnderecoNumero ?? "");
+                    html = html.Replace("{{BAIRRO_CONTRATADO}}", empresaPJ?.AddressNeighborhood ?? funcionarioPJ.EnderecoBairro ?? "");
+                    html = html.Replace("{{CIDADE_CONTRATADO}}", empresaPJ?.AddressCity ?? funcionarioPJ.EnderecoCidade ?? "");
+                    html = html.Replace("{{ESTADO_CONTRATADO}}", empresaPJ?.AddressState ?? funcionarioPJ.EnderecoEstado ?? "");
+
+                    html = html.Replace("{{NOME_CONTRATADO}}", funcionarioPJ.Name);
+                    html = html.Replace("{{NACIONALIDADE_CONTRATADO}}", "Brasileiro(a)");
+                    html = html.Replace("{{ESTADO_CIVIL_CONTRATADO}}", "");
+                    html = html.Replace("{{DATA_NASCIMENTO_CONTRATADO}}", funcionarioPJ.DataNascimento?.ToString("dd/MM/yyyy") ?? "");
+                    html = html.Replace("{{PROFISSAO_CONTRATADO}}", funcionarioPJ.Cargo ?? "Prestador de Serviços");
+                    html = html.Replace("{{CPF_CONTRATADO}}", FormatCpf(cpfContratado));
+                    html = html.Replace("{{ENDERECO_RESIDENCIAL_CONTRATADO}}", funcionarioPJ.EnderecoRua ?? "");
+                    html = html.Replace("{{NUMERO_RESIDENCIAL_CONTRATADO}}", funcionarioPJ.EnderecoNumero ?? "");
+                    html = html.Replace("{{BAIRRO_RESIDENCIAL_CONTRATADO}}", funcionarioPJ.EnderecoBairro ?? "");
+                    html = html.Replace("{{CIDADE_RESIDENCIAL_CONTRATADO}}", funcionarioPJ.EnderecoCidade ?? "");
+                    html = html.Replace("{{ESTADO_RESIDENCIAL_CONTRATADO}}", funcionarioPJ.EnderecoEstado ?? "");
+                    html = html.Replace("{{CEP_RESIDENCIAL_CONTRATADO}}", FormatCep(funcionarioPJ.EnderecoCep ?? ""));
+                }
+                else if (dadosManual != null)
+                {
+                    html = html.Replace("{{RAZAO_SOCIAL_CONTRATADO}}", dadosManual.RazaoSocial);
+                    html = html.Replace("{{CNPJ_CONTRATADO}}", FormatCnpj(dadosManual.Cnpj));
+                    html = html.Replace("{{ENDERECO_CONTRATADO}}", dadosManual.Rua);
+                    html = html.Replace("{{NUMERO_CONTRATADO}}", dadosManual.Numero);
+                    html = html.Replace("{{BAIRRO_CONTRATADO}}", dadosManual.Bairro);
+                    html = html.Replace("{{CIDADE_CONTRATADO}}", dadosManual.Cidade);
+                    html = html.Replace("{{ESTADO_CONTRATADO}}", dadosManual.Estado);
+
+                    html = html.Replace("{{NOME_CONTRATADO}}", dadosManual.NomeCompleto);
+                    html = html.Replace("{{NACIONALIDADE_CONTRATADO}}", "Brasileiro(a)");
+                    html = html.Replace("{{ESTADO_CIVIL_CONTRATADO}}", "");
+                    html = html.Replace("{{DATA_NASCIMENTO_CONTRATADO}}", dadosManual.DataNascimento?.ToString("dd/MM/yyyy") ?? "");
+                    html = html.Replace("{{PROFISSAO_CONTRATADO}}", dadosManual.Profissao ?? "Prestador de Serviços");
+                    html = html.Replace("{{CPF_CONTRATADO}}", FormatCpf(dadosManual.Cpf));
+                    html = html.Replace("{{ENDERECO_RESIDENCIAL_CONTRATADO}}", dadosManual.Rua);
+                    html = html.Replace("{{NUMERO_RESIDENCIAL_CONTRATADO}}", dadosManual.Numero);
+                    html = html.Replace("{{BAIRRO_RESIDENCIAL_CONTRATADO}}", dadosManual.Bairro);
+                    html = html.Replace("{{CIDADE_RESIDENCIAL_CONTRATADO}}", dadosManual.Cidade);
+                    html = html.Replace("{{ESTADO_RESIDENCIAL_CONTRATADO}}", dadosManual.Estado);
+                    html = html.Replace("{{CEP_RESIDENCIAL_CONTRATADO}}", FormatCep(dadosManual.Cep));
+                }
 
                 html = html.Replace("{{DATA_PROPOSTA}}", dataAtual.ToString("dd/MM/yyyy"));
                 html = html.Replace("{{PRAZO_VIGENCIA}}", $"{request.PrazoVigenciaMeses} meses");
@@ -450,26 +493,89 @@ namespace Aure.Application.Services
                 if (config == null)
                     return Result.Failure<Guid>("Configuração de template não encontrada");
 
-                var funcionarioPJ = await _unitOfWork.Users.GetByIdAsync(request.FuncionarioPJId);
-                if (funcionarioPJ == null)
-                    return Result.Failure<Guid>("Funcionário PJ não encontrado");
+                if (!request.FuncionarioPJId.HasValue && request.DadosContratadoManual == null)
+                    return Result.Failure<Guid>("Informe o funcionário PJ ou os dados manuais do contratado");
 
-                if (funcionarioPJ.Role != UserRole.FuncionarioPJ)
-                    return Result.Failure<Guid>("Usuário selecionado não é um funcionário PJ");
+                if (request.FuncionarioPJId.HasValue && request.DadosContratadoManual != null)
+                    return Result.Failure<Guid>("Informe apenas o funcionário PJ OU os dados manuais, não ambos");
 
-                if (funcionarioPJ.CompanyId != user.CompanyId)
-                    return Result.Failure<Guid>("Funcionário PJ não pertence à sua empresa");
+                Guid providerId;
 
-                var existingContract = await _unitOfWork.Contracts.GetActivePJContractByUserIdAsync(request.FuncionarioPJId);
-                if (existingContract != null)
-                    return Result.Failure<Guid>("Funcionário PJ já possui um contrato ativo");
+                if (request.FuncionarioPJId.HasValue)
+                {
+                    var funcionarioPJ = await _unitOfWork.Users.GetByIdAsync(request.FuncionarioPJId.Value);
+                    if (funcionarioPJ == null)
+                        return Result.Failure<Guid>("Funcionário PJ não encontrado");
+
+                    if (funcionarioPJ.Role != UserRole.FuncionarioPJ)
+                        return Result.Failure<Guid>("Usuário selecionado não é um funcionário PJ");
+
+                    if (funcionarioPJ.CompanyId != user.CompanyId)
+                        return Result.Failure<Guid>("Funcionário PJ não pertence à sua empresa");
+
+                    var existingContract = await _unitOfWork.Contracts.GetActivePJContractByUserIdAsync(request.FuncionarioPJId.Value);
+                    if (existingContract != null)
+                        return Result.Failure<Guid>("Funcionário PJ já possui um contrato ativo");
+
+                    providerId = funcionarioPJ.Id;
+                }
+                else
+                {
+                    var tempCompany = new Company(
+                        request.DadosContratadoManual!.RazaoSocial,
+                        request.DadosContratadoManual.Cnpj,
+                        CompanyType.Provider,
+                        BusinessModel.ContractedPJ
+                    );
+
+                    await _unitOfWork.Companies.AddAsync(tempCompany);
+
+                    var tempUser = new User(
+                        request.DadosContratadoManual.NomeCompleto,
+                        request.DadosContratadoManual.Email,
+                        Guid.NewGuid().ToString(),
+                        UserRole.FuncionarioPJ,
+                        tempCompany.Id
+                    );
+
+                    tempUser.SetCpf(request.DadosContratadoManual.Cpf);
+                    
+                    if (!string.IsNullOrWhiteSpace(request.DadosContratadoManual.Rg))
+                        tempUser.SetRg(request.DadosContratadoManual.Rg);
+
+                    if (request.DadosContratadoManual.DataNascimento.HasValue)
+                        tempUser.SetBirthDate(request.DadosContratadoManual.DataNascimento.Value);
+
+                    if (!string.IsNullOrWhiteSpace(request.DadosContratadoManual.Profissao))
+                        tempUser.SetPosition(request.DadosContratadoManual.Profissao);
+
+                    tempUser.UpdateProfile(
+                        request.DadosContratadoManual.TelefoneCelular,
+                        request.DadosContratadoManual.TelefoneFixo
+                    );
+
+                    tempUser.UpdateAddress(
+                        request.DadosContratadoManual.Rua,
+                        request.DadosContratadoManual.Numero,
+                        request.DadosContratadoManual.Complemento,
+                        request.DadosContratadoManual.Bairro,
+                        request.DadosContratadoManual.Cidade,
+                        request.DadosContratadoManual.Estado,
+                        request.DadosContratadoManual.Pais,
+                        request.DadosContratadoManual.Cep
+                    );
+
+                    await _unitOfWork.Users.AddAsync(tempUser);
+
+                    providerId = tempUser.Id;
+                }
 
                 var dataInicio = request.DataInicioVigencia ?? DateTime.UtcNow.Date;
                 var dataFim = dataInicio.AddMonths(request.PrazoVigenciaMeses);
 
                 var contract = new Contract(
                     user.CompanyId.Value,
-                    request.FuncionarioPJId,
+                    providerId,
                     dataInicio,
                     dataFim,
                     request.ValorMensal,
@@ -484,10 +590,11 @@ namespace Aure.Application.Services
                 await _unitOfWork.Contracts.AddAsync(contract);
 
                 _logger.LogInformation(
-                    "Contrato PJ criado com sucesso. ContractId: {ContractId}, FuncionarioPJId: {FuncionarioPJId}, Config: {NomeConfig}",
+                    "Contrato PJ criado com sucesso. ContractId: {ContractId}, ProviderId: {ProviderId}, Config: {NomeConfig}, Modo: {Modo}",
                     contract.Id,
-                    request.FuncionarioPJId,
-                    request.NomeConfig
+                    providerId,
+                    request.NomeConfig,
+                    request.FuncionarioPJId.HasValue ? "Funcionário Cadastrado" : "Dados Manuais"
                 );
 
                 return Result.Success(contract.Id);

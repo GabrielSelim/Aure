@@ -190,8 +190,9 @@ public class ContractTemplateConfigResponse
 
 public class PreviewTemplateRequest
 {
-    [Required(ErrorMessage = "ID do funcionário PJ é obrigatório")]
-    public Guid FuncionarioPJId { get; set; }
+    public Guid? FuncionarioPJId { get; set; }
+
+    public DadosContratadoManualRequest? DadosContratadoManual { get; set; }
 
     [Required(ErrorMessage = "Configuração de template é obrigatória")]
     public ContractTemplateConfigRequest TemplateConfig { get; set; } = new();
@@ -234,8 +235,9 @@ public class GerarContratoComConfigRequest
     [StringLength(100, ErrorMessage = "Nome deve ter no máximo 100 caracteres")]
     public string NomeConfig { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "ID do funcionário PJ é obrigatório")]
-    public Guid FuncionarioPJId { get; set; }
+    public Guid? FuncionarioPJId { get; set; }
+
+    public DadosContratadoManualRequest? DadosContratadoManual { get; set; }
 
     [Required(ErrorMessage = "Valor mensal é obrigatório")]
     [Range(0.01, double.MaxValue, ErrorMessage = "Valor mensal deve ser maior que zero")]
@@ -254,4 +256,67 @@ public class GerarContratoComConfigRequest
     public int DiaPagamento { get; set; }
 
     public DateTime? DataInicioVigencia { get; set; }
+}
+
+public class DadosContratadoManualRequest
+{
+    [Required(ErrorMessage = "Nome completo é obrigatório")]
+    [StringLength(200, ErrorMessage = "Nome deve ter no máximo 200 caracteres")]
+    public string NomeCompleto { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Razão social é obrigatória")]
+    [StringLength(200, ErrorMessage = "Razão social deve ter no máximo 200 caracteres")]
+    public string RazaoSocial { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "CNPJ é obrigatório")]
+    [StringLength(14, MinimumLength = 14, ErrorMessage = "CNPJ deve ter 14 dígitos")]
+    public string Cnpj { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "CPF é obrigatório")]
+    [StringLength(11, MinimumLength = 11, ErrorMessage = "CPF deve ter 11 dígitos")]
+    public string Cpf { get; set; } = string.Empty;
+
+    [StringLength(20, ErrorMessage = "RG deve ter no máximo 20 caracteres")]
+    public string? Rg { get; set; }
+
+    public DateTime? DataNascimento { get; set; }
+
+    [StringLength(100, ErrorMessage = "Profissão deve ter no máximo 100 caracteres")]
+    public string? Profissao { get; set; }
+
+    [Required(ErrorMessage = "Email é obrigatório")]
+    [EmailAddress(ErrorMessage = "Email inválido")]
+    public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Telefone celular é obrigatório")]
+    [StringLength(11, MinimumLength = 10, ErrorMessage = "Telefone deve ter 10 ou 11 dígitos")]
+    public string TelefoneCelular { get; set; } = string.Empty;
+
+    [StringLength(10, MinimumLength = 10, ErrorMessage = "Telefone fixo deve ter 10 dígitos")]
+    public string? TelefoneFixo { get; set; }
+
+    [Required(ErrorMessage = "Rua é obrigatória")]
+    public string Rua { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Número é obrigatório")]
+    public string Numero { get; set; } = string.Empty;
+
+    public string? Complemento { get; set; }
+
+    [Required(ErrorMessage = "Bairro é obrigatório")]
+    public string Bairro { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Cidade é obrigatória")]
+    public string Cidade { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Estado é obrigatório")]
+    [StringLength(2, MinimumLength = 2, ErrorMessage = "Estado deve ter 2 caracteres")]
+    public string Estado { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "País é obrigatório")]
+    public string Pais { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "CEP é obrigatório")]
+    [StringLength(8, MinimumLength = 8, ErrorMessage = "CEP deve ter 8 dígitos")]
+    public string Cep { get; set; } = string.Empty;
 }
