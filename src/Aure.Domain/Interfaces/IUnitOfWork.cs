@@ -19,6 +19,7 @@ public interface IUnitOfWork : IDisposable
     IAuditLogRepository AuditLogs { get; }
     IKycRecordRepository KycRecords { get; }
     INotificationRepository Notifications { get; }
+    IContractTemplateConfigRepository ContractTemplateConfigs { get; }
     
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync();

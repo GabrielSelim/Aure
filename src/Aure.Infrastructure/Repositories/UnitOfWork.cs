@@ -30,6 +30,7 @@ public class UnitOfWork : IUnitOfWork
         AuditLogs = new AuditLogRepository(_context);
         KycRecords = new KycRecordRepository(_context);
         Notifications = new NotificationRepository(_context);
+        ContractTemplateConfigs = new ContractTemplateConfigRepository(_context);
     }
 
     public IUserRepository Users { get; }
@@ -49,6 +50,7 @@ public class UnitOfWork : IUnitOfWork
     public IAuditLogRepository AuditLogs { get; }
     public IKycRecordRepository KycRecords { get; }
     public INotificationRepository Notifications { get; }
+    public IContractTemplateConfigRepository ContractTemplateConfigs { get; }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
