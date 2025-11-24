@@ -308,6 +308,31 @@ namespace Aure.Application.Services
                 if (company == null)
                     return Result.Failure<string>("Empresa não encontrada");
 
+                if (string.IsNullOrWhiteSpace(company.AddressStreet) || 
+                    string.IsNullOrWhiteSpace(company.AddressNumber) ||
+                    string.IsNullOrWhiteSpace(company.AddressCity) ||
+                    string.IsNullOrWhiteSpace(company.AddressState))
+                {
+                    return Result.Failure<string>("Dados de endereço da empresa contratante estão incompletos. Por favor, complete o cadastro da empresa.");
+                }
+
+                if (string.IsNullOrWhiteSpace(user.CPFEncrypted))
+                {
+                    return Result.Failure<string>("CPF do representante não cadastrado. Por favor, complete seu perfil.");
+                }
+
+                if (!user.DataNascimento.HasValue)
+                {
+                    return Result.Failure<string>("Data de nascimento do representante não cadastrada. Por favor, complete seu perfil.");
+                }
+
+                if (string.IsNullOrWhiteSpace(user.EnderecoRua) || 
+                    string.IsNullOrWhiteSpace(user.EnderecoCidade) ||
+                    string.IsNullOrWhiteSpace(user.EnderecoEstado))
+                {
+                    return Result.Failure<string>("Dados de endereço residencial do representante estão incompletos. Por favor, complete seu perfil.");
+                }
+
                 User? funcionarioPJ = null;
                 Company? empresaPJ = null;
                 DadosContratadoManualRequest? dadosManual = null;
@@ -493,6 +518,35 @@ namespace Aure.Application.Services
                 if (config == null)
                     return Result.Failure<Guid>("Configuração de template não encontrada");
 
+                var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+                if (company == null)
+                    return Result.Failure<Guid>("Empresa não encontrada");
+
+                if (string.IsNullOrWhiteSpace(company.AddressStreet) || 
+                    string.IsNullOrWhiteSpace(company.AddressNumber) ||
+                    string.IsNullOrWhiteSpace(company.AddressCity) ||
+                    string.IsNullOrWhiteSpace(company.AddressState))
+                {
+                    return Result.Failure<Guid>("Dados de endereço da empresa contratante estão incompletos. Por favor, complete o cadastro da empresa.");
+                }
+
+                if (string.IsNullOrWhiteSpace(user.CPFEncrypted))
+                {
+                    return Result.Failure<Guid>("CPF do representante não cadastrado. Por favor, complete seu perfil.");
+                }
+
+                if (!user.DataNascimento.HasValue)
+                {
+                    return Result.Failure<Guid>("Data de nascimento do representante não cadastrada. Por favor, complete seu perfil.");
+                }
+
+                if (string.IsNullOrWhiteSpace(user.EnderecoRua) || 
+                    string.IsNullOrWhiteSpace(user.EnderecoCidade) ||
+                    string.IsNullOrWhiteSpace(user.EnderecoEstado))
+                {
+                    return Result.Failure<Guid>("Dados de endereço residencial do representante estão incompletos. Por favor, complete seu perfil.");
+                }
+
                 if (!request.FuncionarioPJId.HasValue && request.DadosContratadoManual == null)
                     return Result.Failure<Guid>("Informe o funcionário PJ ou os dados manuais do contratado");
 
@@ -632,6 +686,83 @@ namespace Aure.Application.Services
             {
                 _logger.LogError(ex, "Erro ao deletar configuração {NomeConfig} para usuário {UserId}", nomeConfig, userId);
                 return Result.Failure<bool>("Erro ao deletar configuração");
+            }
+        }
+
+        public async Task<Result<ValidacaoContratoResponse>> ValidarDadosContratoAsync(Guid userId)
+        {
+            try
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(userId);
+                if (user == null)
+                    return Result.Failure<ValidacaoContratoResponse>("Usuário não encontrado");
+
+                if (!user.CompanyId.HasValue)
+                    return Result.Failure<ValidacaoContratoResponse>("Usuário não pertence a uma empresa");
+
+                var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+                if (company == null)
+                    return Result.Failure<ValidacaoContratoResponse>("Empresa não encontrada");
+
+                var response = new ValidacaoContratoResponse
+                {
+                    NomeRepresentante = user.Name,
+                    CargoRepresentante = user.Role == UserRole.DonoEmpresaPai ? "Proprietário" : "Jurídico",
+                    NomeEmpresa = company.Name
+                };
+
+                if (string.IsNullOrWhiteSpace(company.AddressStreet))
+                    response.CamposEmpresaFaltando.Add("Rua");
+                
+                if (string.IsNullOrWhiteSpace(company.AddressNumber))
+                    response.CamposEmpresaFaltando.Add("Número do endereço");
+                
+                if (string.IsNullOrWhiteSpace(company.AddressCity))
+                    response.CamposEmpresaFaltando.Add("Cidade");
+                
+                if (string.IsNullOrWhiteSpace(company.AddressState))
+                    response.CamposEmpresaFaltando.Add("Estado");
+                
+                if (string.IsNullOrWhiteSpace(company.AddressNeighborhood))
+                    response.CamposEmpresaFaltando.Add("Bairro");
+                
+                if (string.IsNullOrWhiteSpace(company.AddressZipCode))
+                    response.CamposEmpresaFaltando.Add("CEP");
+
+                if (string.IsNullOrWhiteSpace(user.CPFEncrypted))
+                    response.CamposRepresentanteFaltando.Add("CPF");
+                
+                if (!user.DataNascimento.HasValue)
+                    response.CamposRepresentanteFaltando.Add("Data de nascimento");
+                
+                if (string.IsNullOrWhiteSpace(user.EnderecoRua))
+                    response.CamposRepresentanteFaltando.Add("Rua (endereço residencial)");
+                
+                if (string.IsNullOrWhiteSpace(user.EnderecoNumero))
+                    response.CamposRepresentanteFaltando.Add("Número (endereço residencial)");
+                
+                if (string.IsNullOrWhiteSpace(user.EnderecoCidade))
+                    response.CamposRepresentanteFaltando.Add("Cidade (endereço residencial)");
+                
+                if (string.IsNullOrWhiteSpace(user.EnderecoEstado))
+                    response.CamposRepresentanteFaltando.Add("Estado (endereço residencial)");
+                
+                if (string.IsNullOrWhiteSpace(user.EnderecoBairro))
+                    response.CamposRepresentanteFaltando.Add("Bairro (endereço residencial)");
+                
+                if (string.IsNullOrWhiteSpace(user.EnderecoCep))
+                    response.CamposRepresentanteFaltando.Add("CEP (endereço residencial)");
+
+                response.EmpresaCompleta = response.CamposEmpresaFaltando.Count == 0;
+                response.PerfilCompleto = response.CamposRepresentanteFaltando.Count == 0;
+                response.PodeGerarContrato = response.EmpresaCompleta && response.PerfilCompleto;
+
+                return Result.Success(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao validar dados do contrato para usuário {UserId}", userId);
+                return Result.Failure<ValidacaoContratoResponse>("Erro ao validar dados");
             }
         }
 

@@ -158,6 +158,22 @@ namespace Aure.API.Controllers
             );
         }
 
+        [HttpGet("validar-dados")]
+        [Authorize(Roles = "DonoEmpresaPai,Juridico")]
+        [ProducesResponseType(typeof(ValidacaoContratoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> ValidarDadosContrato()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+            var result = await _service.ValidarDadosContratoAsync(userId);
+            
+            if (!result.IsSuccess)
+                return BadRequest(new { message = result.Error });
+
+            return Ok(result.Data);
+        }
+
         [HttpDelete("config/{nomeConfig}")]
         [Authorize(Roles = "DonoEmpresaPai")]
         [ProducesResponseType(StatusCodes.Status200OK)]

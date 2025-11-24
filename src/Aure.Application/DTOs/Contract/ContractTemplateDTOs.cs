@@ -320,3 +320,15 @@ public class DadosContratadoManualRequest
     [StringLength(8, MinimumLength = 8, ErrorMessage = "CEP deve ter 8 dígitos")]
     public string Cep { get; set; } = string.Empty;
 }
+
+public class ValidacaoContratoResponse
+{
+    public bool PerfilCompleto { get; set; }
+    public bool EmpresaCompleta { get; set; }
+    public List<string> CamposEmpresaFaltando { get; set; } = new();
+    public List<string> CamposRepresentanteFaltando { get; set; } = new();
+    public string NomeRepresentante { get; set; } = string.Empty;
+    public string CargoRepresentante { get; set; } = string.Empty;
+    public string NomeEmpresa { get; set; } = string.Empty;
+    public bool PodeGerarContrato { get; set; }
+}
