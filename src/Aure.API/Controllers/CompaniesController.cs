@@ -62,17 +62,20 @@ public class CompaniesController : ControllerBase
         try
         {
             var userId = GetCurrentUserId();
+            _logger.LogInformation("Buscando empresa pai para usuário {UserId}", userId);
             var result = await _companyService.GetCompanyParentInfoAsync(userId);
+            _logger.LogInformation("Empresa pai encontrada: {CompanyId}", result.Id);
             return Ok(result);
         }
         catch (ArgumentException ex)
         {
+            _logger.LogWarning(ex, "Erro de validação ao buscar empresa pai");
             return NotFound(new { message = ex.Message });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao buscar empresa pai");
-            return StatusCode(500, new { message = "Erro ao buscar empresa pai" });
+            _logger.LogError(ex, "Erro ao buscar empresa pai - Detalhes: {Message}", ex.Message);
+            return StatusCode(500, new { message = "Erro ao buscar empresa pai", detalhes = ex.Message });
         }
     }
 

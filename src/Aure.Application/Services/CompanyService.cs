@@ -181,18 +181,33 @@ public class CompanyService : ICompanyService
 
     public async Task<CompanyInfoResponse> GetCompanyParentInfoAsync(Guid userId)
     {
+        _logger.LogInformation("GetCompanyParentInfoAsync iniciado para userId: {UserId}", userId);
+        
         var user = await _userRepository.GetByIdAsync(userId);
 
         if (user == null)
+        {
+            _logger.LogWarning("Usuário não encontrado: {UserId}", userId);
             throw new ArgumentException("Usuário não encontrado");
+        }
+
+        _logger.LogInformation("Usuário encontrado: {UserName}, CompanyId: {CompanyId}", user.Name, user.CompanyId);
 
         if (!user.CompanyId.HasValue)
+        {
+            _logger.LogWarning("Usuário {UserId} não possui empresa vinculada", userId);
             throw new ArgumentException("Usuário não possui empresa vinculada");
+        }
 
         var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
 
         if (company == null)
+        {
+            _logger.LogWarning("Empresa não encontrada: {CompanyId}", user.CompanyId.Value);
             throw new ArgumentException("Empresa não encontrada");
+        }
+
+        _logger.LogInformation("Empresa encontrada: {CompanyName}, Id: {CompanyId}", company.Name, company.Id);
 
         var allUsers = await _userRepository.GetAllAsync();
         var companyUsers = allUsers.Where(u => u.CompanyId == company.Id).ToList();
@@ -207,6 +222,8 @@ public class CompanyService : ICompanyService
             : $"{company.AddressStreet}, {company.AddressNumber}" +
               (!string.IsNullOrWhiteSpace(company.AddressComplement) ? $", {company.AddressComplement}" : "") +
               $" - {company.AddressNeighborhood}, {company.AddressCity}/{company.AddressState}, {company.AddressCountry} - CEP: {company.AddressZipCode}";
+
+        _logger.LogInformation("Retornando dados da empresa {CompanyId}", company.Id);
 
         return new CompanyInfoResponse
         {
