@@ -1353,4 +1353,239 @@ public class UserService : IUserService
             return Result.Failure<UserResponse>("Erro ao atualizar cargo do funcionário");
         }
     }
+
+    public async Task<Result<IEnumerable<FuncionarioInternoResponse>>> GetFuncionariosInternosAsync(Guid requestingUserId)
+    {
+        try
+        {
+            var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
+            
+            if (requestingUser == null)
+                return Result.Failure<IEnumerable<FuncionarioInternoResponse>>("Usuário não encontrado");
+
+            var allCompanies = await _unitOfWork.Companies.GetAllAsync();
+            var mainCompany = allCompanies.FirstOrDefault(c => c.BusinessModel == BusinessModel.MainCompany);
+
+            if (mainCompany == null)
+                return Result.Failure<IEnumerable<FuncionarioInternoResponse>>("Empresa pai não encontrada");
+
+            var allUsers = await _unitOfWork.Users.GetAllAsync();
+            var funcionariosInternos = allUsers
+                .Where(u => u.CompanyId == mainCompany.Id && 
+                           (u.Role == UserRole.DonoEmpresaPai || u.Role == UserRole.Juridico))
+                .ToList();
+
+            var response = new List<FuncionarioInternoResponse>();
+
+            foreach (var funcionario in funcionariosInternos)
+            {
+                var cpfDecrypted = string.Empty;
+                var rgDecrypted = string.Empty;
+
+                if (!string.IsNullOrEmpty(funcionario.CPFEncrypted))
+                {
+                    try
+                    {
+                        cpfDecrypted = _encryptionService.Decrypt(funcionario.CPFEncrypted);
+                        cpfDecrypted = FormatCpf(cpfDecrypted);
+                    }
+                    catch
+                    {
+                        cpfDecrypted = "***.***.***-**";
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(funcionario.RGEncrypted))
+                {
+                    try
+                    {
+                        rgDecrypted = _encryptionService.Decrypt(funcionario.RGEncrypted);
+                    }
+                    catch
+                    {
+                        rgDecrypted = "**********";
+                    }
+                }
+
+                var funcionarioResponse = new FuncionarioInternoResponse
+                {
+                    Id = funcionario.Id,
+                    Nome = funcionario.Name,
+                    Email = funcionario.Email,
+                    Cargo = funcionario.Cargo ?? "Não definido",
+                    Role = funcionario.Role.ToString(),
+                    Cpf = cpfDecrypted,
+                    Rg = rgDecrypted,
+                    DataNascimento = funcionario.DataNascimento,
+                    TelefoneCelular = funcionario.TelefoneCelular,
+                    TelefoneFixo = funcionario.TelefoneFixo,
+                    DataCadastro = funcionario.CreatedAt
+                };
+
+                if (!string.IsNullOrEmpty(funcionario.EnderecoRua))
+                {
+                    funcionarioResponse.Endereco = new EnderecoFuncionarioDto
+                    {
+                        Rua = funcionario.EnderecoRua,
+                        Numero = funcionario.EnderecoNumero ?? string.Empty,
+                        Complemento = funcionario.EnderecoComplemento,
+                        Bairro = funcionario.EnderecoBairro ?? string.Empty,
+                        Cidade = funcionario.EnderecoCidade ?? string.Empty,
+                        Estado = funcionario.EnderecoEstado ?? string.Empty,
+                        Pais = funcionario.EnderecoPais ?? string.Empty,
+                        Cep = funcionario.EnderecoCep ?? string.Empty,
+                        EnderecoCompleto = $"{funcionario.EnderecoRua}, {funcionario.EnderecoNumero}" +
+                            (!string.IsNullOrEmpty(funcionario.EnderecoComplemento) ? $", {funcionario.EnderecoComplemento}" : "") +
+                            $" - {funcionario.EnderecoBairro}, {funcionario.EnderecoCidade}/{funcionario.EnderecoEstado}, {funcionario.EnderecoPais} - CEP: {funcionario.EnderecoCep}"
+                    };
+                }
+
+                response.Add(funcionarioResponse);
+            }
+
+            _logger.LogInformation("Listados {Count} funcionários internos da empresa {CompanyId}", 
+                response.Count, mainCompany.Id);
+
+            return Result.Success<IEnumerable<FuncionarioInternoResponse>>(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao listar funcionários internos");
+            return Result.Failure<IEnumerable<FuncionarioInternoResponse>>("Erro ao listar funcionários internos");
+        }
+    }
+
+    public async Task<Result<IEnumerable<FuncionarioPJResponse>>> GetFuncionariosPJAsync(Guid requestingUserId)
+    {
+        try
+        {
+            var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
+            
+            if (requestingUser == null)
+                return Result.Failure<IEnumerable<FuncionarioPJResponse>>("Usuário não encontrado");
+
+            var allCompanies = await _unitOfWork.Companies.GetAllAsync();
+            var mainCompany = allCompanies.FirstOrDefault(c => c.BusinessModel == BusinessModel.MainCompany);
+
+            if (mainCompany == null)
+                return Result.Failure<IEnumerable<FuncionarioPJResponse>>("Empresa pai não encontrada");
+
+            var allUsers = await _unitOfWork.Users.GetAllAsync();
+            var funcionariosPJ = allUsers
+                .Where(u => u.Role == UserRole.FuncionarioPJ)
+                .ToList();
+
+            var response = new List<FuncionarioPJResponse>();
+
+            foreach (var funcionario in funcionariosPJ)
+            {
+                if (!funcionario.CompanyId.HasValue)
+                    continue;
+
+                var empresaPJ = await _unitOfWork.Companies.GetByIdAsync(funcionario.CompanyId.Value);
+                
+                if (empresaPJ == null || empresaPJ.BusinessModel != BusinessModel.ContractedPJ)
+                    continue;
+
+                var relationships = await _unitOfWork.CompanyRelationships.GetAllAsync();
+                var hasRelationship = relationships.Any(r => 
+                    r.ClientCompanyId == mainCompany.Id && 
+                    r.ProviderCompanyId == empresaPJ.Id);
+
+                if (!hasRelationship)
+                    continue;
+
+                var cpfDecrypted = string.Empty;
+                var rgDecrypted = string.Empty;
+
+                if (!string.IsNullOrEmpty(funcionario.CPFEncrypted))
+                {
+                    try
+                    {
+                        cpfDecrypted = _encryptionService.Decrypt(funcionario.CPFEncrypted);
+                        cpfDecrypted = FormatCpf(cpfDecrypted);
+                    }
+                    catch
+                    {
+                        cpfDecrypted = "***.***.***-**";
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(funcionario.RGEncrypted))
+                {
+                    try
+                    {
+                        rgDecrypted = _encryptionService.Decrypt(funcionario.RGEncrypted);
+                    }
+                    catch
+                    {
+                        rgDecrypted = "**********";
+                    }
+                }
+
+                var funcionarioResponse = new FuncionarioPJResponse
+                {
+                    Id = funcionario.Id,
+                    Nome = funcionario.Name,
+                    Email = funcionario.Email,
+                    Cargo = funcionario.Cargo ?? "Não definido",
+                    Cpf = cpfDecrypted,
+                    Rg = rgDecrypted,
+                    DataNascimento = funcionario.DataNascimento,
+                    TelefoneCelular = funcionario.TelefoneCelular,
+                    TelefoneFixo = funcionario.TelefoneFixo,
+                    DataCadastro = funcionario.CreatedAt
+                };
+
+                if (!string.IsNullOrEmpty(funcionario.EnderecoRua))
+                {
+                    funcionarioResponse.Endereco = new EnderecoFuncionarioDto
+                    {
+                        Rua = funcionario.EnderecoRua,
+                        Numero = funcionario.EnderecoNumero ?? string.Empty,
+                        Complemento = funcionario.EnderecoComplemento,
+                        Bairro = funcionario.EnderecoBairro ?? string.Empty,
+                        Cidade = funcionario.EnderecoCidade ?? string.Empty,
+                        Estado = funcionario.EnderecoEstado ?? string.Empty,
+                        Pais = funcionario.EnderecoPais ?? string.Empty,
+                        Cep = funcionario.EnderecoCep ?? string.Empty,
+                        EnderecoCompleto = $"{funcionario.EnderecoRua}, {funcionario.EnderecoNumero}" +
+                            (!string.IsNullOrEmpty(funcionario.EnderecoComplemento) ? $", {funcionario.EnderecoComplemento}" : "") +
+                            $" - {funcionario.EnderecoBairro}, {funcionario.EnderecoCidade}/{funcionario.EnderecoEstado}, {funcionario.EnderecoPais} - CEP: {funcionario.EnderecoCep}"
+                    };
+                }
+
+                funcionarioResponse.EmpresaPJ = new EmpresaPJDto
+                {
+                    Id = empresaPJ.Id,
+                    RazaoSocial = empresaPJ.Name,
+                    Cnpj = empresaPJ.Cnpj,
+                    CnpjFormatado = empresaPJ.GetFormattedCnpj(),
+                    Tipo = empresaPJ.Type.ToString(),
+                    ModeloNegocio = empresaPJ.BusinessModel.ToString()
+                };
+
+                response.Add(funcionarioResponse);
+            }
+
+            _logger.LogInformation("Listados {Count} funcionários PJ da empresa {CompanyId}", 
+                response.Count, mainCompany.Id);
+
+            return Result.Success<IEnumerable<FuncionarioPJResponse>>(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao listar funcionários PJ");
+            return Result.Failure<IEnumerable<FuncionarioPJResponse>>("Erro ao listar funcionários PJ");
+        }
+    }
+
+    private string FormatCpf(string cpf)
+    {
+        if (string.IsNullOrEmpty(cpf) || cpf.Length != 11)
+            return cpf;
+
+        return $"{cpf.Substring(0, 3)}.{cpf.Substring(3, 3)}.{cpf.Substring(6, 3)}-{cpf.Substring(9, 2)}";
+    }
 }
+

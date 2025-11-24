@@ -4,7 +4,9 @@ using Aure.Domain.Interfaces;
 using Aure.Domain.Entities;
 using Aure.Domain.Enums;
 using Aure.Application.Interfaces;
+using Aure.Application.DTOs.User;
 using System.Security.Claims;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Aure.API.Controllers;
 
@@ -15,15 +17,18 @@ public class ContractsController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly INotificationService _notificationService;
+    private readonly IUserService _userService;
     private readonly ILogger<ContractsController> _logger;
 
     public ContractsController(
         IUnitOfWork unitOfWork, 
         INotificationService notificationService,
+        IUserService userService,
         ILogger<ContractsController> logger)
     {
         _unitOfWork = unitOfWork;
         _notificationService = notificationService;
+        _userService = userService;
         _logger = logger;
     }
 
@@ -490,6 +495,114 @@ public class ContractsController : ControllerBase
         {
             _logger.LogError(ex, "Erro ao assinar contrato {ContractId}", id);
             return BadRequest(new { message = "Erro ao assinar contrato" });
+        }
+    }
+
+    [HttpGet("funcionarios-internos")]
+    [Authorize(Roles = "DonoEmpresaPai,Juridico")]
+    [SwaggerOperation(
+        Summary = "Listar funcionários internos para contratos",
+        Description = @"Retorna lista completa de funcionários internos (Dono da Empresa e Jurídicos) com todos os dados necessários para criação de contratos.
+
+**Permissões:**
+- DonoEmpresaPai
+- Jurídico
+
+**Dados Retornados:**
+- ID, Nome, Email, Cargo
+- CPF e RG (formatados)
+- Data de Nascimento
+- Telefones (Celular e Fixo)
+- Endereço Completo
+- Data de Cadastro
+
+**Uso:**
+- Seleção de signatários para contratos
+- Definição de responsáveis por contratos
+- Dados completos para documentação contratual"
+    )]
+    [SwaggerResponse(200, "Lista de funcionários internos", typeof(IEnumerable<FuncionarioInternoResponse>))]
+    [SwaggerResponse(401, "Não autenticado")]
+    [SwaggerResponse(403, "Sem permissão de acesso")]
+    [SwaggerResponse(404, "Empresa pai não encontrada")]
+    [ProducesResponseType(typeof(IEnumerable<FuncionarioInternoResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetFuncionariosInternos()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Token de usuário inválido" });
+            }
+
+            var result = await _userService.GetFuncionariosInternosAsync(userId);
+
+            if (result.IsFailure)
+                return BadRequest(new { erro = result.Error });
+
+            return Ok(result.Data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar funcionários internos");
+            return StatusCode(500, new { message = "Erro ao buscar funcionários internos" });
+        }
+    }
+
+    [HttpGet("funcionarios-pj")]
+    [Authorize(Roles = "DonoEmpresaPai,Juridico")]
+    [SwaggerOperation(
+        Summary = "Listar funcionários PJ para contratos",
+        Description = @"Retorna lista completa de funcionários PJ (Pessoa Jurídica) contratados pela empresa com todos os dados necessários para criação de contratos.
+
+**Permissões:**
+- DonoEmpresaPai
+- Jurídico
+
+**Dados Retornados:**
+- ID, Nome, Email, Cargo
+- CPF e RG (formatados)
+- Data de Nascimento
+- Telefones (Celular e Fixo)
+- Endereço Completo
+- **Dados da Empresa PJ**: Razão Social, CNPJ, Tipo, Modelo de Negócio
+- Data de Cadastro
+
+**Uso:**
+- Seleção de prestadores de serviço para contratos
+- Dados completos da PJ para documentação contratual
+- Informações da empresa PJ para emissão de notas fiscais
+
+**Observação:**
+Retorna apenas PJs que possuem relacionamento ativo com a empresa principal."
+    )]
+    [SwaggerResponse(200, "Lista de funcionários PJ", typeof(IEnumerable<FuncionarioPJResponse>))]
+    [SwaggerResponse(401, "Não autenticado")]
+    [SwaggerResponse(403, "Sem permissão de acesso")]
+    [SwaggerResponse(404, "Empresa pai não encontrada")]
+    [ProducesResponseType(typeof(IEnumerable<FuncionarioPJResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetFuncionariosPJ()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Token de usuário inválido" });
+            }
+
+            var result = await _userService.GetFuncionariosPJAsync(userId);
+
+            if (result.IsFailure)
+                return BadRequest(new { erro = result.Error });
+
+            return Ok(result.Data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar funcionários PJ");
+            return StatusCode(500, new { message = "Erro ao buscar funcionários PJ" });
         }
     }
 }

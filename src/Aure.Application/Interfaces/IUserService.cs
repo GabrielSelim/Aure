@@ -47,4 +47,8 @@ public interface IUserService
     
     // Position Management
     Task<Result<UserResponse>> UpdateEmployeePositionAsync(Guid employeeId, string newPosition, Guid requestingUserId);
+    
+    // Funcionários para Contratos
+    Task<Result<IEnumerable<FuncionarioInternoResponse>>> GetFuncionariosInternosAsync(Guid requestingUserId);
+    Task<Result<IEnumerable<FuncionarioPJResponse>>> GetFuncionariosPJAsync(Guid requestingUserId);
 }
