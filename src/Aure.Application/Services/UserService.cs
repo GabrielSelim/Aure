@@ -611,7 +611,7 @@ public class UserService : IUserService
                 invite.MarkAsAccepted();
                 await _unitOfWork.UserInvites.UpdateAsync(invite);
                 
-                var userInvitation = await _unitOfWork.UserInvitations.GetByTokenAsync(inviteToken);
+                var userInvitation = await _unitOfWork.UserInvitations.GetByEmailAsync(invite.InviteeEmail);
                 if (userInvitation != null)
                 {
                     userInvitation.MarkAsAccepted(user.Id);
