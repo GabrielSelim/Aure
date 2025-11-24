@@ -16,6 +16,14 @@ namespace Aure.Infrastructure.Configuration
             builder.Property(c => c.CompanyId)
                 .IsRequired();
 
+            builder.Property(c => c.NomeConfig)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            builder.Property(c => c.Categoria)
+                .IsRequired()
+                .HasMaxLength(50);
+
             builder.Property(c => c.TituloServico)
                 .IsRequired()
                 .HasMaxLength(200);
@@ -66,7 +74,9 @@ namespace Aure.Infrastructure.Configuration
                 .HasForeignKey(c => c.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasIndex(c => c.CompanyId)
+            builder.HasIndex(c => c.CompanyId);
+
+            builder.HasIndex(c => new { c.CompanyId, c.NomeConfig })
                 .IsUnique();
         }
     }

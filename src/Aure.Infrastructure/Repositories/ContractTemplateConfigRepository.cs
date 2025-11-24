@@ -21,11 +21,21 @@ namespace Aure.Infrastructure.Repositories
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public async Task<ContractTemplateConfig?> GetByCompanyIdAsync(Guid companyId)
+        public async Task<ContractTemplateConfig?> GetByCompanyIdAndNomeAsync(Guid companyId, string nomeConfig)
         {
             return await _context.ContractTemplateConfigs
                 .Include(c => c.Company)
-                .FirstOrDefaultAsync(c => c.CompanyId == companyId);
+                .FirstOrDefaultAsync(c => c.CompanyId == companyId && c.NomeConfig == nomeConfig);
+        }
+
+        public async Task<IEnumerable<ContractTemplateConfig>> GetAllByCompanyIdAsync(Guid companyId)
+        {
+            return await _context.ContractTemplateConfigs
+                .Include(c => c.Company)
+                .Where(c => c.CompanyId == companyId)
+                .OrderBy(c => c.Categoria)
+                .ThenBy(c => c.NomeConfig)
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<ContractTemplateConfig>> GetAllAsync()

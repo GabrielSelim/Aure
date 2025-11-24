@@ -5,6 +5,8 @@ namespace Aure.Domain.Entities
     public class ContractTemplateConfig : BaseEntity
     {
         public Guid CompanyId { get; private set; }
+        public string NomeConfig { get; private set; } = string.Empty;
+        public string Categoria { get; private set; } = string.Empty;
         public string TituloServico { get; private set; } = string.Empty;
         public string DescricaoServico { get; private set; } = string.Empty;
         public string LocalPrestacaoServico { get; private set; } = string.Empty;
@@ -18,6 +20,8 @@ namespace Aure.Domain.Entities
 
         private ContractTemplateConfig()
         {
+            NomeConfig = string.Empty;
+            Categoria = string.Empty;
             TituloServico = string.Empty;
             DescricaoServico = string.Empty;
             LocalPrestacaoServico = string.Empty;
@@ -28,6 +32,8 @@ namespace Aure.Domain.Entities
 
         public ContractTemplateConfig(
             Guid companyId,
+            string nomeConfig,
+            string categoria,
             string tituloServico,
             string descricaoServico,
             string localPrestacaoServico,
@@ -37,6 +43,8 @@ namespace Aure.Domain.Entities
             string? clausulaAjudaCusto = null)
         {
             CompanyId = companyId;
+            NomeConfig = nomeConfig ?? throw new ArgumentNullException(nameof(nomeConfig));
+            Categoria = categoria ?? throw new ArgumentNullException(nameof(categoria));
             TituloServico = tituloServico ?? throw new ArgumentNullException(nameof(tituloServico));
             DescricaoServico = descricaoServico ?? throw new ArgumentNullException(nameof(descricaoServico));
             LocalPrestacaoServico = localPrestacaoServico ?? throw new ArgumentNullException(nameof(localPrestacaoServico));
@@ -50,6 +58,8 @@ namespace Aure.Domain.Entities
         }
 
         public void Update(
+            string nomeConfig,
+            string categoria,
             string tituloServico,
             string descricaoServico,
             string localPrestacaoServico,
@@ -58,6 +68,8 @@ namespace Aure.Domain.Entities
             List<string> obrigacoesContratante,
             string? clausulaAjudaCusto = null)
         {
+            NomeConfig = nomeConfig ?? throw new ArgumentNullException(nameof(nomeConfig));
+            Categoria = categoria ?? throw new ArgumentNullException(nameof(categoria));
             TituloServico = tituloServico ?? throw new ArgumentNullException(nameof(tituloServico));
             DescricaoServico = descricaoServico ?? throw new ArgumentNullException(nameof(descricaoServico));
             LocalPrestacaoServico = localPrestacaoServico ?? throw new ArgumentNullException(nameof(localPrestacaoServico));
@@ -72,6 +84,18 @@ namespace Aure.Domain.Entities
 
         private void ValidateEntity()
         {
+            if (string.IsNullOrWhiteSpace(NomeConfig))
+                throw new ArgumentException("Nome da configuração não pode ser vazio", nameof(NomeConfig));
+
+            if (NomeConfig.Length > 100)
+                throw new ArgumentException("Nome da configuração deve ter no máximo 100 caracteres", nameof(NomeConfig));
+
+            if (string.IsNullOrWhiteSpace(Categoria))
+                throw new ArgumentException("Categoria não pode ser vazia", nameof(Categoria));
+
+            if (Categoria.Length > 50)
+                throw new ArgumentException("Categoria deve ter no máximo 50 caracteres", nameof(Categoria));
+
             if (string.IsNullOrWhiteSpace(TituloServico))
                 throw new ArgumentException("Título do serviço não pode ser vazio", nameof(TituloServico));
 

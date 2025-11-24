@@ -138,6 +138,14 @@ public class VariableInfo
 
 public class ContractTemplateConfigRequest
 {
+    [Required(ErrorMessage = "Nome da configuração é obrigatório")]
+    [StringLength(100, ErrorMessage = "Nome deve ter no máximo 100 caracteres")]
+    public string NomeConfig { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Categoria é obrigatória")]
+    [StringLength(50, ErrorMessage = "Categoria deve ter no máximo 50 caracteres")]
+    public string Categoria { get; set; } = string.Empty;
+
     [Required(ErrorMessage = "Título do serviço é obrigatório")]
     [StringLength(200, ErrorMessage = "Título deve ter no máximo 200 caracteres")]
     public string TituloServico { get; set; } = string.Empty;
@@ -167,6 +175,8 @@ public class ContractTemplateConfigResponse
     public Guid Id { get; set; }
     public Guid CompanyId { get; set; }
     public string NomeEmpresa { get; set; } = string.Empty;
+    public string NomeConfig { get; set; } = string.Empty;
+    public string Categoria { get; set; } = string.Empty;
     public string TituloServico { get; set; } = string.Empty;
     public string DescricaoServico { get; set; } = string.Empty;
     public string LocalPrestacaoServico { get; set; } = string.Empty;
@@ -209,4 +219,11 @@ public class ContractTemplatePresetResponse
     public string Nome { get; set; } = string.Empty;
     public string Descricao { get; set; } = string.Empty;
     public ContractTemplateConfigRequest Configuracao { get; set; } = new();
+}
+
+public class ClonarPresetRequest
+{
+    [Required(ErrorMessage = "Nome da configuração é obrigatório")]
+    [StringLength(100, ErrorMessage = "Nome deve ter no máximo 100 caracteres")]
+    public string NomeConfig { get; set; } = string.Empty;
 }

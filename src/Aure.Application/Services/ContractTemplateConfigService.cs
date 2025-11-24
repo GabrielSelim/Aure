@@ -58,7 +58,47 @@ namespace Aure.Application.Services
             }
         }
 
-        public async Task<Result<ContractTemplateConfigResponse?>> GetCompanyConfigAsync(Guid userId)
+        public async Task<Result<List<ContractTemplateConfigResponse>>> GetAllCompanyConfigsAsync(Guid userId)
+        {
+            try
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(userId);
+                if (user == null)
+                    return Result.Failure<List<ContractTemplateConfigResponse>>("Usuário não encontrado");
+
+                if (!user.CompanyId.HasValue)
+                    return Result.Failure<List<ContractTemplateConfigResponse>>("Usuário não pertence a uma empresa");
+
+                var configs = await _unitOfWork.ContractTemplateConfigs.GetAllByCompanyIdAsync(user.CompanyId.Value);
+                
+                var responses = configs.Select(config => new ContractTemplateConfigResponse
+                {
+                    Id = config.Id,
+                    CompanyId = config.CompanyId,
+                    NomeEmpresa = config.Company.Name,
+                    NomeConfig = config.NomeConfig,
+                    Categoria = config.Categoria,
+                    TituloServico = config.TituloServico,
+                    DescricaoServico = config.DescricaoServico,
+                    LocalPrestacaoServico = config.LocalPrestacaoServico,
+                    DetalhamentoServicos = config.DetalhamentoServicos,
+                    ClausulaAjudaCusto = config.ClausulaAjudaCusto,
+                    ObrigacoesContratado = config.ObrigacoesContratado,
+                    ObrigacoesContratante = config.ObrigacoesContratante,
+                    CreatedAt = config.CreatedAt,
+                    UpdatedAt = config.UpdatedAt
+                }).ToList();
+
+                return Result.Success(responses);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao buscar configurações da empresa para usuário {UserId}", userId);
+                return Result.Failure<List<ContractTemplateConfigResponse>>("Erro ao buscar configurações");
+            }
+        }
+
+        public async Task<Result<ContractTemplateConfigResponse?>> GetCompanyConfigByNomeAsync(Guid userId, string nomeConfig)
         {
             try
             {
@@ -69,7 +109,7 @@ namespace Aure.Application.Services
                 if (!user.CompanyId.HasValue)
                     return Result.Failure<ContractTemplateConfigResponse?>("Usuário não pertence a uma empresa");
 
-                var config = await _unitOfWork.ContractTemplateConfigs.GetByCompanyIdAsync(user.CompanyId.Value);
+                var config = await _unitOfWork.ContractTemplateConfigs.GetByCompanyIdAndNomeAsync(user.CompanyId.Value, nomeConfig);
                 
                 if (config == null)
                     return Result.Success<ContractTemplateConfigResponse?>(null);
@@ -79,6 +119,8 @@ namespace Aure.Application.Services
                     Id = config.Id,
                     CompanyId = config.CompanyId,
                     NomeEmpresa = config.Company.Name,
+                    NomeConfig = config.NomeConfig,
+                    Categoria = config.Categoria,
                     TituloServico = config.TituloServico,
                     DescricaoServico = config.DescricaoServico,
                     LocalPrestacaoServico = config.LocalPrestacaoServico,
@@ -94,7 +136,7 @@ namespace Aure.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao buscar configuração da empresa para usuário {UserId}", userId);
+                _logger.LogError(ex, "Erro ao buscar configuração {NomeConfig} da empresa para usuário {UserId}", nomeConfig, userId);
                 return Result.Failure<ContractTemplateConfigResponse?>("Erro ao buscar configuração");
             }
         }
@@ -113,13 +155,15 @@ namespace Aure.Application.Services
                 if (!user.CompanyId.HasValue)
                     return Result.Failure<ContractTemplateConfigResponse>("Usuário não pertence a uma empresa");
 
-                var existingConfig = await _unitOfWork.ContractTemplateConfigs.GetByCompanyIdAsync(user.CompanyId.Value);
+                var existingConfig = await _unitOfWork.ContractTemplateConfigs.GetByCompanyIdAndNomeAsync(user.CompanyId.Value, request.NomeConfig);
 
                 ContractTemplateConfig config;
 
                 if (existingConfig != null)
                 {
                     existingConfig.Update(
+                        request.NomeConfig,
+                        request.Categoria,
                         request.TituloServico,
                         request.DescricaoServico,
                         request.LocalPrestacaoServico,
@@ -135,6 +179,8 @@ namespace Aure.Application.Services
                 {
                     config = new ContractTemplateConfig(
                         user.CompanyId.Value,
+                        request.NomeConfig,
+                        request.Categoria,
                         request.TituloServico,
                         request.DescricaoServico,
                         request.LocalPrestacaoServico,
@@ -153,6 +199,8 @@ namespace Aure.Application.Services
                     Id = config.Id,
                     CompanyId = config.CompanyId,
                     NomeEmpresa = company?.Name ?? string.Empty,
+                    NomeConfig = config.NomeConfig,
+                    Categoria = config.Categoria,
                     TituloServico = config.TituloServico,
                     DescricaoServico = config.DescricaoServico,
                     LocalPrestacaoServico = config.LocalPrestacaoServico,
@@ -170,6 +218,72 @@ namespace Aure.Application.Services
             {
                 _logger.LogError(ex, "Erro ao criar/atualizar configuração de template para usuário {UserId}", userId);
                 return Result.Failure<ContractTemplateConfigResponse>($"Erro ao salvar configuração: {ex.Message}");
+            }
+        }
+
+        public async Task<Result<ContractTemplateConfigResponse>> ClonarPresetAsync(Guid userId, string tipoPreset, string nomeConfig)
+        {
+            try
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(userId);
+                if (user == null)
+                    return Result.Failure<ContractTemplateConfigResponse>("Usuário não encontrado");
+
+                if (user.Role != UserRole.DonoEmpresaPai)
+                    return Result.Failure<ContractTemplateConfigResponse>("Apenas o dono da empresa pode clonar presets");
+
+                if (!user.CompanyId.HasValue)
+                    return Result.Failure<ContractTemplateConfigResponse>("Usuário não pertence a uma empresa");
+
+                var preset = _presetService.GetPresetByTipo(tipoPreset);
+                if (preset == null)
+                    return Result.Failure<ContractTemplateConfigResponse>("Preset não encontrado");
+
+                var existingConfig = await _unitOfWork.ContractTemplateConfigs.GetByCompanyIdAndNomeAsync(user.CompanyId.Value, nomeConfig);
+                if (existingConfig != null)
+                    return Result.Failure<ContractTemplateConfigResponse>($"Já existe uma configuração com o nome '{nomeConfig}'");
+
+                var config = new ContractTemplateConfig(
+                    user.CompanyId.Value,
+                    nomeConfig,
+                    preset.Tipo,
+                    preset.Configuracao.TituloServico,
+                    preset.Configuracao.DescricaoServico,
+                    preset.Configuracao.LocalPrestacaoServico,
+                    preset.Configuracao.DetalhamentoServicos,
+                    preset.Configuracao.ObrigacoesContratado,
+                    preset.Configuracao.ObrigacoesContratante,
+                    preset.Configuracao.ClausulaAjudaCusto
+                );
+
+                await _unitOfWork.ContractTemplateConfigs.AddAsync(config);
+
+                var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+
+                var response = new ContractTemplateConfigResponse
+                {
+                    Id = config.Id,
+                    CompanyId = config.CompanyId,
+                    NomeEmpresa = company?.Name ?? string.Empty,
+                    NomeConfig = config.NomeConfig,
+                    Categoria = config.Categoria,
+                    TituloServico = config.TituloServico,
+                    DescricaoServico = config.DescricaoServico,
+                    LocalPrestacaoServico = config.LocalPrestacaoServico,
+                    DetalhamentoServicos = config.DetalhamentoServicos,
+                    ClausulaAjudaCusto = config.ClausulaAjudaCusto,
+                    ObrigacoesContratado = config.ObrigacoesContratado,
+                    ObrigacoesContratante = config.ObrigacoesContratante,
+                    CreatedAt = config.CreatedAt,
+                    UpdatedAt = config.UpdatedAt
+                };
+
+                return Result.Success(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao clonar preset {TipoPreset} para usuário {UserId}", tipoPreset, userId);
+                return Result.Failure<ContractTemplateConfigResponse>($"Erro ao clonar preset: {ex.Message}");
             }
         }
 
@@ -318,7 +432,7 @@ namespace Aure.Application.Services
             }
         }
 
-        public async Task<Result<bool>> DeleteCompanyConfigAsync(Guid userId)
+        public async Task<Result<bool>> DeleteCompanyConfigAsync(Guid userId, string nomeConfig)
         {
             try
             {
@@ -327,12 +441,12 @@ namespace Aure.Application.Services
                     return Result.Failure<bool>("Usuário não encontrado");
 
                 if (user.Role != UserRole.DonoEmpresaPai)
-                    return Result.Failure<bool>("Apenas o dono da empresa pode deletar a configuração");
+                    return Result.Failure<bool>("Apenas o dono da empresa pode deletar configurações");
 
                 if (!user.CompanyId.HasValue)
                     return Result.Failure<bool>("Usuário não pertence a uma empresa");
 
-                var config = await _unitOfWork.ContractTemplateConfigs.GetByCompanyIdAsync(user.CompanyId.Value);
+                var config = await _unitOfWork.ContractTemplateConfigs.GetByCompanyIdAndNomeAsync(user.CompanyId.Value, nomeConfig);
                 if (config == null)
                     return Result.Failure<bool>("Configuração não encontrada");
 
@@ -342,7 +456,7 @@ namespace Aure.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao deletar configuração para usuário {UserId}", userId);
+                _logger.LogError(ex, "Erro ao deletar configuração {NomeConfig} para usuário {UserId}", nomeConfig, userId);
                 return Result.Failure<bool>("Erro ao deletar configuração");
             }
         }

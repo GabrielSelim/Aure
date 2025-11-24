@@ -48,18 +48,31 @@ namespace Aure.API.Controllers
         }
 
         [HttpGet("config")]
-        [ProducesResponseType(typeof(ContractTemplateConfigResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetCompanyConfig()
+        [ProducesResponseType(typeof(List<ContractTemplateConfigResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllCompanyConfigs()
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
-            var result = await _service.GetCompanyConfigAsync(userId);
+            var result = await _service.GetAllCompanyConfigsAsync(userId);
+            
+            if (!result.IsSuccess)
+                return BadRequest(new { message = result.Error });
+
+            return Ok(result.Data);
+        }
+
+        [HttpGet("config/{nomeConfig}")]
+        [ProducesResponseType(typeof(ContractTemplateConfigResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCompanyConfigByNome(string nomeConfig)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+            var result = await _service.GetCompanyConfigByNomeAsync(userId, nomeConfig);
             
             if (!result.IsSuccess)
                 return BadRequest(new { message = result.Error });
 
             if (result.Data == null)
-                return NotFound(new { message = "Empresa ainda não possui configuração de template. Configure um template para começar a gerar contratos personalizados." });
+                return NotFound(new { message = $"Configuração '{nomeConfig}' não encontrada" });
 
             return Ok(result.Data);
         }
@@ -76,6 +89,25 @@ namespace Aure.API.Controllers
 
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
             var result = await _service.CreateOrUpdateConfigAsync(userId, request);
+            
+            if (!result.IsSuccess)
+                return BadRequest(new { message = result.Error });
+
+            return Ok(result.Data);
+        }
+
+        [HttpPost("clonar-preset/{tipoPreset}")]
+        [Authorize(Roles = "DonoEmpresaPai")]
+        [ProducesResponseType(typeof(ContractTemplateConfigResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> ClonarPreset(string tipoPreset, [FromBody] ClonarPresetRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+            var result = await _service.ClonarPresetAsync(userId, tipoPreset, request.NomeConfig);
             
             if (!result.IsSuccess)
                 return BadRequest(new { message = result.Error });
@@ -102,20 +134,20 @@ namespace Aure.API.Controllers
             return Content(result.Data!, "text/html");
         }
 
-        [HttpDelete("config")]
+        [HttpDelete("config/{nomeConfig}")]
         [Authorize(Roles = "DonoEmpresaPai")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> DeleteConfig()
+        public async Task<IActionResult> DeleteConfig(string nomeConfig)
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
-            var result = await _service.DeleteCompanyConfigAsync(userId);
+            var result = await _service.DeleteCompanyConfigAsync(userId, nomeConfig);
             
             if (!result.IsSuccess)
                 return BadRequest(new { message = result.Error });
 
-            return Ok(new { message = "Configuração deletada com sucesso" });
+            return Ok(new { message = $"Configuração '{nomeConfig}' deletada com sucesso" });
         }
     }
 }

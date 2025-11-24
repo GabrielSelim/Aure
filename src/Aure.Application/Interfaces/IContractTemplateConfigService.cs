@@ -7,9 +7,11 @@ namespace Aure.Application.Interfaces
     {
         Task<Result<List<ContractTemplatePresetResponse>>> GetPresetsAsync();
         Task<Result<ContractTemplatePresetResponse?>> GetPresetByTipoAsync(string tipo);
-        Task<Result<ContractTemplateConfigResponse?>> GetCompanyConfigAsync(Guid userId);
+        Task<Result<List<ContractTemplateConfigResponse>>> GetAllCompanyConfigsAsync(Guid userId);
+        Task<Result<ContractTemplateConfigResponse?>> GetCompanyConfigByNomeAsync(Guid userId, string nomeConfig);
         Task<Result<ContractTemplateConfigResponse>> CreateOrUpdateConfigAsync(Guid userId, ContractTemplateConfigRequest request);
+        Task<Result<ContractTemplateConfigResponse>> ClonarPresetAsync(Guid userId, string tipoPreset, string nomeConfig);
         Task<Result<string>> PreviewContractHtmlAsync(Guid userId, PreviewTemplateRequest request);
-        Task<Result<bool>> DeleteCompanyConfigAsync(Guid userId);
+        Task<Result<bool>> DeleteCompanyConfigAsync(Guid userId, string nomeConfig);
     }
 }
