@@ -11,6 +11,9 @@ public class FuncionarioInternoResponse
     public string Role { get; set; } = string.Empty;
     public string? Cpf { get; set; }
     public string? Rg { get; set; }
+    public string? OrgaoExpedidorRG { get; set; }
+    public string? Nacionalidade { get; set; }
+    public string? EstadoCivil { get; set; }
     public DateTime? DataNascimento { get; set; }
     public string? TelefoneCelular { get; set; }
     public string? TelefoneFixo { get; set; }
@@ -26,6 +29,9 @@ public class FuncionarioPJResponse
     public string Cargo { get; set; } = string.Empty;
     public string? Cpf { get; set; }
     public string? Rg { get; set; }
+    public string? OrgaoExpedidorRG { get; set; }
+    public string? Nacionalidade { get; set; }
+    public string? EstadoCivil { get; set; }
     public DateTime? DataNascimento { get; set; }
     public string? TelefoneCelular { get; set; }
     public string? TelefoneFixo { get; set; }
