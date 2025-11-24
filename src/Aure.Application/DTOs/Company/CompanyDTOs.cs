@@ -55,6 +55,8 @@ public class UserCompanyInfoResponse
     public EnderecoEmpresaDto? Endereco { get; set; }
     public string? TelefoneFixo { get; set; }
     public string? TelefoneCelular { get; set; }
+    public string? Nire { get; set; }
+    public string? InscricaoEstadual { get; set; }
 }
 
 public class EnderecoEmpresaDto
@@ -115,5 +117,13 @@ public record UpdateUserCompanyInfoRequest(
     [Required(ErrorMessage = "CEP é obrigatório")]
     [RegularExpression(@"^\d{8}$", ErrorMessage = "CEP deve conter 8 dígitos")]
     [Description("CEP (apenas números)")]
-    string Cep
+    string Cep,
+
+    [StringLength(20, ErrorMessage = "NIRE deve ter no máximo 20 caracteres")]
+    [Description("NIRE - Número de Identificação do Registro de Empresa (opcional)")]
+    string? Nire,
+
+    [StringLength(50, ErrorMessage = "Inscrição Estadual deve ter no máximo 50 caracteres")]
+    [Description("Inscrição Estadual (opcional)")]
+    string? InscricaoEstadual
 );

@@ -74,6 +74,9 @@ public class UserProfileService : IUserProfileService
             RG = (isDono || isOwnProfile) && !string.IsNullOrEmpty(user.RGEncrypted)
                 ? _encryptionService.Decrypt(user.RGEncrypted)
                 : null,
+            OrgaoExpedidorRG = user.OrgaoExpedidorRG,
+            Nacionalidade = user.Nacionalidade,
+            EstadoCivil = user.EstadoCivil,
             Cargo = user.Cargo,
             TelefoneCelular = user.TelefoneCelular,
             TelefoneFixo = user.TelefoneFixo,
@@ -157,6 +160,16 @@ public class UserProfileService : IUserProfileService
                 : user.RGEncrypted;
 
             user.UpdateDocuments(cpfEncrypted, rgEncrypted);
+        }
+
+        if (!string.IsNullOrEmpty(request.OrgaoExpedidorRG))
+        {
+            user.SetOrgaoExpedidorRG(request.OrgaoExpedidorRG);
+        }
+
+        if (!string.IsNullOrEmpty(request.Nacionalidade) || !string.IsNullOrEmpty(request.EstadoCivil))
+        {
+            user.SetDadosPessoais(request.Nacionalidade, request.EstadoCivil);
         }
 
         await _userRepository.UpdateAsync(user);

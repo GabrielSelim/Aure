@@ -20,6 +20,8 @@ public class CompanyInfoResponse
     public string? EnderecoCompleto { get; set; }
     public string? TelefoneCelular { get; set; }
     public string? TelefoneFixo { get; set; }
+    public string? Nire { get; set; }
+    public string? InscricaoEstadual { get; set; }
     public int TotalFuncionarios { get; set; }
     public int ContratosAtivos { get; set; }
     public DateTime DataCadastro { get; set; }

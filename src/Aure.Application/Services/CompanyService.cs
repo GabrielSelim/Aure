@@ -224,6 +224,8 @@ public class CompanyService : ICompanyService
             EnderecoCompleto = enderecoCompleto,
             TelefoneCelular = company.PhoneMobile,
             TelefoneFixo = company.PhoneLandline,
+            Nire = company.Nire,
+            InscricaoEstadual = company.StateRegistration,
             TotalFuncionarios = companyUsers.Count,
             ContratosAtivos = activeContracts,
             DataCadastro = company.CreatedAt
@@ -392,6 +394,8 @@ public class CompanyService : ICompanyService
                 ModeloNegocio = company.BusinessModel.ToString(),
                 TelefoneCelular = company.PhoneMobile,
                 TelefoneFixo = company.PhoneLandline,
+                Nire = company.Nire,
+                InscricaoEstadual = company.StateRegistration,
                 Rua = company.AddressStreet,
                 Numero = company.AddressNumber,
                 Complemento = company.AddressComplement,
@@ -483,6 +487,7 @@ public class CompanyService : ICompanyService
                 request.Pais,
                 request.Cep
             );
+            company.UpdateRegistrationInfo(request.Nire, request.InscricaoEstadual);
 
             await _unitOfWork.Companies.UpdateAsync(company);
             await _unitOfWork.SaveChangesAsync();

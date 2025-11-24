@@ -7,6 +7,9 @@ public class UpdateFullProfileRequest
     public DateTime? DataNascimento { get; set; }
     public string? CPF { get; set; }
     public string? RG { get; set; }
+    public string? OrgaoExpedidorRG { get; set; }
+    public string? Nacionalidade { get; set; }
+    public string? EstadoCivil { get; set; }
     public string? Cargo { get; set; }
     
     public string? TelefoneCelular { get; set; }
@@ -37,6 +40,9 @@ public class UserProfileResponse
     public string? CPFMascarado { get; set; }
     public string? CPF { get; set; }
     public string? RG { get; set; }
+    public string? OrgaoExpedidorRG { get; set; }
+    public string? Nacionalidade { get; set; }
+    public string? EstadoCivil { get; set; }
     public string? Cargo { get; set; }
     public string? TelefoneCelular { get; set; }
     public string? TelefoneFixo { get; set; }
