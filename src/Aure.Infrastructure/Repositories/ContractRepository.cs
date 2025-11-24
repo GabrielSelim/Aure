@@ -96,4 +96,15 @@ public class ContractRepository : BaseRepository<Contract>, IContractRepository
             .OrderBy(x => x.ExpirationDate)
             .ToListAsync();
     }
+
+    public async Task<Contract?> GetActivePJContractByUserIdAsync(Guid userId)
+    {
+        return await _dbSet
+            .Where(x => x.ProviderId == userId && 
+                       x.Type == ContractType.PJ &&
+                       x.Status == ContractStatus.Active)
+            .Include(x => x.Client)
+            .Include(x => x.Provider)
+            .FirstOrDefaultAsync();
+    }
 }

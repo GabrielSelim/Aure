@@ -432,6 +432,73 @@ namespace Aure.Application.Services
             }
         }
 
+        public async Task<Result<Guid>> GerarContratoComConfigAsync(Guid userId, GerarContratoComConfigRequest request)
+        {
+            try
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(userId);
+                if (user == null)
+                    return Result.Failure<Guid>("Usuário não encontrado");
+
+                if (user.Role != UserRole.DonoEmpresaPai && user.Role != UserRole.Juridico)
+                    return Result.Failure<Guid>("Apenas o dono da empresa ou jurídico podem gerar contratos");
+
+                if (!user.CompanyId.HasValue)
+                    return Result.Failure<Guid>("Usuário não pertence a uma empresa");
+
+                var config = await _unitOfWork.ContractTemplateConfigs.GetByCompanyIdAndNomeAsync(user.CompanyId.Value, request.NomeConfig);
+                if (config == null)
+                    return Result.Failure<Guid>("Configuração de template não encontrada");
+
+                var funcionarioPJ = await _unitOfWork.Users.GetByIdAsync(request.FuncionarioPJId);
+                if (funcionarioPJ == null)
+                    return Result.Failure<Guid>("Funcionário PJ não encontrado");
+
+                if (funcionarioPJ.Role != UserRole.FuncionarioPJ)
+                    return Result.Failure<Guid>("Usuário selecionado não é um funcionário PJ");
+
+                if (funcionarioPJ.CompanyId != user.CompanyId)
+                    return Result.Failure<Guid>("Funcionário PJ não pertence à sua empresa");
+
+                var existingContract = await _unitOfWork.Contracts.GetActivePJContractByUserIdAsync(request.FuncionarioPJId);
+                if (existingContract != null)
+                    return Result.Failure<Guid>("Funcionário PJ já possui um contrato ativo");
+
+                var dataInicio = request.DataInicioVigencia ?? DateTime.UtcNow.Date;
+                var dataFim = dataInicio.AddMonths(request.PrazoVigenciaMeses);
+
+                var contract = new Contract(
+                    user.CompanyId.Value,
+                    request.FuncionarioPJId,
+                    dataInicio,
+                    dataFim,
+                    request.ValorMensal,
+                    ContractType.PJ
+                );
+
+                contract.SetPaymentDetails(
+                    request.DiaVencimentoNF,
+                    request.DiaPagamento
+                );
+
+                await _unitOfWork.Contracts.AddAsync(contract);
+
+                _logger.LogInformation(
+                    "Contrato PJ criado com sucesso. ContractId: {ContractId}, FuncionarioPJId: {FuncionarioPJId}, Config: {NomeConfig}",
+                    contract.Id,
+                    request.FuncionarioPJId,
+                    request.NomeConfig
+                );
+
+                return Result.Success(contract.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao gerar contrato com config {NomeConfig}", request.NomeConfig);
+                return Result.Failure<Guid>($"Erro ao gerar contrato: {ex.Message}");
+            }
+        }
+
         public async Task<Result<bool>> DeleteCompanyConfigAsync(Guid userId, string nomeConfig)
         {
             try

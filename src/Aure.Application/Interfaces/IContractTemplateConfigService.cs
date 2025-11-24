@@ -12,6 +12,7 @@ namespace Aure.Application.Interfaces
         Task<Result<ContractTemplateConfigResponse>> CreateOrUpdateConfigAsync(Guid userId, ContractTemplateConfigRequest request);
         Task<Result<ContractTemplateConfigResponse>> ClonarPresetAsync(Guid userId, string tipoPreset, string nomeConfig);
         Task<Result<string>> PreviewContractHtmlAsync(Guid userId, PreviewTemplateRequest request);
+        Task<Result<Guid>> GerarContratoComConfigAsync(Guid userId, GerarContratoComConfigRequest request);
         Task<Result<bool>> DeleteCompanyConfigAsync(Guid userId, string nomeConfig);
     }
 }

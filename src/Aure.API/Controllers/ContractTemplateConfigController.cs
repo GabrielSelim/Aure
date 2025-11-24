@@ -134,6 +134,30 @@ namespace Aure.API.Controllers
             return Content(result.Data!, "text/html");
         }
 
+        [HttpPost("gerar-contrato")]
+        [Authorize(Roles = "DonoEmpresaPai,Juridico")]
+        [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GerarContrato([FromBody] GerarContratoComConfigRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+            var result = await _service.GerarContratoComConfigAsync(userId, request);
+            
+            if (!result.IsSuccess)
+                return BadRequest(new { message = result.Error });
+
+            return CreatedAtAction(
+                "ObterContratoPorId",
+                "Contracts",
+                new { id = result.Data },
+                new { contractId = result.Data, message = "Contrato criado com sucesso" }
+            );
+        }
+
         [HttpDelete("config/{nomeConfig}")]
         [Authorize(Roles = "DonoEmpresaPai")]
         [ProducesResponseType(StatusCodes.Status200OK)]

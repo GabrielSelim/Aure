@@ -12,6 +12,7 @@ public interface IContractRepository
     Task<IEnumerable<Contract>> GetByCompanyIdAsync(Guid companyId);
     Task<IEnumerable<Contract>> GetByStatusAsync(ContractStatus status);
     Task<IEnumerable<Contract>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
+    Task<Contract?> GetActivePJContractByUserIdAsync(Guid userId);
     Task AddAsync(Contract contract);
     Task UpdateAsync(Contract contract);
     Task DeleteAsync(Guid id);

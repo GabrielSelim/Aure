@@ -1,5 +1,6 @@
 using Aure.Domain.Common;
 using Aure.Domain.Enums;
+using Aure.Domain.Exceptions;
 
 namespace Aure.Domain.Entities;
 
@@ -17,6 +18,9 @@ public class Contract : BaseEntity
     public string? IpfsCid { get; private set; }
     public string Sha256Hash { get; private set; } = string.Empty;
     public ContractStatus Status { get; private set; }
+    public ContractType Type { get; private set; }
+    public int? DiaVencimentoNF { get; private set; }
+    public int? DiaPagamento { get; private set; }
 
     public Company Client { get; private set; } = null!;
     public Company Provider { get; private set; } = null!;
@@ -47,6 +51,23 @@ public class Contract : BaseEntity
         ExpirationDate = expirationDate;
         Sha256Hash = sha256Hash;
         Status = ContractStatus.Draft;
+        Type = ContractType.Other;
+    }
+
+    public Contract(Guid clientId, Guid providerId, DateTime startDate, DateTime expirationDate, 
+                   decimal monthlyValue, ContractType type)
+    {
+        ClientId = clientId;
+        ProviderId = providerId;
+        StartDate = startDate;
+        ExpirationDate = expirationDate;
+        MonthlyValue = monthlyValue;
+        ValueTotal = monthlyValue * (decimal)((expirationDate - startDate).TotalDays / 30.0);
+        Title = type == ContractType.PJ ? "Contrato de Prestação de Serviços PJ" : "Contrato";
+        Description = string.Empty;
+        Sha256Hash = string.Empty;
+        Status = ContractStatus.Draft;
+        Type = type;
     }
 
     public void UpdateContractDetails(string title, decimal valueTotal)
@@ -105,6 +126,19 @@ public class Contract : BaseEntity
     public void CancelContract()
     {
         Status = ContractStatus.Cancelled;
+        UpdateTimestamp();
+    }
+
+    public void SetPaymentDetails(int diaVencimentoNF, int diaPagamento)
+    {
+        if (diaVencimentoNF < 1 || diaVencimentoNF > 31)
+            throw new DomainException("Dia de vencimento da NF deve estar entre 1 e 31");
+        
+        if (diaPagamento < 1 || diaPagamento > 31)
+            throw new DomainException("Dia de pagamento deve estar entre 1 e 31");
+        
+        DiaVencimentoNF = diaVencimentoNF;
+        DiaPagamento = diaPagamento;
         UpdateTimestamp();
     }
 

@@ -104,6 +104,24 @@ public enum ContractStatus
     Cancelled = 4
 }
 
+public enum ContractType
+{
+    [Description("CLT - Contrato de trabalho com carteira assinada")]
+    CLT = 1,
+    
+    [Description("PJ - Prestação de serviços pessoa jurídica")]
+    PJ = 2,
+    
+    [Description("Fornecedor - Contrato com fornecedor")]
+    Supplier = 3,
+    
+    [Description("Cliente - Contrato com cliente")]
+    Client = 4,
+    
+    [Description("Outro - Outros tipos de contrato")]
+    Other = 5
+}
+
 /// <summary>
 /// Status do pagamento
 /// </summary>

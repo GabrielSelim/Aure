@@ -227,3 +227,31 @@ public class ClonarPresetRequest
     [StringLength(100, ErrorMessage = "Nome deve ter no máximo 100 caracteres")]
     public string NomeConfig { get; set; } = string.Empty;
 }
+
+public class GerarContratoComConfigRequest
+{
+    [Required(ErrorMessage = "Nome da configuração é obrigatório")]
+    [StringLength(100, ErrorMessage = "Nome deve ter no máximo 100 caracteres")]
+    public string NomeConfig { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "ID do funcionário PJ é obrigatório")]
+    public Guid FuncionarioPJId { get; set; }
+
+    [Required(ErrorMessage = "Valor mensal é obrigatório")]
+    [Range(0.01, double.MaxValue, ErrorMessage = "Valor mensal deve ser maior que zero")]
+    public decimal ValorMensal { get; set; }
+
+    [Required(ErrorMessage = "Prazo de vigência é obrigatório")]
+    [Range(1, 120, ErrorMessage = "Prazo deve ser entre 1 e 120 meses")]
+    public int PrazoVigenciaMeses { get; set; }
+
+    [Required(ErrorMessage = "Dia de vencimento da NF é obrigatório")]
+    [Range(1, 31, ErrorMessage = "Dia deve ser entre 1 e 31")]
+    public int DiaVencimentoNF { get; set; }
+
+    [Required(ErrorMessage = "Dia de pagamento é obrigatório")]
+    [Range(1, 31, ErrorMessage = "Dia deve ser entre 1 e 31")]
+    public int DiaPagamento { get; set; }
+
+    public DateTime? DataInicioVigencia { get; set; }
+}
