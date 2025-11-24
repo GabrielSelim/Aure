@@ -1363,15 +1363,17 @@ public class UserService : IUserService
             if (requestingUser == null)
                 return Result.Failure<IEnumerable<FuncionarioInternoResponse>>("Usuário não encontrado");
 
-            var allCompanies = await _unitOfWork.Companies.GetAllAsync();
-            var mainCompany = allCompanies.FirstOrDefault(c => c.BusinessModel == BusinessModel.MainCompany);
+            if (!requestingUser.CompanyId.HasValue)
+                return Result.Failure<IEnumerable<FuncionarioInternoResponse>>("Usuário não vinculado a uma empresa");
 
-            if (mainCompany == null)
-                return Result.Failure<IEnumerable<FuncionarioInternoResponse>>("Empresa pai não encontrada");
+            var company = await _unitOfWork.Companies.GetByIdAsync(requestingUser.CompanyId.Value);
+
+            if (company == null)
+                return Result.Failure<IEnumerable<FuncionarioInternoResponse>>("Empresa não encontrada");
 
             var allUsers = await _unitOfWork.Users.GetAllAsync();
             var funcionariosInternos = allUsers
-                .Where(u => u.CompanyId == mainCompany.Id && 
+                .Where(u => u.CompanyId == company.Id && 
                            (u.Role == UserRole.DonoEmpresaPai || u.Role == UserRole.Juridico))
                 .ToList();
 
@@ -1444,7 +1446,7 @@ public class UserService : IUserService
             }
 
             _logger.LogInformation("Listados {Count} funcionários internos da empresa {CompanyId}", 
-                response.Count, mainCompany.Id);
+                response.Count, company.Id);
 
             return Result.Success<IEnumerable<FuncionarioInternoResponse>>(response);
         }
@@ -1464,11 +1466,13 @@ public class UserService : IUserService
             if (requestingUser == null)
                 return Result.Failure<IEnumerable<FuncionarioPJResponse>>("Usuário não encontrado");
 
-            var allCompanies = await _unitOfWork.Companies.GetAllAsync();
-            var mainCompany = allCompanies.FirstOrDefault(c => c.BusinessModel == BusinessModel.MainCompany);
+            if (!requestingUser.CompanyId.HasValue)
+                return Result.Failure<IEnumerable<FuncionarioPJResponse>>("Usuário não vinculado a uma empresa");
 
-            if (mainCompany == null)
-                return Result.Failure<IEnumerable<FuncionarioPJResponse>>("Empresa pai não encontrada");
+            var company = await _unitOfWork.Companies.GetByIdAsync(requestingUser.CompanyId.Value);
+
+            if (company == null)
+                return Result.Failure<IEnumerable<FuncionarioPJResponse>>("Empresa não encontrada");
 
             var allUsers = await _unitOfWork.Users.GetAllAsync();
             var funcionariosPJ = allUsers
@@ -1489,7 +1493,7 @@ public class UserService : IUserService
 
                 var relationships = await _unitOfWork.CompanyRelationships.GetAllAsync();
                 var hasRelationship = relationships.Any(r => 
-                    r.ClientCompanyId == mainCompany.Id && 
+                    r.ClientCompanyId == company.Id && 
                     r.ProviderCompanyId == empresaPJ.Id);
 
                 if (!hasRelationship)
@@ -1569,7 +1573,7 @@ public class UserService : IUserService
             }
 
             _logger.LogInformation("Listados {Count} funcionários PJ da empresa {CompanyId}", 
-                response.Count, mainCompany.Id);
+                response.Count, company.Id);
 
             return Result.Success<IEnumerable<FuncionarioPJResponse>>(response);
         }
