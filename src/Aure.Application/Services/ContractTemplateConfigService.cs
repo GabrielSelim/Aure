@@ -405,16 +405,16 @@ namespace Aure.Application.Services
                 html = html.Replace("{{UF_CONTRATANTE}}", company.AddressState ?? "");
                 html = html.Replace("{{CEP_CONTRATANTE}}", FormatCep(company.AddressZipCode ?? ""));
                 html = html.Replace("{{ESTADO_REGISTRO_CONTRATANTE}}", company.AddressState ?? "");
-                html = html.Replace("{{NIRE_CONTRATANTE}}", "");
+                html = html.Replace("{{NIRE_CONTRATANTE}}", company.Nire ?? "");
 
                 html = html.Replace("{{NOME_REPRESENTANTE_CONTRATANTE}}", user.Name);
-                html = html.Replace("{{NACIONALIDADE_REPRESENTANTE}}", "Brasileiro(a)");
-                html = html.Replace("{{ESTADO_CIVIL_REPRESENTANTE}}", "");
+                html = html.Replace("{{NACIONALIDADE_REPRESENTANTE}}", user.Nacionalidade ?? "Brasileiro(a)");
+                html = html.Replace("{{ESTADO_CIVIL_REPRESENTANTE}}", user.EstadoCivil ?? "");
                 html = html.Replace("{{DATA_NASCIMENTO_REPRESENTANTE}}", user.DataNascimento?.ToString("dd/MM/yyyy") ?? "");
                 html = html.Replace("{{PROFISSAO_REPRESENTANTE}}", user.Cargo ?? "Empresário");
                 html = html.Replace("{{CPF_REPRESENTANTE}}", user.CPFEncrypted != null ? FormatCpf(_encryptionService.Decrypt(user.CPFEncrypted)) : "");
                 html = html.Replace("{{RG_REPRESENTANTE}}", user.RGEncrypted != null ? _encryptionService.Decrypt(user.RGEncrypted) : "");
-                html = html.Replace("{{ORGAO_EXPEDIDOR_REPRESENTANTE}}", "SSP");
+                html = html.Replace("{{ORGAO_EXPEDIDOR_REPRESENTANTE}}", user.OrgaoExpedidorRG ?? "SSP");
                 html = html.Replace("{{ENDERECO_RESIDENCIAL_REPRESENTANTE}}", user.EnderecoRua ?? "");
                 html = html.Replace("{{NUMERO_RESIDENCIAL_REPRESENTANTE}}", user.EnderecoNumero ?? "");
                 html = html.Replace("{{BAIRRO_RESIDENCIAL_REPRESENTANTE}}", user.EnderecoBairro ?? "");
@@ -439,8 +439,8 @@ namespace Aure.Application.Services
                     html = html.Replace("{{ESTADO_CONTRATADO}}", empresaPJ?.AddressState ?? funcionarioPJ.EnderecoEstado ?? "");
 
                     html = html.Replace("{{NOME_CONTRATADO}}", funcionarioPJ.Name);
-                    html = html.Replace("{{NACIONALIDADE_CONTRATADO}}", "Brasileiro(a)");
-                    html = html.Replace("{{ESTADO_CIVIL_CONTRATADO}}", "");
+                    html = html.Replace("{{NACIONALIDADE_CONTRATADO}}", funcionarioPJ.Nacionalidade ?? "Brasileiro(a)");
+                    html = html.Replace("{{ESTADO_CIVIL_CONTRATADO}}", funcionarioPJ.EstadoCivil ?? "");
                     html = html.Replace("{{DATA_NASCIMENTO_CONTRATADO}}", funcionarioPJ.DataNascimento?.ToString("dd/MM/yyyy") ?? "");
                     html = html.Replace("{{PROFISSAO_CONTRATADO}}", funcionarioPJ.Cargo ?? "Prestador de Serviços");
                     html = html.Replace("{{CPF_CONTRATADO}}", FormatCpf(cpfContratado));

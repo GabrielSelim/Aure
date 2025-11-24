@@ -21,6 +21,11 @@ public class User : BaseEntity
     // Documentos (Criptografados)
     public string? CPFEncrypted { get; private set; }
     public string? RGEncrypted { get; private set; }
+    public string? OrgaoExpedidorRG { get; private set; }
+
+    // Dados Pessoais
+    public string? Nacionalidade { get; private set; }
+    public string? EstadoCivil { get; private set; }
 
     // Contatos
     public string? TelefoneCelular { get; private set; }
@@ -276,6 +281,19 @@ public class User : BaseEntity
             throw new ArgumentException("RG criptografado não pode ser vazio", nameof(rgEncrypted));
         
         RGEncrypted = rgEncrypted;
+        UpdateTimestamp();
+    }
+
+    public void SetOrgaoExpedidorRG(string? orgaoExpedidor)
+    {
+        OrgaoExpedidorRG = orgaoExpedidor;
+        UpdateTimestamp();
+    }
+
+    public void SetDadosPessoais(string? nacionalidade, string? estadoCivil)
+    {
+        Nacionalidade = nacionalidade;
+        EstadoCivil = estadoCivil;
         UpdateTimestamp();
     }
 

@@ -25,6 +25,9 @@ public class Company : BaseEntity
     public string? AddressCountry { get; private set; }
     public string? AddressZipCode { get; private set; }
 
+    public string? Nire { get; private set; }
+    public string? StateRegistration { get; private set; }
+
     private readonly List<Contract> _clientContracts = new();
     private readonly List<Contract> _providerContracts = new();
     private readonly List<KycRecord> _kycRecords = new();
@@ -137,6 +140,13 @@ public class Company : BaseEntity
         AddressState = state;
         AddressCountry = country;
         AddressZipCode = zipCode;
+        UpdateTimestamp();
+    }
+
+    public void UpdateRegistrationInfo(string? nire, string? stateRegistration)
+    {
+        Nire = nire;
+        StateRegistration = stateRegistration;
         UpdateTimestamp();
     }
 
