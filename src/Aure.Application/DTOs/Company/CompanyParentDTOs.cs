@@ -32,6 +32,9 @@ public class UpdateCompanyParentRequest
     public string? RazaoSocial { get; set; }
     public string? Cnpj { get; set; }
     public bool ConfirmarDivergenciaRazaoSocial { get; set; } = false;
+    // Novos campos para registro/identificação da empresa
+    public string? Nire { get; set; }
+    public string? InscricaoEstadual { get; set; }
     public string? EnderecoRua { get; set; }
     public string? EnderecoNumero { get; set; }
     public string? EnderecoComplemento { get; set; }

@@ -292,7 +292,7 @@ public class CompanyService : ICompanyService
 
                 var similarity = CalculateSimilarity(razaoSocialReceita, razaoSocialAtual);
 
-                if (similarity < 0.85 && !request.ConfirmarDivergenciaRazaoSocial)
+                if (similarity < 0.8 && !request.ConfirmarDivergenciaRazaoSocial)
                 {
                     _logger.LogWarning(
                         "Divergência de Razão Social detectada. Receita: {RazaoSocialReceita}, Informada: {RazaoSocialInformada}, Similaridade: {Similarity}%",
@@ -320,17 +320,33 @@ public class CompanyService : ICompanyService
             _logger.LogInformation("Razão Social da empresa pai {CompanyId} alterada para {RazaoSocial}", company.Id, request.RazaoSocial);
         }
 
+        if (!string.IsNullOrEmpty(request.Nire) || !string.IsNullOrEmpty(request.InscricaoEstadual))
+        {
+            company.UpdateRegistrationInfo(request.Nire, request.InscricaoEstadual);
+            _logger.LogInformation("NIRE/Inscrição Estadual da empresa pai {CompanyId} atualizados", company.Id);
+        }
+
         if (!string.IsNullOrEmpty(request.EnderecoRua))
         {
             user.UpdateAddress(
                 request.EnderecoRua,
-                request.EnderecoNumero,
+                request.EnderecoNumero!,
                 request.EnderecoComplemento,
-                request.EnderecoBairro,
-                request.EnderecoCidade,
-                request.EnderecoEstado,
-                request.EnderecoPais,
-                request.EnderecoCep);
+                request.EnderecoBairro!,
+                request.EnderecoCidade!,
+                request.EnderecoEstado!,
+                request.EnderecoPais!,
+                request.EnderecoCep!);
+
+            company.UpdateAddress(
+                request.EnderecoRua,
+                request.EnderecoNumero!,
+                request.EnderecoComplemento,
+                request.EnderecoBairro!,
+                request.EnderecoCidade!,
+                request.EnderecoEstado!,
+                request.EnderecoPais!,
+                request.EnderecoCep!);
 
             await _userRepository.UpdateAsync(user);
             _logger.LogInformation("Endereço da empresa pai {CompanyId} atualizado (sync bidirecional)", company.Id);
@@ -415,14 +431,6 @@ public class CompanyService : ICompanyService
                 TelefoneFixo = company.PhoneLandline,
                 Nire = company.Nire,
                 InscricaoEstadual = company.StateRegistration,
-                Rua = company.AddressStreet,
-                Numero = company.AddressNumber,
-                Complemento = company.AddressComplement,
-                Bairro = company.AddressNeighborhood,
-                Cidade = company.AddressCity,
-                Estado = company.AddressState,
-                Pais = company.AddressCountry,
-                Cep = company.AddressZipCode,
                 EnderecoCompleto = company.GetFullAddress(),
                 Endereco = string.IsNullOrWhiteSpace(company.AddressStreet) ? null : new EnderecoEmpresaDto
                 {
