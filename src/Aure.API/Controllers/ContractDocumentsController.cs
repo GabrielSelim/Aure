@@ -25,7 +25,7 @@ public class ContractDocumentsController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ContractDocumentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ContractDocumentResponse>> ObterDocumentoPorId(Guid id)
+    public ActionResult<ContractDocumentResponse> ObterDocumentoPorId(Guid id)
     {
         var companyId = Guid.Parse(User.FindFirst("CompanyId")?.Value!);
 

@@ -7,17 +7,17 @@ public class CreateContractTemplateRequest
 {
     [Required(ErrorMessage = "Nome do template é obrigatório")]
     [StringLength(200, ErrorMessage = "Nome deve ter no máximo 200 caracteres")]
-    public string Nome { get; set; }
+    public required string Nome { get; set; }
 
     [Required(ErrorMessage = "Descrição é obrigatória")]
     [StringLength(1000, ErrorMessage = "Descrição deve ter no máximo 1000 caracteres")]
-    public string Descricao { get; set; }
+    public required string Descricao { get; set; }
 
     [Required(ErrorMessage = "Tipo do contrato é obrigatório")]
     public ContractTemplateType Tipo { get; set; }
 
     [Required(ErrorMessage = "Conteúdo HTML é obrigatório")]
-    public string ConteudoHtml { get; set; }
+    public required string ConteudoHtml { get; set; }
 
     public string? ConteudoDocxBase64 { get; set; }
 
@@ -30,14 +30,14 @@ public class UpdateContractTemplateRequest
 {
     [Required(ErrorMessage = "Nome do template é obrigatório")]
     [StringLength(200, ErrorMessage = "Nome deve ter no máximo 200 caracteres")]
-    public string Nome { get; set; }
+    public required string Nome { get; set; }
 
     [Required(ErrorMessage = "Descrição é obrigatória")]
     [StringLength(1000, ErrorMessage = "Descrição deve ter no máximo 1000 caracteres")]
-    public string Descricao { get; set; }
+    public required string Descricao { get; set; }
 
     [Required(ErrorMessage = "Conteúdo HTML é obrigatório")]
-    public string ConteudoHtml { get; set; }
+    public required string ConteudoHtml { get; set; }
 
     public string? ConteudoDocxBase64 { get; set; }
 
@@ -47,17 +47,17 @@ public class UpdateContractTemplateRequest
 public class ContractTemplateResponse
 {
     public Guid Id { get; set; }
-    public string Nome { get; set; }
-    public string Descricao { get; set; }
-    public string Tipo { get; set; }
-    public string ConteudoHtml { get; set; }
+    public required string Nome { get; set; }
+    public required string Descricao { get; set; }
+    public required string Tipo { get; set; }
+    public required string ConteudoHtml { get; set; }
     public bool TemDocx { get; set; }
     public bool EhPadrao { get; set; }
     public bool Ativo { get; set; }
     public bool EhSistema { get; set; }
     public bool PodeEditar { get; set; }
     public bool PodeDeletar { get; set; }
-    public List<string> VariaveisDisponiveis { get; set; }
+    public required List<string> VariaveisDisponiveis { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? DataDesativacao { get; set; }
     public string? MotivoDesativacao { get; set; }
@@ -66,9 +66,9 @@ public class ContractTemplateResponse
 public class ContractTemplateListResponse
 {
     public Guid Id { get; set; }
-    public string Nome { get; set; }
-    public string Descricao { get; set; }
-    public string Tipo { get; set; }
+    public required string Nome { get; set; }
+    public required string Descricao { get; set; }
+    public required string Tipo { get; set; }
     public bool EhPadrao { get; set; }
     public bool Ativo { get; set; }
     public bool EhSistema { get; set; }
@@ -97,7 +97,7 @@ public class UploadCustomContractRequest
     public Guid ContractId { get; set; }
 
     [Required(ErrorMessage = "Conteúdo HTML é obrigatório")]
-    public string ConteudoHtml { get; set; }
+    public required string ConteudoHtml { get; set; }
 
     public string? ConteudoPdfBase64 { get; set; }
     public string? ConteudoDocxBase64 { get; set; }
@@ -112,13 +112,13 @@ public class ContractDocumentResponse
     public Guid ContractId { get; set; }
     public Guid? TemplateId { get; set; }
     public string? NomeTemplate { get; set; }
-    public string ConteudoHtml { get; set; }
+    public required string ConteudoHtml { get; set; }
     public string? ConteudoPdfBase64 { get; set; }
     public string? ConteudoDocxBase64 { get; set; }
-    public string Versao { get; set; }
+    public required string Versao { get; set; }
     public DateTime DataGeracao { get; set; }
     public string? GeradoPorUsuarioNome { get; set; }
-    public Dictionary<string, string> DadosPreenchidos { get; set; }
+    public required Dictionary<string, string> DadosPreenchidos { get; set; }
     public bool EhVersaoFinal { get; set; }
     public string? HashDocumento { get; set; }
 }
@@ -130,10 +130,10 @@ public class AvailableVariablesResponse
 
 public class VariableInfo
 {
-    public string Nome { get; set; }
-    public string Descricao { get; set; }
-    public string Exemplo { get; set; }
-    public string Categoria { get; set; }
+    public required string Nome { get; set; }
+    public required string Descricao { get; set; }
+    public required string Exemplo { get; set; }
+    public required string Categoria { get; set; }
 }
 
 public class ContractTemplateConfigRequest

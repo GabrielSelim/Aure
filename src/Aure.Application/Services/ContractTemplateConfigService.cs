@@ -604,6 +604,8 @@ namespace Aure.Application.Services
                         tempUser.SetPosition(request.DadosContratadoManual.Profissao);
 
                     tempUser.UpdateProfile(
+                        request.DadosContratadoManual.NomeCompleto,
+                        request.DadosContratadoManual.Email,
                         request.DadosContratadoManual.TelefoneCelular,
                         request.DadosContratadoManual.TelefoneFixo
                     );
