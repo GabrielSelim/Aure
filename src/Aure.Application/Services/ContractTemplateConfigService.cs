@@ -62,14 +62,26 @@ namespace Aure.Application.Services
         {
             try
             {
+                _logger.LogInformation("Iniciando busca de configurações para usuário {UserId}", userId);
+                
                 var user = await _unitOfWork.Users.GetByIdAsync(userId);
                 if (user == null)
+                {
+                    _logger.LogWarning("Usuário {UserId} não encontrado", userId);
                     return Result.Failure<List<ContractTemplateConfigResponse>>("Usuário não encontrado");
+                }
 
                 if (!user.CompanyId.HasValue)
+                {
+                    _logger.LogWarning("Usuário {UserId} não possui CompanyId", userId);
                     return Result.Failure<List<ContractTemplateConfigResponse>>("Usuário não pertence a uma empresa");
+                }
 
+                _logger.LogInformation("Buscando configurações para empresa {CompanyId}", user.CompanyId.Value);
+                
                 var configs = await _unitOfWork.ContractTemplateConfigs.GetAllByCompanyIdAsync(user.CompanyId.Value);
+                
+                _logger.LogInformation("Encontradas {Count} configurações", configs.Count());
                 
                 var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
                 var nomeEmpresa = company?.Name ?? "Empresa não encontrada";
@@ -92,12 +104,14 @@ namespace Aure.Application.Services
                     UpdatedAt = config.UpdatedAt
                 }).ToList();
 
+                _logger.LogInformation("Retornando {Count} configurações convertidas", responses.Count);
+                
                 return Result.Success(responses);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao buscar configurações da empresa para usuário {UserId}", userId);
-                return Result.Failure<List<ContractTemplateConfigResponse>>("Erro ao buscar configurações");
+                _logger.LogError(ex, "Erro ao buscar configurações da empresa para usuário {UserId}. Mensagem: {Message}, StackTrace: {StackTrace}", userId, ex.Message, ex.StackTrace);
+                return Result.Failure<List<ContractTemplateConfigResponse>>($"Erro ao buscar configurações: {ex.Message}");
             }
         }
 
