@@ -758,8 +758,17 @@ public class UserService : IUserService
             throw new ArgumentException("Usuário não possui empresa vinculada");
 
         var allUsers = await _unitOfWork.Users.GetAllAsync();
+        var allCompanies = await _unitOfWork.Companies.GetAllAsync();
+        var allRelationships = await _unitOfWork.CompanyRelationships.GetAllAsync();
+        
+        var pjCompanyIds = allRelationships
+            .Where(r => r.ClientCompanyId == requestingUser.CompanyId.Value && r.IsActive)
+            .Select(r => r.ProviderCompanyId)
+            .ToList();
+        
         var query = allUsers
-            .Where(u => u.CompanyId == requestingUser.CompanyId.Value)
+            .Where(u => u.CompanyId == requestingUser.CompanyId.Value || 
+                       (u.Role == UserRole.FuncionarioPJ && u.CompanyId.HasValue && pjCompanyIds.Contains(u.CompanyId.Value)))
             .AsQueryable();
 
         if (requestingUser.Role == UserRole.Financeiro || requestingUser.Role == UserRole.Juridico)
@@ -811,8 +820,6 @@ public class UserService : IUserService
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
             .ToList();
-
-        var allCompanies = await _unitOfWork.Companies.GetAllAsync();
 
         var response = items.Select(u => {
             var empresaPJ = u.Role == UserRole.FuncionarioPJ && u.CompanyId.HasValue
