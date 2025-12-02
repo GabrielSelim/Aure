@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore;
 using Aure.Domain.Interfaces;
 using Aure.Infrastructure.Data;
+using Aure.Domain.Entities;
 
 namespace Aure.Infrastructure.Repositories;
 
@@ -55,6 +56,11 @@ public class UnitOfWork : IUnitOfWork
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<int> CommitAsync()
+    {
+        return await _context.SaveChangesAsync();
     }
 
     public async Task BeginTransactionAsync()

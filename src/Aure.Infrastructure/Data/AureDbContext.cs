@@ -30,6 +30,7 @@ public class AureDbContext : DbContext
     public DbSet<ContractTemplate> ContractTemplates { get; set; }
     public DbSet<ContractDocument> ContractDocuments { get; set; }
     public DbSet<ContractTemplateConfig> ContractTemplateConfigs { get; set; }
+    public DbSet<NotificationHistory> NotificationHistories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

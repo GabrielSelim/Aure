@@ -3,6 +3,7 @@ using System;
 using Aure.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Aure.Infrastructure.Migrations
 {
     [DbContext(typeof(AureDbContext))]
-    partial class AureDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251202141847_AdicionarNacionalidadeEstadoCivilDadosManual")]
+    partial class AdicionarNacionalidadeEstadoCivilDadosManual
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -969,42 +972,6 @@ namespace Aure.Infrastructure.Migrations
                     b.HasIndex("PaymentId");
 
                     b.ToTable("notifications");
-                });
-
-            modelBuilder.Entity("Aure.Domain.Entities.NotificationHistory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("CamposNotificados")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("campos_notificados");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime>("DataEnvio")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("data_envio");
-
-                    b.Property<string>("TipoNotificacao")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("tipo_notificacao");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("notificationhistories");
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.NotificationPreferences", b =>
@@ -2010,17 +1977,6 @@ namespace Aure.Infrastructure.Migrations
                     b.Navigation("Contract");
 
                     b.Navigation("Payment");
-                });
-
-            modelBuilder.Entity("Aure.Domain.Entities.NotificationHistory", b =>
-                {
-                    b.HasOne("Aure.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.Payment", b =>

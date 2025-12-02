@@ -519,4 +519,204 @@ Equipe Aure
 Este é um email automático. Por favor, não responda.
         ";
     }
+
+    private async Task<bool> SendEmailAsync(string recipientEmail, string subject, string htmlBody)
+    {
+        try
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_emailSettings.FromName, _emailSettings.FromEmail));
+            message.To.Add(new MailboxAddress("", recipientEmail));
+            message.Subject = subject;
+
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = htmlBody,
+                TextBody = StripHtml(htmlBody)
+            };
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using var client = new SmtpClient();
+            var secureSocketOptions = _emailSettings.SmtpPort == 587 
+                ? MailKit.Security.SecureSocketOptions.StartTls 
+                : (_emailSettings.UseSsl ? MailKit.Security.SecureSocketOptions.SslOnConnect : MailKit.Security.SecureSocketOptions.None);
+            
+            await client.ConnectAsync(_emailSettings.SmtpHost, _emailSettings.SmtpPort, secureSocketOptions);
+            
+            if (!string.IsNullOrEmpty(_emailSettings.Username) && !string.IsNullOrEmpty(_emailSettings.Password))
+            {
+                await client.AuthenticateAsync(_emailSettings.Username, _emailSettings.Password);
+            }
+
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            _logger.LogInformation("Email enviado com sucesso para {Email}", recipientEmail);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao enviar email para {Email}", recipientEmail);
+            return false;
+        }
+    }
+
+    public async Task<bool> SendCompletarCadastroEmailAsync(string recipientEmail, string recipientName, string companyName, List<string> camposFaltando, string systemUrl)
+    {
+        try
+        {
+            var subject = $"📋 Complete seu cadastro - {companyName}";
+            
+            var camposListaHtml = string.Join("", camposFaltando.Select(campo => $"<li>{campo}</li>"));
+            
+            var body = $@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                    .button {{ display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }}
+                    .warning {{ background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0; }}
+                    .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+                    .campos-lista {{ background: white; padding: 15px; border-radius: 5px; margin: 15px 0; }}
+                    .campos-lista ul {{ margin: 10px 0; padding-left: 20px; }}
+                    .campos-lista li {{ margin: 5px 0; color: #e74c3c; font-weight: 500; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>📋 Complete Seu Cadastro</h1>
+                    </div>
+                    <div class='content'>
+                        <p>Olá, <strong>{recipientName}</strong>!</p>
+                        
+                        <p>A empresa <strong>{companyName}</strong> está tentando gerar um contrato com você, mas seu cadastro está incompleto.</p>
+                        
+                        <div class='warning'>
+                            <strong>⚠️ Atenção:</strong> Para que o contrato possa ser gerado, é necessário completar os seguintes dados:
+                        </div>
+                        
+                        <div class='campos-lista'>
+                            <p style='margin: 0 0 10px 0; font-weight: bold; color: #667eea;'>📝 Campos Faltando:</p>
+                            <ul>
+                                {camposListaHtml}
+                            </ul>
+                        </div>
+                        
+                        <p>Por favor, acesse o sistema e complete seu cadastro em <strong>Configurações > Perfil e Empresa PJ</strong>.</p>
+                        
+                        <div style='text-align: center;'>
+                            <a href='{systemUrl}/configuracoes' class='button'>Completar Cadastro Agora</a>
+                        </div>
+                        
+                        <p style='margin-top: 30px; color: #666; font-size: 14px;'>
+                            Após completar seu cadastro, a empresa poderá gerar o contrato imediatamente.
+                        </p>
+                        
+                        <p>Atenciosamente,<br><strong>Sistema Aure</strong></p>
+                    </div>
+                    <div class='footer'>
+                        <p>Este é um email automático. Por favor, não responda.</p>
+                        <p>Se você tem dúvidas, entre em contato com <strong>{companyName}</strong>.</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
+
+            return await SendEmailAsync(recipientEmail, subject, body);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao enviar email de completar cadastro para {Email}", recipientEmail);
+            return false;
+        }
+    }
+
+    public async Task<bool> SendEmpresaIncompletaEmailAsync(string recipientEmail, string recipientName, string companyName, List<string> camposFaltando, string systemUrl, string? usuarioSolicitante)
+    {
+        try
+        {
+            var subject = $"⚠️ Dados da Empresa Incompletos - {companyName}";
+            
+            var camposListaHtml = string.Join("", camposFaltando.Select(campo => $"<li>{campo}</li>"));
+            var usuarioTexto = string.IsNullOrEmpty(usuarioSolicitante) 
+                ? "Um gestor" 
+                : $"O usuário <strong>{usuarioSolicitante}</strong>";
+            
+            var body = $@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                    .button {{ display: inline-block; background: #e74c3c; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }}
+                    .error {{ background: #FFEBEE; border-left: 4px solid #e74c3c; padding: 15px; margin: 20px 0; }}
+                    .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+                    .campos-lista {{ background: white; padding: 15px; border-radius: 5px; margin: 15px 0; }}
+                    .campos-lista ul {{ margin: 10px 0; padding-left: 20px; }}
+                    .campos-lista li {{ margin: 5px 0; color: #e74c3c; font-weight: 500; }}
+                    .bloqueio {{ background: #FFF3CD; border: 2px solid #F59E0B; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>⚠️ Dados da Empresa Incompletos</h1>
+                    </div>
+                    <div class='content'>
+                        <p>Olá, <strong>{recipientName}</strong>!</p>
+                        
+                        <p>{usuarioTexto} tentou gerar um contrato, mas a operação foi <strong>bloqueada</strong> porque os dados da empresa estão incompletos.</p>
+                        
+                        <div class='error'>
+                            <strong>🚫 Campos faltando na empresa <strong>{companyName}</strong>:</strong>
+                        </div>
+                        
+                        <div class='campos-lista'>
+                            <ul>
+                                {camposListaHtml}
+                            </ul>
+                        </div>
+                        
+                        <div class='bloqueio'>
+                            <h3 style='margin: 0 0 10px 0; color: #F59E0B;'>⚠️ ATENÇÃO CRÍTICA</h3>
+                            <p style='margin: 0; font-size: 14px;'>
+                                Enquanto esses dados não forem preenchidos,<br>
+                                <strong style='color: #e74c3c; font-size: 16px;'>NENHUM CONTRATO PODERÁ SER GERADO</strong>
+                            </p>
+                        </div>
+                        
+                        <p>Para gerar contratos, é <strong>obrigatório</strong> completar esses dados.</p>
+                        
+                        <p>Por favor, acesse <strong>Configurações > Empresa</strong> e preencha os campos faltando.</p>
+                        
+                        <div style='text-align: center;'>
+                            <a href='{systemUrl}/configuracoes' class='button'>Completar Dados da Empresa</a>
+                        </div>
+                        
+                        <p>Atenciosamente,<br><strong>Sistema Aure</strong></p>
+                    </div>
+                    <div class='footer'>
+                        <p>Este é um email automático. Por favor, não responda.</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
+
+            return await SendEmailAsync(recipientEmail, subject, body);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao enviar email de empresa incompleta para {Email}", recipientEmail);
+            return false;
+        }
+    }
 }
