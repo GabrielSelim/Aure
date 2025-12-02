@@ -67,7 +67,7 @@ namespace Aure.API.Controllers
                 var hasRelationship = await _context.CompanyRelationships
                     .AnyAsync(cr => cr.ClientCompanyId == currentUser.CompanyId 
                                  && cr.ProviderCompanyId == funcionarioPJ.CompanyId 
-                                 && cr.IsActive);
+                                 && cr.Status == RelationshipStatus.Active);
 
                 if (!hasRelationship)
                     return Forbid();
