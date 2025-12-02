@@ -863,10 +863,6 @@ namespace Aure.Application.Services
                 camposFaltando.Add("Estado");
             if (string.IsNullOrWhiteSpace(company.AddressZipCode))
                 camposFaltando.Add("CEP");
-            if (string.IsNullOrWhiteSpace(company.Nire))
-                camposFaltando.Add("NIRE");
-            if (string.IsNullOrWhiteSpace(company.StateRegistration))
-                camposFaltando.Add("Inscrição Estadual");
 
             if (camposFaltando.Any())
             {

@@ -18,8 +18,8 @@ Todos os campos abaixo são **obrigatórios** antes de gerar ou visualizar um co
 | Cidade (endereço empresa) | Não pode ser vazio | "Campo Cidade é obrigatório" |
 | Estado (endereço empresa) | Não pode ser vazio | "Campo Estado é obrigatório" |
 | CEP (endereço empresa) | Não pode ser vazio | "Campo CEP é obrigatório" |
-| NIRE | Não pode ser vazio | "Campo NIRE é obrigatório" |
-| Inscrição Estadual | Não pode ser vazio | "Campo Inscrição Estadual é obrigatório" |
+
+**Observação:** NIRE e Inscrição Estadual são campos **opcionais** e não bloqueiam a geração de contratos.
 
 **Mensagem backend quando campos faltam:**
 ```
@@ -178,8 +178,6 @@ async function validarDadosIniciais() {
   if (!empresa.cidade) camposEmpresaFaltando.push('Cidade');
   if (!empresa.estado) camposEmpresaFaltando.push('Estado');
   if (!empresa.cep) camposEmpresaFaltando.push('CEP');
-  if (!empresa.nire) camposEmpresaFaltando.push('NIRE');
-  if (!empresa.inscricaoEstadual) camposEmpresaFaltando.push('Inscrição Estadual');
 
   // 4. Validar campos do representante
   const camposRepresentanteFaltando = [];
