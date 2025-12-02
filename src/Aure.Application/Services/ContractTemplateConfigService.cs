@@ -71,11 +71,14 @@ namespace Aure.Application.Services
 
                 var configs = await _unitOfWork.ContractTemplateConfigs.GetAllByCompanyIdAsync(user.CompanyId.Value);
                 
+                var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+                var nomeEmpresa = company?.Name ?? "Empresa não encontrada";
+                
                 var responses = configs.Select(config => new ContractTemplateConfigResponse
                 {
                     Id = config.Id,
                     CompanyId = config.CompanyId,
-                    NomeEmpresa = config.Company.Name,
+                    NomeEmpresa = nomeEmpresa,
                     NomeConfig = config.NomeConfig,
                     Categoria = config.Categoria,
                     TituloServico = config.TituloServico,
@@ -114,11 +117,14 @@ namespace Aure.Application.Services
                 if (config == null)
                     return Result.Success<ContractTemplateConfigResponse?>(null);
 
+                var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
+                var nomeEmpresa = company?.Name ?? "Empresa não encontrada";
+
                 var response = new ContractTemplateConfigResponse
                 {
                     Id = config.Id,
                     CompanyId = config.CompanyId,
-                    NomeEmpresa = config.Company.Name,
+                    NomeEmpresa = nomeEmpresa,
                     NomeConfig = config.NomeConfig,
                     Categoria = config.Categoria,
                     TituloServico = config.TituloServico,
