@@ -1330,8 +1330,8 @@ public class UserService : IUserService
             if (requestingUser == null)
                 return Result.Failure<UserResponse>("Usuário solicitante não encontrado");
 
-            if (requestingUser.Role != UserRole.DonoEmpresaPai)
-                return Result.Failure<UserResponse>("Apenas o dono da empresa pode alterar cargos");
+            if (requestingUser.Role != UserRole.DonoEmpresaPai && requestingUser.Role != UserRole.Juridico)
+                return Result.Failure<UserResponse>("Apenas o dono da empresa ou jurídico podem alterar cargos");
 
             var employee = await _unitOfWork.Users.GetByIdAsync(employeeId);
             

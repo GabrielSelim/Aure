@@ -301,13 +301,13 @@ Esta ação não pode ser desfeita. Após anonimização, você não poderá mai
     }
 
     [HttpPut("{employeeId}/cargo")]
-    [Authorize(Roles = "DonoEmpresaPai")]
+    [Authorize(Roles = "DonoEmpresaPai,Juridico")]
     [SwaggerOperation(
         Summary = "Atualizar cargo de funcionário",
-        Description = @"Permite que o dono da empresa altere o cargo de um funcionário.
+        Description = @"Permite que o dono da empresa ou jurídico altere o cargo de um funcionário.
 
 **Permissões:**
-- Apenas DonoEmpresaPai pode alterar cargos
+- DonoEmpresaPai e Juridico podem alterar cargos
 - Não é possível alterar o cargo do proprietário
 - Funcionário deve pertencer à mesma empresa
 
