@@ -9,4 +9,6 @@ public interface IEmailService
     Task<bool> SendPaymentNotificationAsync(string recipientEmail, string recipientName, decimal amount, DateTime paymentDate, string contractReference, string companyName);
     Task<bool> SendWelcomeEmailAsync(string recipientEmail, string recipientName, string companyName);
     Task<bool> SendPasswordResetEmailAsync(string recipientEmail, string recipientName, string resetLink);
+    Task<bool> SendCompletarCadastroEmailAsync(string recipientEmail, string recipientName, string companyName, List<string> camposFaltando, string systemUrl);
+    Task<bool> SendEmpresaIncompletaEmailAsync(string recipientEmail, string recipientName, string companyName, List<string> camposFaltando, string systemUrl, string? usuarioSolicitante);
 }

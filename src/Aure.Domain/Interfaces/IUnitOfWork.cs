@@ -1,3 +1,5 @@
+using Aure.Domain.Entities;
+
 namespace Aure.Domain.Interfaces;
 
 public interface IUnitOfWork : IDisposable
@@ -22,6 +24,7 @@ public interface IUnitOfWork : IDisposable
     IContractTemplateConfigRepository ContractTemplateConfigs { get; }
     
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<int> CommitAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();
     Task RollbackTransactionAsync();
