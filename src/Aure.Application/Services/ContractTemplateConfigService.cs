@@ -328,6 +328,14 @@ namespace Aure.Application.Services
                 if (company == null)
                     return Result.Failure<string>("Empresa não encontrada");
 
+                var validacaoEmpresa = ValidarDadosEmpresaContratante(company);
+                if (!validacaoEmpresa.IsSuccess)
+                    return Result.Failure<string>(validacaoEmpresa.Error);
+
+                var validacaoRepresentante = ValidarDadosRepresentante(user);
+                if (!validacaoRepresentante.IsSuccess)
+                    return Result.Failure<string>(validacaoRepresentante.Error);
+
                 if (string.IsNullOrWhiteSpace(company.AddressStreet) || 
                     string.IsNullOrWhiteSpace(company.AddressNumber) ||
                     string.IsNullOrWhiteSpace(company.AddressCity) ||
@@ -363,13 +371,28 @@ namespace Aure.Application.Services
                     if (funcionarioPJ == null)
                         return Result.Failure<string>("Funcionário PJ não encontrado");
 
+                    var validacaoContratadoPJ = ValidarDadosContratadoPJ(funcionarioPJ);
+                    if (!validacaoContratadoPJ.IsSuccess)
+                        return Result.Failure<string>(validacaoContratadoPJ.Error);
+
                     empresaPJ = funcionarioPJ.CompanyId.HasValue 
                         ? await _unitOfWork.Companies.GetByIdAsync(funcionarioPJ.CompanyId.Value)
                         : null;
+
+                    if (empresaPJ != null)
+                    {
+                        var validacaoEmpresaPJ = ValidarDadosEmpresaPJ(empresaPJ);
+                        if (!validacaoEmpresaPJ.IsSuccess)
+                            return Result.Failure<string>(validacaoEmpresaPJ.Error);
+                    }
                 }
                 else
                 {
                     dadosManual = request.DadosContratadoManual;
+                    
+                    var validacaoDadosManual = ValidarDadosContratadoManual(dadosManual!);
+                    if (!validacaoDadosManual.IsSuccess)
+                        return Result.Failure<string>(validacaoDadosManual.Error);
                 }
 
                 var templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", "ContratoPrestacaoServicosGenerico.html");
@@ -482,8 +505,8 @@ namespace Aure.Application.Services
                     html = html.Replace("{{ESTADO_CONTRATADO}}", dadosManual.Estado);
 
                     html = html.Replace("{{NOME_CONTRATADO}}", dadosManual.NomeCompleto);
-                    html = html.Replace("{{NACIONALIDADE_CONTRATADO}}", "Brasileiro(a)");
-                    html = html.Replace("{{ESTADO_CIVIL_CONTRATADO}}", "");
+                    html = html.Replace("{{NACIONALIDADE_CONTRATADO}}", dadosManual.Nacionalidade ?? "Brasileiro(a)");
+                    html = html.Replace("{{ESTADO_CIVIL_CONTRATADO}}", dadosManual.EstadoCivil ?? "");
                     html = html.Replace("{{DATA_NASCIMENTO_CONTRATADO}}", dadosManual.DataNascimento?.ToString("dd/MM/yyyy") ?? "");
                     html = html.Replace("{{PROFISSAO_CONTRATADO}}", dadosManual.Profissao ?? "Prestador de Serviços");
                     html = html.Replace("{{CPF_CONTRATADO}}", FormatCpf(dadosManual.Cpf));
@@ -510,6 +533,9 @@ namespace Aure.Application.Services
                 html = html.Replace("{{ESTADO_FORO}}", company.AddressState ?? "");
                 html = html.Replace("{{CIDADE_ASSINATURA}}", company.AddressCity ?? "");
                 html = html.Replace("{{DATA_ASSINATURA}}", dataAtual.ToString("dd 'de' MMMM 'de' yyyy", cultura));
+
+                html = System.Text.RegularExpressions.Regex.Replace(html, @",\s*,", ",");
+                html = System.Text.RegularExpressions.Regex.Replace(html, @"\s+", " ");
 
                 return Result.Success(html);
             }
@@ -541,6 +567,14 @@ namespace Aure.Application.Services
                 var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
                 if (company == null)
                     return Result.Failure<Guid>("Empresa não encontrada");
+
+                var validacaoEmpresa = ValidarDadosEmpresaContratante(company);
+                if (!validacaoEmpresa.IsSuccess)
+                    return Result.Failure<Guid>(validacaoEmpresa.Error);
+
+                var validacaoRepresentante = ValidarDadosRepresentante(user);
+                if (!validacaoRepresentante.IsSuccess)
+                    return Result.Failure<Guid>(validacaoRepresentante.Error);
 
                 if (string.IsNullOrWhiteSpace(company.AddressStreet) || 
                     string.IsNullOrWhiteSpace(company.AddressNumber) ||
@@ -587,6 +621,21 @@ namespace Aure.Application.Services
                     if (funcionarioPJ.CompanyId != user.CompanyId)
                         return Result.Failure<Guid>("Funcionário PJ não pertence à sua empresa");
 
+                    var validacaoContratadoPJ = ValidarDadosContratadoPJ(funcionarioPJ);
+                    if (!validacaoContratadoPJ.IsSuccess)
+                        return Result.Failure<Guid>(validacaoContratadoPJ.Error);
+
+                    if (funcionarioPJ.CompanyId.HasValue)
+                    {
+                        var empresaPJ = await _unitOfWork.Companies.GetByIdAsync(funcionarioPJ.CompanyId.Value);
+                        if (empresaPJ != null)
+                        {
+                            var validacaoEmpresaPJ = ValidarDadosEmpresaPJ(empresaPJ);
+                            if (!validacaoEmpresaPJ.IsSuccess)
+                                return Result.Failure<Guid>(validacaoEmpresaPJ.Error);
+                        }
+                    }
+
                     var existingContract = await _unitOfWork.Contracts.GetActivePJContractByUserIdAsync(request.FuncionarioPJId.Value);
                     if (existingContract != null)
                         return Result.Failure<Guid>("Funcionário PJ já possui um contrato ativo");
@@ -595,6 +644,10 @@ namespace Aure.Application.Services
                 }
                 else
                 {
+                    var validacaoDadosManual = ValidarDadosContratadoManual(request.DadosContratadoManual!);
+                    if (!validacaoDadosManual.IsSuccess)
+                        return Result.Failure<Guid>(validacaoDadosManual.Error);
+
                     var tempCompany = new Company(
                         request.DadosContratadoManual!.RazaoSocial,
                         request.DadosContratadoManual.Cnpj,
@@ -792,6 +845,184 @@ namespace Aure.Application.Services
         {
             if (string.IsNullOrEmpty(cnpj) || cnpj.Length != 14) return cnpj;
             return $"{cnpj.Substring(0, 2)}.{cnpj.Substring(2, 3)}.{cnpj.Substring(5, 3)}/{cnpj.Substring(8, 4)}-{cnpj.Substring(12, 2)}";
+        }
+
+        private Result<bool> ValidarDadosEmpresaContratante(Company company)
+        {
+            var camposFaltando = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(company.AddressStreet))
+                camposFaltando.Add("Rua");
+            if (string.IsNullOrWhiteSpace(company.AddressNumber))
+                camposFaltando.Add("Número");
+            if (string.IsNullOrWhiteSpace(company.AddressNeighborhood))
+                camposFaltando.Add("Bairro");
+            if (string.IsNullOrWhiteSpace(company.AddressCity))
+                camposFaltando.Add("Cidade");
+            if (string.IsNullOrWhiteSpace(company.AddressState))
+                camposFaltando.Add("Estado");
+            if (string.IsNullOrWhiteSpace(company.AddressZipCode))
+                camposFaltando.Add("CEP");
+            if (string.IsNullOrWhiteSpace(company.Nire))
+                camposFaltando.Add("NIRE");
+            if (string.IsNullOrWhiteSpace(company.StateRegistration))
+                camposFaltando.Add("Inscrição Estadual");
+
+            if (camposFaltando.Any())
+            {
+                var mensagem = $"Dados da empresa contratante estão incompletos. Campos faltando: {string.Join(", ", camposFaltando)}";
+                return Result.Failure<bool>(mensagem);
+            }
+
+            return Result.Success(true);
+        }
+
+        private Result<bool> ValidarDadosRepresentante(User user)
+        {
+            var camposFaltando = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(user.CPFEncrypted))
+                camposFaltando.Add("CPF");
+            if (string.IsNullOrWhiteSpace(user.RGEncrypted))
+                camposFaltando.Add("RG");
+            if (!user.DataNascimento.HasValue)
+                camposFaltando.Add("Data de Nascimento");
+            if (string.IsNullOrWhiteSpace(user.Nacionalidade))
+                camposFaltando.Add("Nacionalidade");
+            if (string.IsNullOrWhiteSpace(user.EstadoCivil))
+                camposFaltando.Add("Estado Civil");
+            if (string.IsNullOrWhiteSpace(user.EnderecoRua))
+                camposFaltando.Add("Rua (endereço residencial)");
+            if (string.IsNullOrWhiteSpace(user.EnderecoNumero))
+                camposFaltando.Add("Número (endereço residencial)");
+            if (string.IsNullOrWhiteSpace(user.EnderecoBairro))
+                camposFaltando.Add("Bairro (endereço residencial)");
+            if (string.IsNullOrWhiteSpace(user.EnderecoCidade))
+                camposFaltando.Add("Cidade (endereço residencial)");
+            if (string.IsNullOrWhiteSpace(user.EnderecoEstado))
+                camposFaltando.Add("Estado (endereço residencial)");
+            if (string.IsNullOrWhiteSpace(user.EnderecoCep))
+                camposFaltando.Add("CEP (endereço residencial)");
+
+            if (camposFaltando.Any())
+            {
+                var mensagem = $"Dados do representante estão incompletos. Campos faltando: {string.Join(", ", camposFaltando)}";
+                return Result.Failure<bool>(mensagem);
+            }
+
+            return Result.Success(true);
+        }
+
+        private Result<bool> ValidarDadosContratadoPJ(User funcionarioPJ)
+        {
+            var camposFaltando = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.CPFEncrypted))
+                camposFaltando.Add("CPF");
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.RGEncrypted))
+                camposFaltando.Add("RG");
+            if (!funcionarioPJ.DataNascimento.HasValue)
+                camposFaltando.Add("Data de Nascimento");
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.Nacionalidade))
+                camposFaltando.Add("Nacionalidade");
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.EstadoCivil))
+                camposFaltando.Add("Estado Civil");
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.Cargo))
+                camposFaltando.Add("Profissão");
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.EnderecoRua))
+                camposFaltando.Add("Rua (endereço residencial)");
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.EnderecoNumero))
+                camposFaltando.Add("Número (endereço residencial)");
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.EnderecoBairro))
+                camposFaltando.Add("Bairro (endereço residencial)");
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.EnderecoCidade))
+                camposFaltando.Add("Cidade (endereço residencial)");
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.EnderecoEstado))
+                camposFaltando.Add("Estado (endereço residencial)");
+            if (string.IsNullOrWhiteSpace(funcionarioPJ.EnderecoCep))
+                camposFaltando.Add("CEP (endereço residencial)");
+
+            if (camposFaltando.Any())
+            {
+                var mensagem = $"Dados do contratado (funcionário PJ) estão incompletos. Campos faltando: {string.Join(", ", camposFaltando)}";
+                return Result.Failure<bool>(mensagem);
+            }
+
+            return Result.Success(true);
+        }
+
+        private Result<bool> ValidarDadosContratadoManual(DadosContratadoManualRequest dadosManual)
+        {
+            var camposFaltando = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(dadosManual.NomeCompleto))
+                camposFaltando.Add("Nome Completo");
+            if (string.IsNullOrWhiteSpace(dadosManual.RazaoSocial))
+                camposFaltando.Add("Razão Social");
+            if (string.IsNullOrWhiteSpace(dadosManual.Cnpj))
+                camposFaltando.Add("CNPJ");
+            if (string.IsNullOrWhiteSpace(dadosManual.Cpf))
+                camposFaltando.Add("CPF");
+            if (string.IsNullOrWhiteSpace(dadosManual.Rg))
+                camposFaltando.Add("RG");
+            if (!dadosManual.DataNascimento.HasValue)
+                camposFaltando.Add("Data de Nascimento");
+            if (string.IsNullOrWhiteSpace(dadosManual.Nacionalidade))
+                camposFaltando.Add("Nacionalidade");
+            if (string.IsNullOrWhiteSpace(dadosManual.EstadoCivil))
+                camposFaltando.Add("Estado Civil");
+            if (string.IsNullOrWhiteSpace(dadosManual.Profissao))
+                camposFaltando.Add("Profissão");
+            if (string.IsNullOrWhiteSpace(dadosManual.Email))
+                camposFaltando.Add("Email");
+            if (string.IsNullOrWhiteSpace(dadosManual.TelefoneCelular))
+                camposFaltando.Add("Telefone Celular");
+            if (string.IsNullOrWhiteSpace(dadosManual.Rua))
+                camposFaltando.Add("Rua");
+            if (string.IsNullOrWhiteSpace(dadosManual.Numero))
+                camposFaltando.Add("Número");
+            if (string.IsNullOrWhiteSpace(dadosManual.Bairro))
+                camposFaltando.Add("Bairro");
+            if (string.IsNullOrWhiteSpace(dadosManual.Cidade))
+                camposFaltando.Add("Cidade");
+            if (string.IsNullOrWhiteSpace(dadosManual.Estado))
+                camposFaltando.Add("Estado");
+            if (string.IsNullOrWhiteSpace(dadosManual.Pais))
+                camposFaltando.Add("País");
+            if (string.IsNullOrWhiteSpace(dadosManual.Cep))
+                camposFaltando.Add("CEP");
+
+            if (camposFaltando.Any())
+            {
+                var mensagem = $"Dados do contratado estão incompletos. Campos faltando: {string.Join(", ", camposFaltando)}";
+                return Result.Failure<bool>(mensagem);
+            }
+
+            return Result.Success(true);
+        }
+
+        private Result<bool> ValidarDadosEmpresaPJ(Company empresaPJ)
+        {
+            var camposFaltando = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(empresaPJ.AddressStreet))
+                camposFaltando.Add("Rua (empresa PJ)");
+            if (string.IsNullOrWhiteSpace(empresaPJ.AddressNumber))
+                camposFaltando.Add("Número (empresa PJ)");
+            if (string.IsNullOrWhiteSpace(empresaPJ.AddressNeighborhood))
+                camposFaltando.Add("Bairro (empresa PJ)");
+            if (string.IsNullOrWhiteSpace(empresaPJ.AddressCity))
+                camposFaltando.Add("Cidade (empresa PJ)");
+            if (string.IsNullOrWhiteSpace(empresaPJ.AddressState))
+                camposFaltando.Add("Estado (empresa PJ)");
+
+            if (camposFaltando.Any())
+            {
+                var mensagem = $"Dados da empresa do contratado (PJ) estão incompletos. Campos faltando: {string.Join(", ", camposFaltando)}";
+                return Result.Failure<bool>(mensagem);
+            }
+
+            return Result.Success(true);
         }
 
         private string FormatCpf(string cpf)

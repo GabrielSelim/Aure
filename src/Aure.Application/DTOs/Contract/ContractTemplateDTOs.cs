@@ -281,6 +281,12 @@ public class DadosContratadoManualRequest
 
     public DateTime? DataNascimento { get; set; }
 
+    [StringLength(50, ErrorMessage = "Nacionalidade deve ter no máximo 50 caracteres")]
+    public string? Nacionalidade { get; set; }
+
+    [StringLength(50, ErrorMessage = "Estado civil deve ter no máximo 50 caracteres")]
+    public string? EstadoCivil { get; set; }
+
     [StringLength(100, ErrorMessage = "Profissão deve ter no máximo 100 caracteres")]
     public string? Profissao { get; set; }
 

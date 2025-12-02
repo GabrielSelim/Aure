@@ -355,6 +355,8 @@ POST /api/ContractTemplateConfig/preview
     "cpf": "12345678901",
     "rg": "123456789",
     "dataNascimento": "1990-05-15",
+    "nacionalidade": "Brasileiro(a)",
+    "estadoCivil": "Solteiro(a)",
     "profissao": "Desenvolvedora",
     "email": "maria@exemplo.com",
     "telefoneCelular": "11987654321",
