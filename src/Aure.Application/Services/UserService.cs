@@ -546,14 +546,16 @@ public class UserService : IUserService
                 // Criar usuário
                 var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
                 
-                // Usuário sempre fica vinculado à empresa contratante (empresa pai)
-                // A empresa PJ criada é registrada separadamente e vinculada via CompanyRelationship
+                // Para PJ contratado: usuário fica vinculado à própria empresa PJ (é o dono dela)
+                // Para funcionário interno: usuário fica vinculado à empresa contratante
+                var companyId = pjCompany?.Id ?? invite.CompanyId;
+                
                 var user = new User(
                     name: invite.InviteeName,
                     email: invite.InviteeEmail,
                     passwordHash: passwordHash,
                     role: invite.Role,
-                    companyId: invite.CompanyId
+                    companyId: companyId
                 );
 
                 // Criptografar CPF e RG

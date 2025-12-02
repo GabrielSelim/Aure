@@ -64,7 +64,12 @@ namespace Aure.API.Controllers
                 if (funcionarioPJ.Role != UserRole.FuncionarioPJ)
                     return BadRequest(new { message = "Usuário não é um funcionário PJ" });
 
-                if (funcionarioPJ.CompanyId != currentUser.CompanyId)
+                var hasRelationship = await _context.CompanyRelationships
+                    .AnyAsync(cr => cr.ClientCompanyId == currentUser.CompanyId 
+                                 && cr.ProviderCompanyId == funcionarioPJ.CompanyId 
+                                 && cr.IsActive);
+
+                if (!hasRelationship)
                     return Forbid();
 
                 if (request.CamposFaltando == null || !request.CamposFaltando.Any())
@@ -84,7 +89,7 @@ namespace Aure.API.Controllers
                     });
                 }
 
-                var company = await _unitOfWork.Companies.GetByIdAsync(currentUser.CompanyId.Value);
+                var company = await _unitOfWork.Companies.GetByIdAsync(currentUser.CompanyId!.Value);
                 var systemUrl = _configuration["FrontendUrl"] ?? "https://aure.gabrielsanztech.com.br";
 
                 _ = Task.Run(async () =>
