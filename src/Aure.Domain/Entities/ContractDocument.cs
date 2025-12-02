@@ -5,10 +5,10 @@ namespace Aure.Domain.Entities;
 public class ContractDocument : BaseEntity
 {
     public Guid ContractId { get; private set; }
-    public Contract Contract { get; private set; }
+    public Contract? Contract { get; private set; }
     public Guid? TemplateId { get; private set; }
     public ContractTemplate? Template { get; private set; }
-    public string ConteudoHtml { get; private set; }
+    public string ConteudoHtml { get; private set; } = string.Empty;
     public string? ConteudoPdf { get; private set; }
     public string? ConteudoDocx { get; private set; }
     public int VersaoMajor { get; private set; }
