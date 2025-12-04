@@ -688,9 +688,9 @@ namespace Aure.Application.Services
                     if (!validacaoEmpresaPJ.IsSuccess)
                         return Result.Failure<Guid>(validacaoEmpresaPJ.Error);
 
-                    var existingContract = await _unitOfWork.Contracts.GetActivePJContractByUserIdAsync(request.FuncionarioPJId.Value);
+                    var existingContract = await _unitOfWork.Contracts.GetActivePJContractByUserIdAsync(funcionarioPJ.CompanyId.Value);
                     if (existingContract != null)
-                        return Result.Failure<Guid>("Funcionário PJ já possui um contrato ativo");
+                        return Result.Failure<Guid>("Esta empresa PJ já possui um contrato ativo");
 
                     providerId = funcionarioPJ.CompanyId.Value;
                 }
