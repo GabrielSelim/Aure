@@ -634,8 +634,14 @@ namespace Aure.Application.Services
                     if (funcionarioPJ.Role != UserRole.FuncionarioPJ)
                         return Result.Failure<Guid>("Usuário selecionado não é um funcionário PJ");
 
-                    if (funcionarioPJ.CompanyId != user.CompanyId)
-                        return Result.Failure<Guid>("Funcionário PJ não pertence à sua empresa");
+                    var allRelationships = await _unitOfWork.CompanyRelationships.GetAllAsync();
+                    var temRelacionamento = allRelationships.Any(r => 
+                        r.ClientCompanyId == user.CompanyId 
+                        && r.ProviderCompanyId == funcionarioPJ.CompanyId 
+                        && r.Status == RelationshipStatus.Active);
+
+                    if (!temRelacionamento)
+                        return Result.Failure<Guid>("Funcionário PJ não possui relacionamento ativo com sua empresa");
 
                     var validacaoContratadoPJ = ValidarDadosContratadoPJ(funcionarioPJ);
                     if (!validacaoContratadoPJ.IsSuccess)
