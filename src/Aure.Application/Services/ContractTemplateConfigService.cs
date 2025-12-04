@@ -751,7 +751,9 @@ namespace Aure.Application.Services
                     providerId = tempUser.Id;
                 }
 
-                var dataInicio = request.DataInicioVigencia ?? DateTime.UtcNow.Date;
+                var dataInicio = request.DataInicioVigencia.HasValue 
+                    ? DateTime.SpecifyKind(request.DataInicioVigencia.Value, DateTimeKind.Utc)
+                    : DateTime.UtcNow.Date;
                 var dataFim = dataInicio.AddMonths(request.PrazoVigenciaMeses);
 
                 var contract = new Contract(
