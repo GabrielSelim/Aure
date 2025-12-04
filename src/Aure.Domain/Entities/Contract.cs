@@ -65,7 +65,7 @@ public class Contract : BaseEntity
         ValueTotal = monthlyValue * (decimal)((expirationDate - startDate).TotalDays / 30.0);
         Title = type == ContractType.PJ ? "Contrato de Prestação de Serviços PJ" : "Contrato";
         Description = string.Empty;
-        Sha256Hash = string.Empty;
+        Sha256Hash = $"draft-{Guid.NewGuid():N}";
         Status = ContractStatus.Draft;
         Type = type;
     }
