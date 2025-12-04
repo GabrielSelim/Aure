@@ -823,7 +823,7 @@ namespace Aure.Application.Services
 
                         var contractDocument = new ContractDocument(
                             contract.Id,
-                            config.Id,
+                            null,
                             htmlResult.Data,
                             dadosPreenchidos,
                             userId
