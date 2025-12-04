@@ -781,6 +781,79 @@ namespace Aure.Application.Services
                 await _unitOfWork.SaveChangesAsync();
 
                 _logger.LogInformation(
+                    "Contrato salvo. Gerando preview HTML para visualização..."
+                );
+
+                try
+                {
+                    var previewRequest = new PreviewTemplateRequest
+                    {
+                        FuncionarioPJId = request.FuncionarioPJId,
+                        DadosContratadoManual = request.DadosContratadoManual,
+                        ValorMensal = request.ValorMensal,
+                        PrazoVigenciaMeses = request.PrazoVigenciaMeses,
+                        DiaVencimentoNF = request.DiaVencimentoNF,
+                        DiaPagamento = request.DiaPagamento,
+                        TemplateConfig = new ContractTemplateConfigRequest
+                        {
+                            NomeConfig = config.NomeConfig,
+                            Categoria = config.Categoria,
+                            TituloServico = config.TituloServico,
+                            DescricaoServico = config.DescricaoServico,
+                            LocalPrestacaoServico = config.LocalPrestacaoServico,
+                            DetalhamentoServicos = config.DetalhamentoServicos,
+                            ClausulaAjudaCusto = config.ClausulaAjudaCusto,
+                            ObrigacoesContratado = config.ObrigacoesContratado,
+                            ObrigacoesContratante = config.ObrigacoesContratante
+                        }
+                    };
+
+                    var htmlResult = await PreviewContractHtmlAsync(userId, previewRequest);
+                    
+                    if (htmlResult.IsSuccess && !string.IsNullOrWhiteSpace(htmlResult.Data))
+                    {
+                        var dadosPreenchidos = new Dictionary<string, string>
+                        {
+                            ["NomeConfig"] = config.NomeConfig,
+                            ["ValorMensal"] = request.ValorMensal.ToString("F2"),
+                            ["PrazoVigenciaMeses"] = request.PrazoVigenciaMeses.ToString(),
+                            ["DiaVencimentoNF"] = request.DiaVencimentoNF.ToString(),
+                            ["DiaPagamento"] = request.DiaPagamento.ToString()
+                        };
+
+                        var contractDocument = new ContractDocument(
+                            contract.Id,
+                            config.Id,
+                            htmlResult.Data,
+                            dadosPreenchidos,
+                            userId
+                        );
+
+                        await _unitOfWork.ContractDocuments.AddAsync(contractDocument);
+                        await _unitOfWork.SaveChangesAsync();
+
+                        _logger.LogInformation(
+                            "Preview HTML salvo com sucesso. DocumentId: {DocumentId}",
+                            contractDocument.Id
+                        );
+                    }
+                    else
+                    {
+                        _logger.LogWarning(
+                            "Não foi possível gerar preview HTML: {Error}",
+                            htmlResult.Error
+                        );
+                    }
+                }
+                catch (Exception previewEx)
+                {
+                    _logger.LogWarning(previewEx, 
+                        "Erro ao gerar preview HTML, mas contrato foi criado com sucesso. ContractId: {ContractId}",
+                        contract.Id
+                    );
+                }
+
+                _logger.LogInformation(
                     "Contrato PJ criado com sucesso. ContractId: {ContractId}, ProviderId: {ProviderId}, Config: {NomeConfig}, Modo: {Modo}",
                     contract.Id,
                     providerId,

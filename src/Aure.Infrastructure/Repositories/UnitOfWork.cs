@@ -32,6 +32,7 @@ public class UnitOfWork : IUnitOfWork
         KycRecords = new KycRecordRepository(_context);
         Notifications = new NotificationRepository(_context);
         ContractTemplateConfigs = new ContractTemplateConfigRepository(_context);
+        ContractDocuments = new ContractDocumentRepository(_context);
     }
 
     public IUserRepository Users { get; }
@@ -52,6 +53,7 @@ public class UnitOfWork : IUnitOfWork
     public IKycRecordRepository KycRecords { get; }
     public INotificationRepository Notifications { get; }
     public IContractTemplateConfigRepository ContractTemplateConfigs { get; }
+    public IContractDocumentRepository ContractDocuments { get; }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

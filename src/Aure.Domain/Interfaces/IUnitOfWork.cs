@@ -22,6 +22,7 @@ public interface IUnitOfWork : IDisposable
     IKycRecordRepository KycRecords { get; }
     INotificationRepository Notifications { get; }
     IContractTemplateConfigRepository ContractTemplateConfigs { get; }
+    IContractDocumentRepository ContractDocuments { get; }
     
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<int> CommitAsync();

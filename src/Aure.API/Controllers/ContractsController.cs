@@ -715,10 +715,33 @@ Retorna apenas PJs que possuem relacionamento ativo com a empresa principal."
                 return Forbid();
             }
 
-            return Content(
-                "<html><body><h1>Funcionalidade de visualização em desenvolvimento</h1><p>Para visualizar o contrato, use a opção de Preview antes de gerar.</p><p>Após assinar o contrato, o documento final estará disponível.</p></body></html>",
-                "text/html"
-            );
+            var documents = await _unitOfWork.ContractDocuments.GetByContractIdAsync(id);
+            if (documents == null || !documents.Any())
+            {
+                return Content(
+                    @"<html>
+                    <head>
+                        <meta charset='UTF-8'>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 40px; text-align: center; }
+                            h1 { color: #dc2626; }
+                            p { color: #666; margin: 20px 0; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>⚠️ Preview não disponível</h1>
+                        <p>Este contrato não possui preview salvo.</p>
+                        <p>O preview é gerado automaticamente ao criar o contrato.</p>
+                        <p>Se você acabou de criar o contrato, tente recarregar a página.</p>
+                    </body>
+                    </html>",
+                    "text/html"
+                );
+            }
+
+            var latestDocument = documents.OrderByDescending(d => d.CreatedAt).First();
+
+            return Content(latestDocument.ConteudoHtml, "text/html");
         }
         catch (Exception ex)
         {
