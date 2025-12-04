@@ -1341,7 +1341,22 @@ public class UserService : IUserService
             if (employee == null)
                 return Result.Failure<UserResponse>("Funcionário não encontrado");
 
-            if (employee.CompanyId != requestingUser.CompanyId)
+            bool temPermissao = false;
+
+            if (employee.Role == UserRole.FuncionarioPJ)
+            {
+                var allRelationships = await _unitOfWork.CompanyRelationships.GetAllAsync();
+                temPermissao = allRelationships.Any(r => 
+                    r.ClientCompanyId == requestingUser.CompanyId 
+                    && r.ProviderCompanyId == employee.CompanyId 
+                    && r.Status == Domain.Enums.RelationshipStatus.Active);
+            }
+            else
+            {
+                temPermissao = employee.CompanyId == requestingUser.CompanyId;
+            }
+
+            if (!temPermissao)
                 return Result.Failure<UserResponse>("Você só pode alterar cargos de funcionários da sua empresa");
 
             if (employee.Role == UserRole.DonoEmpresaPai)
