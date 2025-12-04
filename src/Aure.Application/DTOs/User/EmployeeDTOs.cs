@@ -16,7 +16,10 @@ public class EmployeeListItemResponse
     public string? Cpf { get; set; }
     public string? CpfMascarado { get; set; }
     public string? Rg { get; set; }
+    public string? OrgaoExpedidorRG { get; set; }
     public DateTime? DataNascimento { get; set; }
+    public string? Nacionalidade { get; set; }
+    public string? EstadoCivil { get; set; }
     public string? Rua { get; set; }
     public string? Numero { get; set; }
     public string? Complemento { get; set; }

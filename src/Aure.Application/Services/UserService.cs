@@ -851,7 +851,10 @@ public class UserService : IUserService
                     ? $"***.{cpfDescriptografado.Substring(3, 3)}.{cpfDescriptografado.Substring(6, 3)}-**" 
                     : null,
                 Rg = rgDescriptografado,
+                OrgaoExpedidorRG = u.OrgaoExpedidorRG,
                 DataNascimento = u.DataNascimento,
+                Nacionalidade = u.Nacionalidade,
+                EstadoCivil = u.EstadoCivil?.ToString(),
                 Rua = u.EnderecoRua,
                 Numero = u.EnderecoNumero,
                 Complemento = u.EnderecoComplemento,
