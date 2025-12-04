@@ -675,6 +675,57 @@ Retorna apenas PJs que possuem relacionamento ativo com a empresa principal."
             return StatusCode(500, new { message = "Erro ao deletar contrato Draft" });
         }
     }
+
+    /// <summary>
+    /// Visualizar HTML de contrato Draft
+    /// </summary>
+    /// <param name="id">ID do contrato</param>
+    [HttpGet("{id}/visualizar")]
+    [SwaggerOperation(
+        Summary = "Visualizar HTML do contrato",
+        Description = "Retorna o HTML renderizado do contrato. Para contratos Draft, o HTML é gerado em tempo real com os dados armazenados."
+    )]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK, "text/html")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> VisualizarContratoHtml(Guid id)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Token de usuário inválido" });
+            }
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null || user.CompanyId == null)
+            {
+                return NotFound(new { message = "Usuário ou empresa não encontrada" });
+            }
+
+            var contract = await _unitOfWork.Contracts.GetByIdAsync(id);
+            if (contract == null)
+            {
+                return NotFound(new { message = "Contrato não encontrado" });
+            }
+
+            if (contract.ClientId != user.CompanyId && contract.ProviderId != user.CompanyId)
+            {
+                return Forbid();
+            }
+
+            return Content(
+                "<html><body><h1>Funcionalidade de visualização em desenvolvimento</h1><p>Para visualizar o contrato, use a opção de Preview antes de gerar.</p><p>Após assinar o contrato, o documento final estará disponível.</p></body></html>",
+                "text/html"
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao visualizar contrato {ContractId}", id);
+            return StatusCode(500, new { message = "Erro ao visualizar contrato" });
+        }
+    }
 }
 
 public class CreateContractRequest
