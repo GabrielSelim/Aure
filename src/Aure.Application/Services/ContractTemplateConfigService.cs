@@ -381,6 +381,22 @@ namespace Aure.Application.Services
 
                     if (empresaPJ != null)
                     {
+                        if (string.IsNullOrWhiteSpace(empresaPJ.AddressStreet) && !string.IsNullOrWhiteSpace(funcionarioPJ.EnderecoRua))
+                        {
+                            empresaPJ.UpdateAddress(
+                                funcionarioPJ.EnderecoRua,
+                                funcionarioPJ.EnderecoNumero ?? "S/N",
+                                funcionarioPJ.EnderecoComplemento,
+                                funcionarioPJ.EnderecoBairro ?? "",
+                                funcionarioPJ.EnderecoCidade ?? "",
+                                funcionarioPJ.EnderecoEstado ?? "",
+                                funcionarioPJ.EnderecoPais ?? "Brasil",
+                                funcionarioPJ.EnderecoCep ?? ""
+                            );
+                            await _unitOfWork.Companies.UpdateAsync(empresaPJ);
+                            await _unitOfWork.SaveChangesAsync();
+                        }
+
                         var validacaoEmpresaPJ = ValidarDadosEmpresaPJ(empresaPJ);
                         if (!validacaoEmpresaPJ.IsSuccess)
                             return Result.Failure<string>(validacaoEmpresaPJ.Error);
@@ -630,6 +646,22 @@ namespace Aure.Application.Services
                         var empresaPJ = await _unitOfWork.Companies.GetByIdAsync(funcionarioPJ.CompanyId.Value);
                         if (empresaPJ != null)
                         {
+                            if (string.IsNullOrWhiteSpace(empresaPJ.AddressStreet) && !string.IsNullOrWhiteSpace(funcionarioPJ.EnderecoRua))
+                            {
+                                empresaPJ.UpdateAddress(
+                                    funcionarioPJ.EnderecoRua,
+                                    funcionarioPJ.EnderecoNumero ?? "S/N",
+                                    funcionarioPJ.EnderecoComplemento,
+                                    funcionarioPJ.EnderecoBairro ?? "",
+                                    funcionarioPJ.EnderecoCidade ?? "",
+                                    funcionarioPJ.EnderecoEstado ?? "",
+                                    funcionarioPJ.EnderecoPais ?? "Brasil",
+                                    funcionarioPJ.EnderecoCep ?? ""
+                                );
+                                await _unitOfWork.Companies.UpdateAsync(empresaPJ);
+                                await _unitOfWork.SaveChangesAsync();
+                            }
+
                             var validacaoEmpresaPJ = ValidarDadosEmpresaPJ(empresaPJ);
                             if (!validacaoEmpresaPJ.IsSuccess)
                                 return Result.Failure<Guid>(validacaoEmpresaPJ.Error);
