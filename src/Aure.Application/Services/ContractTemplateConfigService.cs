@@ -768,7 +768,15 @@ namespace Aure.Application.Services
                     request.DiaPagamento
                 );
 
+                _logger.LogInformation(
+                    "Adicionando contrato ao banco. ClientId: {ClientId}, ProviderId: {ProviderId}, Config: {NomeConfig}",
+                    user.CompanyId.Value,
+                    providerId,
+                    request.NomeConfig
+                );
+
                 await _unitOfWork.Contracts.AddAsync(contract);
+                await _unitOfWork.SaveChangesAsync();
 
                 _logger.LogInformation(
                     "Contrato PJ criado com sucesso. ContractId: {ContractId}, ProviderId: {ProviderId}, Config: {NomeConfig}, Modo: {Modo}",
@@ -782,7 +790,14 @@ namespace Aure.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao gerar contrato com config {NomeConfig}", request.NomeConfig);
+                _logger.LogError(ex, "Erro ao gerar contrato com config {NomeConfig}. Message: {Message}, StackTrace: {StackTrace}", 
+                    request.NomeConfig, ex.Message, ex.StackTrace);
+                
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError("Inner Exception: {InnerMessage}", ex.InnerException.Message);
+                }
+
                 return Result.Failure<Guid>($"Erro ao gerar contrato: {ex.Message}");
             }
         }
