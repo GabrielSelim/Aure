@@ -303,17 +303,24 @@ Esta ação não pode ser desfeita. Após anonimização, você não poderá mai
     [HttpPut("{employeeId}/cargo")]
     [Authorize(Roles = "DonoEmpresaPai,Juridico")]
     [SwaggerOperation(
-        Summary = "Atualizar cargo de funcionário",
-        Description = @"Permite que o dono da empresa ou jurídico altere o cargo de um funcionário.
+        Summary = "Atualizar cargo de usuário",
+        Description = @"Permite que o dono da empresa ou jurídico altere o cargo de qualquer usuário da empresa.
 
-**Permissões:**
-- DonoEmpresaPai e Juridico podem alterar cargos
+**Quem Pode Alterar:**
+- DonoEmpresaPai pode alterar cargos de: Financeiro, Juridico, FuncionarioCLT, FuncionarioPJ
+- Juridico pode alterar cargos de: Financeiro, Juridico (outros), FuncionarioCLT, FuncionarioPJ
 - Não é possível alterar o cargo do proprietário
-- Funcionário deve pertencer à mesma empresa
+
+**Exemplos de Cargos:**
+- **Financeiro**: Gerente Financeiro, Analista Contábil, Controller, CFO
+- **Jurídico**: Advogado Contratual, Advogado Corporativo, Consultor Jurídico, Gerente Jurídico
+- **FuncionarioCLT**: Analista de TI, Gerente de Vendas, Coordenador, Assistente
+- **FuncionarioPJ**: Desenvolvedor Full Stack, Consultor, Designer, Arquiteto de Software
 
 **Validações:**
 - Cargo não pode ser vazio
-- Cargo deve ter no máximo 100 caracteres"
+- Cargo deve ter no máximo 100 caracteres
+- Usuário deve pertencer à mesma empresa"
     )]
     [SwaggerResponse(200, "Cargo atualizado com sucesso", typeof(UserResponse))]
     [SwaggerResponse(400, "Requisição inválida")]
