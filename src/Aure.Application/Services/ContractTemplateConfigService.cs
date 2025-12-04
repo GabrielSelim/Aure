@@ -577,8 +577,22 @@ namespace Aure.Application.Services
                     return Result.Failure<Guid>("Usuário não pertence a uma empresa");
 
                 var config = await _unitOfWork.ContractTemplateConfigs.GetByCompanyIdAndNomeAsync(user.CompanyId.Value, request.NomeConfig);
+                
                 if (config == null)
-                    return Result.Failure<Guid>("Configuração de template não encontrada");
+                {
+                    var presetResult = await GetPresetByTipoAsync(request.NomeConfig);
+                    if (!presetResult.IsSuccess || presetResult.Data == null)
+                        return Result.Failure<Guid>("Configuração de template não encontrada. Você precisa clonar um preset primeiro ou usar um nome de preset válido (software, gestao, consultoria, etc).");
+                    
+                    var cloneResult = await ClonarPresetAsync(userId, request.NomeConfig, request.NomeConfig);
+                    
+                    if (!cloneResult.IsSuccess)
+                        return Result.Failure<Guid>($"Erro ao criar configuração automática: {cloneResult.Error}");
+                    
+                    config = await _unitOfWork.ContractTemplateConfigs.GetByCompanyIdAndNomeAsync(user.CompanyId.Value, request.NomeConfig);
+                    if (config == null)
+                        return Result.Failure<Guid>("Erro ao carregar configuração criada automaticamente");
+                }
 
                 var company = await _unitOfWork.Companies.GetByIdAsync(user.CompanyId.Value);
                 if (company == null)
