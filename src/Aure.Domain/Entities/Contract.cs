@@ -62,7 +62,12 @@ public class Contract : BaseEntity
         StartDate = startDate;
         ExpirationDate = expirationDate;
         MonthlyValue = monthlyValue;
-        ValueTotal = monthlyValue * (decimal)((expirationDate - startDate).TotalDays / 30.0);
+        
+        var months = ((expirationDate.Year - startDate.Year) * 12) + expirationDate.Month - startDate.Month;
+        if (expirationDate.Day < startDate.Day)
+            months--;
+        
+        ValueTotal = monthlyValue * months;
         Title = type == ContractType.PJ ? "Contrato de Prestação de Serviços PJ" : "Contrato";
         Description = string.Empty;
         Sha256Hash = $"draft-{Guid.NewGuid():N}";
