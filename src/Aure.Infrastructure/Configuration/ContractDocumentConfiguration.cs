@@ -36,6 +36,7 @@ public class ContractDocumentConfiguration : IEntityTypeConfiguration<ContractDo
             );
 
         builder.Property(cd => cd.DataGeracao)
+            .HasColumnName("data_geracao")
             .IsRequired();
 
         builder.Property(cd => cd.EhVersaoFinal)
