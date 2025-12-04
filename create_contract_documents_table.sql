@@ -22,11 +22,6 @@ CREATE TABLE IF NOT EXISTS contract_documents (
         REFERENCES contracts(id) 
         ON DELETE RESTRICT,
     
-    CONSTRAINT fk_contract_documents_templates 
-        FOREIGN KEY (template_id) 
-        REFERENCES contract_templates(id) 
-        ON DELETE SET NULL,
-    
     CONSTRAINT fk_contract_documents_users 
         FOREIGN KEY (gerado_por_usuario_id) 
         REFERENCES users(id) 
