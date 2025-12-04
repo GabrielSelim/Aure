@@ -661,38 +661,38 @@ namespace Aure.Application.Services
                     if (!validacaoContratadoPJ.IsSuccess)
                         return Result.Failure<Guid>(validacaoContratadoPJ.Error);
 
-                    if (funcionarioPJ.CompanyId.HasValue)
-                    {
-                        var empresaPJ = await _unitOfWork.Companies.GetByIdAsync(funcionarioPJ.CompanyId.Value);
-                        if (empresaPJ != null)
-                        {
-                            if (string.IsNullOrWhiteSpace(empresaPJ.AddressStreet) && !string.IsNullOrWhiteSpace(funcionarioPJ.EnderecoRua))
-                            {
-                                empresaPJ.UpdateAddress(
-                                    funcionarioPJ.EnderecoRua,
-                                    funcionarioPJ.EnderecoNumero ?? "S/N",
-                                    funcionarioPJ.EnderecoComplemento,
-                                    funcionarioPJ.EnderecoBairro ?? "",
-                                    funcionarioPJ.EnderecoCidade ?? "",
-                                    funcionarioPJ.EnderecoEstado ?? "",
-                                    funcionarioPJ.EnderecoPais ?? "Brasil",
-                                    funcionarioPJ.EnderecoCep ?? ""
-                                );
-                                await _unitOfWork.Companies.UpdateAsync(empresaPJ);
-                                await _unitOfWork.SaveChangesAsync();
-                            }
+                    if (!funcionarioPJ.CompanyId.HasValue)
+                        return Result.Failure<Guid>("Funcionário PJ não possui empresa vinculada");
 
-                            var validacaoEmpresaPJ = ValidarDadosEmpresaPJ(empresaPJ);
-                            if (!validacaoEmpresaPJ.IsSuccess)
-                                return Result.Failure<Guid>(validacaoEmpresaPJ.Error);
-                        }
+                    var empresaPJ = await _unitOfWork.Companies.GetByIdAsync(funcionarioPJ.CompanyId.Value);
+                    if (empresaPJ == null)
+                        return Result.Failure<Guid>("Empresa PJ não encontrada");
+
+                    if (string.IsNullOrWhiteSpace(empresaPJ.AddressStreet) && !string.IsNullOrWhiteSpace(funcionarioPJ.EnderecoRua))
+                    {
+                        empresaPJ.UpdateAddress(
+                            funcionarioPJ.EnderecoRua,
+                            funcionarioPJ.EnderecoNumero ?? "S/N",
+                            funcionarioPJ.EnderecoComplemento,
+                            funcionarioPJ.EnderecoBairro ?? "",
+                            funcionarioPJ.EnderecoCidade ?? "",
+                            funcionarioPJ.EnderecoEstado ?? "",
+                            funcionarioPJ.EnderecoPais ?? "Brasil",
+                            funcionarioPJ.EnderecoCep ?? ""
+                        );
+                        await _unitOfWork.Companies.UpdateAsync(empresaPJ);
+                        await _unitOfWork.SaveChangesAsync();
                     }
+
+                    var validacaoEmpresaPJ = ValidarDadosEmpresaPJ(empresaPJ);
+                    if (!validacaoEmpresaPJ.IsSuccess)
+                        return Result.Failure<Guid>(validacaoEmpresaPJ.Error);
 
                     var existingContract = await _unitOfWork.Contracts.GetActivePJContractByUserIdAsync(request.FuncionarioPJId.Value);
                     if (existingContract != null)
                         return Result.Failure<Guid>("Funcionário PJ já possui um contrato ativo");
 
-                    providerId = funcionarioPJ.Id;
+                    providerId = funcionarioPJ.CompanyId.Value;
                 }
                 else
                 {
@@ -748,7 +748,7 @@ namespace Aure.Application.Services
 
                     await _unitOfWork.Users.AddAsync(tempUser);
 
-                    providerId = tempUser.Id;
+                    providerId = tempCompany.Id;
                 }
 
                 var dataInicio = request.DataInicioVigencia.HasValue 
