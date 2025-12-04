@@ -104,7 +104,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("PerformedBy");
 
-                    b.ToTable("auditlogs");
+                    b.ToTable("auditlogs", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.Company", b =>
@@ -218,7 +218,7 @@ namespace Aure.Infrastructure.Migrations
                     b.HasIndex("Type")
                         .HasDatabaseName("idx_companies_type");
 
-                    b.ToTable("companies");
+                    b.ToTable("companies", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.CompanyRelationship", b =>
@@ -276,7 +276,7 @@ namespace Aure.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("is_deleted = false");
 
-                    b.ToTable("companyrelationships");
+                    b.ToTable("companyrelationships", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.Contract", b =>
@@ -388,7 +388,7 @@ namespace Aure.Infrastructure.Migrations
                     b.HasIndex("Status")
                         .HasDatabaseName("idx_contracts_status");
 
-                    b.ToTable("contracts");
+                    b.ToTable("contracts", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.ContractDocument", b =>
@@ -736,7 +736,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("PaymentId");
 
-                    b.ToTable("invoices");
+                    b.ToTable("invoices", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.InvoiceItem", b =>
@@ -797,7 +797,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("InvoiceId");
 
-                    b.ToTable("invoiceitems");
+                    b.ToTable("invoiceitems", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.KycRecord", b =>
@@ -848,7 +848,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("CompanyId");
 
-                    b.ToTable("kycrecords");
+                    b.ToTable("kycrecords", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.LedgerEntry", b =>
@@ -905,7 +905,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("PaymentId");
 
-                    b.ToTable("ledgerentries");
+                    b.ToTable("ledgerentries", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.Notification", b =>
@@ -968,7 +968,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("PaymentId");
 
-                    b.ToTable("notifications");
+                    b.ToTable("notifications", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.NotificationHistory", b =>
@@ -1004,7 +1004,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("notificationhistories");
+                    b.ToTable("notificationhistories", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.NotificationPreferences", b =>
@@ -1086,7 +1086,7 @@ namespace Aure.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("is_deleted = false");
 
-                    b.ToTable("notificationpreferences");
+                    b.ToTable("notificationpreferences", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.Payment", b =>
@@ -1157,7 +1157,7 @@ namespace Aure.Infrastructure.Migrations
                     b.HasIndex("Status")
                         .HasDatabaseName("idx_payments_status");
 
-                    b.ToTable("payments");
+                    b.ToTable("payments", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.Session", b =>
@@ -1196,7 +1196,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("sessions");
+                    b.ToTable("sessions", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.Signature", b =>
@@ -1262,7 +1262,7 @@ namespace Aure.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("idx_signatures_contract_user_unique");
 
-                    b.ToTable("signatures");
+                    b.ToTable("signatures", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.SplitExecution", b =>
@@ -1318,7 +1318,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("SplitRuleId");
 
-                    b.ToTable("splitexecutions");
+                    b.ToTable("splitexecutions", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.SplitRule", b =>
@@ -1365,7 +1365,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("ContractId");
 
-                    b.ToTable("splitrules");
+                    b.ToTable("splitrules", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.TaxCalculation", b =>
@@ -1411,7 +1411,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("InvoiceId");
 
-                    b.ToTable("taxcalculations");
+                    b.ToTable("taxcalculations", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.TokenizedAsset", b =>
@@ -1456,7 +1456,7 @@ namespace Aure.Infrastructure.Migrations
                     b.HasIndex("ContractId")
                         .IsUnique();
 
-                    b.ToTable("tokenizedassets");
+                    b.ToTable("tokenizedassets", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.User", b =>
@@ -1652,7 +1652,7 @@ namespace Aure.Infrastructure.Migrations
                     b.HasIndex("Role")
                         .HasDatabaseName("idx_users_role");
 
-                    b.ToTable("users");
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.UserInvitation", b =>
@@ -1841,7 +1841,7 @@ namespace Aure.Infrastructure.Migrations
 
                     b.HasIndex("CompanyId", "IsAccepted", "IsDeleted");
 
-                    b.ToTable("userinvites");
+                    b.ToTable("userinvites", (string)null);
                 });
 
             modelBuilder.Entity("Aure.Domain.Entities.AuditLog", b =>

@@ -150,12 +150,7 @@ namespace Aure.API.Controllers
             if (!result.IsSuccess)
                 return BadRequest(new { message = result.Error });
 
-            return CreatedAtAction(
-                "ObterContratoPorId",
-                "Contracts",
-                new { id = result.Data },
-                new { contractId = result.Data, message = "Contrato criado com sucesso" }
-            );
+            return Ok(new { contractId = result.Data, message = "Contrato criado com sucesso" });
         }
 
         [HttpGet("validar-dados")]
