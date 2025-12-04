@@ -605,6 +605,76 @@ Retorna apenas PJs que possuem relacionamento ativo com a empresa principal."
             return StatusCode(500, new { message = "Erro ao buscar funcionários PJ" });
         }
     }
+
+    /// <summary>
+    /// Deletar contrato com status Draft
+    /// </summary>
+    /// <param name="id">ID do contrato</param>
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "DonoEmpresaPai,Juridico")]
+    [SwaggerOperation(
+        Summary = "Deletar contrato Draft",
+        Description = "Deleta um contrato que está com status Draft (rascunho). Apenas contratos Draft podem ser deletados. Contratos ativos devem ser cancelados."
+    )]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteDraftContract(Guid id)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Token de usuário inválido" });
+            }
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null || user.CompanyId == null)
+            {
+                return NotFound(new { message = "Usuário ou empresa não encontrada" });
+            }
+
+            var contract = await _unitOfWork.Contracts.GetByIdAsync(id);
+            if (contract == null)
+            {
+                return NotFound(new { message = "Contrato não encontrado" });
+            }
+
+            if (contract.ClientId != user.CompanyId && contract.ProviderId != user.CompanyId)
+            {
+                return Forbid();
+            }
+
+            if (contract.Status != ContractStatus.Draft)
+            {
+                return BadRequest(new { 
+                    message = $"Apenas contratos com status Draft podem ser deletados. Status atual: {contract.Status}",
+                    statusAtual = contract.Status.ToString()
+                });
+            }
+
+            await _unitOfWork.Contracts.DeleteAsync(id);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Contrato Draft deletado. ContractId: {ContractId}, UserId: {UserId}, CompanyId: {CompanyId}",
+                id, userId, user.CompanyId
+            );
+
+            return Ok(new { 
+                message = "Contrato Draft deletado com sucesso",
+                contratoId = id
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao deletar contrato Draft {ContractId}", id);
+            return StatusCode(500, new { message = "Erro ao deletar contrato Draft" });
+        }
+    }
 }
 
 public class CreateContractRequest
